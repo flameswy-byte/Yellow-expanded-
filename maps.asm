@@ -1230,6 +1230,11 @@ INCLUDE "scripts/CeladonWoods.asm"
 INCLUDE "data/maps/objects/CeladonWoods.asm"
 CeladonWoods_Blocks: INCBIN "maps/CeladonWoods.blk"
 
+INCLUDE "data/maps/headers/Route26.asm"
+INCLUDE "scripts/Route26.asm"
+INCLUDE "data/maps/objects/Route26.asm"
+Route26_Blocks: INCBIN "maps/Route26.blk"
+
 SECTION "Maps 22", ROMX
 
 INCLUDE "scripts/ViridianCity_2.asm"

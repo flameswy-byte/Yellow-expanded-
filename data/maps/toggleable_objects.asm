@@ -437,6 +437,10 @@ ToggleableObjectStates:
 	toggle_object_state CELADONWOODS_ETHER,  ON
 	toggle_object_state CELADONWOODS_NUGGET, ON
 
+	toggleable_objects_for ROUTE_26
+	toggle_object_state ROUTE26_RARE_CANDY, ON
+	toggle_object_state ROUTE26_CARBOS,     ON
+
 	assert_table_length NUM_TOGGLEABLE_OBJECTS
 
 	db -1, 1, ON ; end

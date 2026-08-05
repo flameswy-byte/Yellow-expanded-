@@ -45,6 +45,7 @@ ExternalMapEntries:
 	outdoor_map 10,  1, Route24Name
 	outdoor_map 11,  0, Route25Name
 	outdoor_map  7,  6, CeladonWoodsName
+	outdoor_map  7,  9, Route26Name
 	assert_table_length FIRST_INDOOR_MAP
 
 

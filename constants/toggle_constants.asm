@@ -409,4 +409,8 @@ ENDM
 	const TOGGLE_CELADON_WOODS_ITEM_1          ; EF X
 	const TOGGLE_CELADON_WOODS_ITEM_2          ; F0 X
 
+	toggle_consts_for ROUTE_26
+	const TOGGLE_ROUTE_26_ITEM_1               ; F1 X
+	const TOGGLE_ROUTE_26_ITEM_2               ; F2 X
+
 DEF NUM_TOGGLEABLE_OBJECTS EQU const_value
