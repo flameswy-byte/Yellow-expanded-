@@ -229,6 +229,33 @@ For every map whose size or origin changes:
 - [ ] **Trainer sight lines** — range values in object data assume a specific tile distance
 - [ ] **Hidden items** — `data/events/hidden_objects.asm`, coordinates are absolute
 - [ ] **Script X/Y checks** — scripts that compare `wYCoord`/`wXCoord` to trigger events
+
+**Opening a new edge into a vanilla map is the dangerous case, and it is not on
+the list above**, because the map's own size and origin never change. A new
+connection changes *which coordinates the player can stand on*, and vanilla
+scripts assume the vanilla answer.
+
+The worked example: `PalletMovementScript_OakMoveLeft` computes
+`wNumStepsToTake = wXCoord - $a`. The Pallet Town intro fires at `wYCoord == 0`,
+which in vanilla is reachable only at `wXCoord` 10 or 11 — the one-block gap in
+the northern fence. Route 1's western column is walkable but forms an isolated
+108-cell strip no player can enter. Connecting a new map to Route 1's west edge
+made that strip reachable, and from it the player could step south onto Pallet's
+boundary fence — whose *upper* half is walkable — arriving at `wYCoord == 0`
+with `wXCoord` 0, 1 or 2. The subtraction underflows to 246 and Prof. Oak walks
+left forever. The ROM builds, the layout validates, and the game is unfinishable.
+
+So for every vanilla edge opened:
+
+- [ ] **Re-derive which coordinates became reachable**, across map boundaries,
+      and diff that against vanilla. `tools/check_walk.py` gives the step grid;
+      the flood has to span every connected map, not one map at a time
+- [ ] **Check the destination map's script for coordinate tests** — grep its
+      script for `wXCoord` / `wYCoord` and confirm every newly reachable value
+      is one the script handles
+- [ ] **Check what the player can now reach too early** — the same edge let the
+      player walk into tall grass before owning a Pokémon, which is a wild
+      encounter with an empty party
 - [ ] **Sprite set assignment** — new or moved outdoor maps need a `data/maps/sprite_sets.asm` entry
 - [ ] **Wild encounters** — `data/wild/maps/<Name>.asm` must exist for any map with grass
 - [ ] **Rebuild and check the md5 changed** — an unchanged md5 means the edit did not take

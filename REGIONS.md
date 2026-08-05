@@ -123,49 +123,40 @@ Pidgey, Venonat, Gloom, Weepinbell, Pidgeotto.
 them is a separate change. No sign at the entrance. Nothing here has been
 walked in an emulator yet; that is the one check still outstanding.
 
-## 6. Built — the Pallet Town loop (Routes 27 and 28)
+## 6. Built — the western pocket (Routes 27 and 28)
 
-Testing ground. Everything else built so far is mid-game and needs a
-playthrough to reach; this is walkable within seconds of a new game.
-
-Two maps west of the starting area, forming a **loop**:
-
-```
-Pallet Town --west--> Route 27 --north--> Route 28 --east--> Route 1 --south--> Pallet Town
-```
+Testing ground: reachable about a minute into a new game, as soon as the Pallet
+Town intro is done.
 
 | Map | ID | Size | At | Buffer |
 |---|---|---|---|---|
 | Route 27 | `$27` | 20×9 | (−20,0) | 390 |
 | Route 28 | `$28` | 20×18 | (−20,−18) | 624 |
 
-Every connection offset is 0, because each new map's east edge aligns exactly
-with the vanilla map it meets.
+```
+Route 1 --west--> Route 28 --south--> Route 27   (dead end)
+```
 
-**Why west and not east.** East of Pallet runs into Route 17 — Cycling Road is
-10×72 spanning y −50…21, so it occupies x 30…39 at Pallet's latitude. Anything
-east of Pallet has to stop at x 29. The west side is clear.
+**This was originally a loop through Pallet Town, and that broke the game.**
+Pallet had a west exit into Route 27, closing a circuit back via Route 1. Two
+things went wrong, both of which are now recorded in `DESIGN.md` §5:
 
-**Why this shape.** Route 27's east edge is exactly Pallet's 9 rows and Route
-28's is exactly Route 1's 18 rows. That is forced: if either map were taller,
-its east edge would touch two vanilla maps at once, which `connection` cannot
-express.
+1. Route 1's west column is walkable but isolated in vanilla. Connecting Route
+   28 to it made it reachable, and from there the player could step south onto
+   Pallet's boundary fence — walkable on its upper half — reaching `wYCoord 0`
+   at `wXCoord` 0–2. The intro's `wXCoord - $a` underflows to 246 and Oak walks
+   left forever.
+2. The west exit also reached tall grass before the player owns a Pokémon.
 
-**Vanilla edits.** Route 1 needed none — its entire west column is already
-`$0a` and walkable, so it only needed the connection. Pallet Town needed one
-block: the west boundary fence at (0,3) became town path, opening onto the main
-street. `$4e` is a fence block, solid on its left step cells and walkable on
-its right, which is why the town reads as enclosed. No map changes size or
-origin.
+Both are fixed by making the pocket hang off Route 1 instead, so it is only
+reachable after the intro. Pallet's west connection and its fence gap are
+reverted to vanilla. Route 1 gains a gap at block (1,8) so its west column joins
+the main route, and its bottom row is sealed to `$6f` everywhere except the
+tall-grass gap, so the only descent into Pallet is the vanilla one.
 
-**Verification.** Builds; 40/40 outdoor maps placed, no conflicts, no overlaps;
-fill 40.0% → 41.7%. All three seams share walkable rows/columns, both new maps
-traverse from one seam to the other, and Pallet's new gap connects to the
-component holding all three of its warps. The collision model validates here —
-Pallet's warps all land in one component, which is the check Celadon fails.
+**Verified:** Pallet's `wYCoord 0` row is reachable at `wXCoord` 10 and 11 and
+nowhere else, matching vanilla exactly; Routes 27 and 28 are 292/292 and 844/844
+cells reachable from Pallet; 40/40 maps placed, no conflicts.
 
-**Remaining option.** Route 27's east edge could also reach Route 17's west
-edge, giving Pallet a direct path to Cycling Road. Deliberately not taken: it
-would drop a level-5 player into level-30 territory and bypass the bike gate
-entirely. Route 17's west edge can only ever host one of these maps, so
-spending it is a one-time decision.
+**Still wanted:** the loop. Making Pallet's west exit work needs it gated on the
+intro event, which is a script change rather than map data.
