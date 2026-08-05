@@ -17,6 +17,7 @@ button,select,input{font:inherit;color:inherit}
   height:100vh;height:100dvh}
 header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:8px 14px;
   background:var(--panel);border-bottom:1px solid var(--line)}
+header select{width:200px}
 h1{margin:0;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:600}
 header .sep{flex:1}
 .badge{font-size:11px;color:var(--dim)}
@@ -54,14 +55,21 @@ button:focus-visible,select:focus-visible,input:focus-visible,#palette canvas:fo
 .ok{color:var(--ok)}
 kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:0 4px;font-size:11px}
 @media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 320px auto}
-  aside,#side{max-height:220px;border:0;border-bottom:1px solid var(--line)}}
+  aside,#side{max-height:220px;border:0;border-bottom:1px solid var(--line)}
+  /* the header is a single flex row; unwrapped it overflows a phone and the
+     buttons end up underneath the map selector, unclickable */
+  header{flex-wrap:wrap;gap:8px}
+  header .sep{display:none}
+  header h1{flex:1 0 100%}
+  header select{width:auto;flex:1 1 130px;min-width:0}
+  header button{flex:1 1 auto}}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <h1>Kanto Block Editor</h1>
-    <select id="mapsel" style="width:200px"></select>
+    <select id="mapsel"></select>
     <span class="badge">size <b id="dims">–</b></span>
     <span class="badge">buffer <b id="buf">–</b></span>
     <span class="sep"></span>
@@ -143,6 +151,15 @@ const $ = id => document.getElementById(id);
 
 // ---- load graphics ---------------------------------------------------------
 function boot(){
+  // When this file is embedded in a host page its <head> is not ours, so the
+  // viewport meta can be missing. Without it a phone lays the page out at 980px
+  // and every responsive rule here silently fails.
+  if (!document.querySelector('meta[name="viewport"]')){
+    const m = document.createElement('meta');
+    m.name = 'viewport';
+    m.content = 'width=device-width,initial-scale=1';
+    document.head.appendChild(m);
+  }
   const img = new Image();
   img.onload = () => {
     const c = document.createElement('canvas');
@@ -162,7 +179,7 @@ function boot(){
   img.src = 'data:image/png;base64,' + DATA.tileset;
 }
 
-function blockCanvas(id, size){
+function buildBlockCanvas(id, size){
   const c = document.createElement('canvas');
   c.width = c.height = size || BS;
   const x = c.getContext('2d');
@@ -175,11 +192,48 @@ function blockCanvas(id, size){
   return c;
 }
 
+// A full redraw touches thousands of blocks. Rebuilding each one from its 16
+// tiles every time cost ~260ms on Route 1 and ~555ms on Route 21, which is
+// what made painting unusable — draw() runs on every pointer move.
+const blockCache = [];
+function blockCanvas(id){
+  return blockCache[id] || (blockCache[id] = buildBlockCanvas(id, BS));
+}
+
+// neighbour blockdata was being base64-decoded once per neighbour per frame
+const nbrCache = {};
+function nbrBlocks(name){
+  return nbrCache[name] || (nbrCache[name] = b64(DATA.maps[name].blk));
+}
+
+// Blocks of neighbour context drawn around the edited map. On a narrow screen
+// 8 blocks is 256px of dimmed neighbour before the map starts, which left the
+// map itself as a sliver at the edge of the viewport.
+function padBlocks(){
+  return showNbr ? (window.innerWidth < 900 ? 3 : 8) : 0;
+}
+
+// put the edited map in view rather than the top-left of the padding
+function scrollToMap(){
+  const st = $('stage'), p = padBlocks() * BS * zoom;
+  const mw = cur.w * BS * zoom, mh = cur.h * BS * zoom;
+  st.scrollLeft = Math.max(0, mw <= st.clientWidth  ? p - (st.clientWidth  - mw) / 2 : p - 16);
+  st.scrollTop  = Math.max(0, mh <= st.clientHeight ? p - (st.clientHeight - mh) / 2 : p - 16);
+}
+
+// coalesce redraws onto animation frames so a fast drag cannot queue them up
+let drawPending = false;
+function requestDraw(){
+  if (drawPending) return;
+  drawPending = true;
+  requestAnimationFrame(() => { drawPending = false; draw(); });
+}
+
 // ---- palette ---------------------------------------------------------------
 function initPalette(){
   const p = $('palette'); p.innerHTML = '';
   blocks.forEach((_, i) => {
-    const c = blockCanvas(i);
+    const c = buildBlockCanvas(i, BS);
     c.title = 'block $' + i.toString(16).padStart(2,'0');
     c.tabIndex = 0;
     if (i === sel) c.classList.add('on');
@@ -200,7 +254,7 @@ function loadMap(name){
                      : {grassRate:0,grass:[],waterRate:0,water:[]} };
   undoStack = []; redoStack = [];
   $('mw').value = cur.w; $('mh').value = cur.h;
-  syncHeader(); buildEnc(); draw();
+  syncHeader(); buildEnc(); draw(); scrollToMap();
 }
 function syncHeader(){
   $('dims').textContent = cur.w + '\u00d7' + cur.h;
@@ -213,7 +267,7 @@ function snapshot(){ undoStack.push(cur.blk.slice()); if (undoStack.length > 60)
 
 // ---- drawing ---------------------------------------------------------------
 function draw(){
-  const pad = showNbr ? 8 : 0;                      // blocks of context margin
+  const pad = padBlocks();                          // blocks of context margin
   const cv = $('cv'), x = cv.getContext('2d');
   const W = (cur.w + pad*2) * BS * zoom, H = (cur.h + pad*2) * BS * zoom;
   cv.width = W; cv.height = H;
@@ -230,7 +284,7 @@ function draw(){
       if (n === curName) continue;
       if (m.x > cur.x+cur.w+pad || m.x+m.w < cur.x-pad ||
           m.y > cur.y+cur.h+pad || m.y+m.h < cur.y-pad) continue;
-      const d = b64(m.blk);
+      const d = nbrBlocks(n);
       for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++)
         put(m.x+i, m.y+j, d[j*m.w+i], true);
     }
@@ -268,7 +322,7 @@ function draw(){
 
 // ---- editing ---------------------------------------------------------------
 function cellAt(e){
-  const pad = showNbr ? 8 : 0, r = $('cv').getBoundingClientRect();
+  const pad = padBlocks(), r = $('cv').getBoundingClientRect();
   const i = Math.floor((e.clientX - r.left) / (BS*zoom)) - pad;
   const j = Math.floor((e.clientY - r.top ) / (BS*zoom)) - pad;
   return (i >= 0 && j >= 0 && i < cur.w && j < cur.h) ? [i,j] : null;
@@ -295,14 +349,14 @@ function down(e){
     return;
   }
   snapshot();
-  if (tool === 'fill'){ flood(i,j,sel); draw(); return; }
+  if (tool === 'fill'){ flood(i,j,sel); requestDraw(); return; }
   if (tool === 'rect'){ rectStart = [i,j]; return; }
-  painting = true; setCell(i,j,sel); draw();
+  painting = true; setCell(i,j,sel); requestDraw();
 }
 function move(e){
   if (!painting) return;
   const c = cellAt(e); if (!c) return;
-  setCell(c[0], c[1], sel); draw();
+  setCell(c[0], c[1], sel); requestDraw();
 }
 function up(e){
   if (tool === 'rect' && rectStart){
@@ -311,7 +365,7 @@ function up(e){
       const [x0,y0] = rectStart, [x1,y1] = c;
       for (let j = Math.min(y0,y1); j <= Math.max(y0,y1); j++)
         for (let i = Math.min(x0,x1); i <= Math.max(x0,x1); i++) setCell(i,j,sel);
-      draw();
+      requestDraw();
     }
     rectStart = null;
   }
@@ -428,9 +482,9 @@ function initUI(){
   });
   $('tGrid').onclick = e => { showGrid = !showGrid; e.target.classList.toggle('on', showGrid); draw(); };
   $('tColl').onclick = e => { showColl = !showColl; e.target.classList.toggle('on', showColl); draw(); };
-  $('tNbr').onclick  = e => { showNbr  = !showNbr;  e.target.classList.toggle('on', showNbr);  draw(); };
+  $('tNbr').onclick  = e => { showNbr  = !showNbr;  e.target.classList.toggle('on', showNbr);  draw(); scrollToMap(); };
   $('tZoom').onclick = e => { zoom = zoom === 1 ? 2 : zoom === 2 ? .5 : 1;
-    e.target.textContent = 'Zoom ' + zoom + 'x'; draw(); };
+    e.target.textContent = 'Zoom ' + zoom + 'x'; draw(); scrollToMap(); };
 
   $('applysize').onclick = resize;
   $('undo').onclick = () => { if (!undoStack.length) return;
