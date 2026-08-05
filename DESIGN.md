@@ -77,28 +77,70 @@ Kanto into one giant map.
 
 Map IDs are a single byte and `LAST_MAP EQU $ff`. Yellow uses **249 of 255**.
 
-**22 unused slots ship in the ROM**, plus 6 free at the top of the range — **28
-available IDs, no engine work.** For scale, vanilla Kanto has only 36 outdoor
-maps, so this nearly doubles the outdoor world.
+**22 unused slots ship in the ROM**, plus 6 free at the top of the range — 28
+IDs that cost no engine work. **For indoor maps.** Outdoor maps are a different
+and much tighter story.
 
-Claim them in order and tick them off here:
+### Outdoor maps must have an ID below `FIRST_INDOOR_MAP`
 
-| ID | Claimed by | ID | Claimed by |
-|---|---|---|---|
-| `UNUSED_MAP_0B` | | `UNUSED_MAP_74` | |
-| `UNUSED_MAP_69` | | `UNUSED_MAP_75` | |
-| `UNUSED_MAP_6A` | | `UNUSED_MAP_CC` | |
-| `UNUSED_MAP_6B` | | `UNUSED_MAP_CD` | |
-| `UNUSED_MAP_6D` | | `UNUSED_MAP_CE` | |
-| `UNUSED_MAP_6E` | | `UNUSED_MAP_E7` | |
-| `UNUSED_MAP_6F` | | `UNUSED_MAP_ED` | |
-| `UNUSED_MAP_70` | | `UNUSED_MAP_EE` | |
-| `UNUSED_MAP_72` | | `UNUSED_MAP_F1` | |
-| `UNUSED_MAP_73` | | `UNUSED_MAP_F2` | |
-| | | `UNUSED_MAP_F3` | |
-| | | `UNUSED_MAP_F4` | |
+Two tables are sized to the outdoor range rather than to `NUM_MAPS`:
 
-### Reserve, if 28 runs out
+| Table | Length | Indexed by |
+|---|---|---|
+| `MapSpriteSets` (`data/maps/sprite_sets.asm`) | `FIRST_INDOOR_MAP` | raw map ID |
+| `ExternalMapEntries` (`data/maps/town_map_entries.asm`) | `FIRST_INDOOR_MAP` | raw map ID |
+
+`GetSplitMapSpriteSetID` in `engine/overworld/map_sprites.asm` does
+`ld hl, MapSpriteSets / add hl, de` with **no bounds check**, and
+`LoadTownMapEntry` in `engine/items/town_map.asm` branches on
+`cp FIRST_INDOOR_MAP` to pick the external table.
+
+`FIRST_INDOOR_MAP` is `$25`. Every one of the 22 shipped unused slots except
+`UNUSED_MAP_0B` is `$69` or higher. An outdoor map at `$69` reads 68 bytes past
+the end of a 37-byte table and gets a garbage sprite set.
+
+And `UNUSED_MAP_0B` is not the escape hatch it looks like: it sits below
+`FIRST_ROUTE_MAP` (`$0C`), so `MarkTownVisitedAndLoadToggleableObjects` treats
+it as a **town** and sets a Fly flag for it, while `engine/gfx/palettes.asm`
+compares against `NUM_CITY_MAPS` (`$0B`) and hands it the route palette. It is
+the boundary marker between the city block and the route block of the ID space.
+
+**So the usable outdoor budget is zero unused IDs, not 28.** DESIGN.md said the
+28 slots "nearly doubles the outdoor world"; they do nothing of the sort.
+
+### How to actually add an outdoor map
+
+Insert a new constant into `constants/map_constants.asm` *before*
+`FIRST_INDOOR_MAP` — i.e. immediately after `ROUTE_25` at `$25`. Every indoor
+map shifts up by one, which is free because all indoor references are symbolic
+and the group constants are computed from `const_value`.
+
+Then add one entry, at the matching position, to each table indexed by map ID:
+
+| Table | Length asserted |
+|---|---|
+| `MapHeaderPointers` | `NUM_MAPS` |
+| `MapHeaderBanks` | `NUM_MAPS` |
+| `MapSongBanks` | `NUM_MAPS` |
+| `WildDataPointers` | `NUM_MAPS` |
+| `MapSpriteSets` | `FIRST_INDOOR_MAP` |
+| `ExternalMapEntries` | `FIRST_INDOOR_MAP` |
+
+`ToggleableObjectMapPointers` generates itself with `FOR n, NUM_MAPS` and needs
+nothing. Every one of these carries `assert_table_length`, so a missed entry is
+an assembly error rather than a silent corruption — this is the one part of the
+job the build actually checks for you.
+
+This is data work, not engine work, so it stays inside the §0 scope decision.
+
+**The real ceiling is `NUM_MAPS <= LAST_MAP`: 6 new maps of any kind.** Beyond
+that, an outdoor map has to be paid for by retiring an unused indoor slot —
+delete `UNUSED_MAP_69`, add the outdoor constant before `FIRST_INDOOR_MAP`, and
+drop the matching filler row from each `NUM_MAPS` table. That keeps `NUM_MAPS`
+flat and is how the 22 slots become genuinely spendable, one relocation at a
+time.
+
+### Reserve, if the ID budget runs out
 
 60 interior maps share byte-identical blockdata — 18 copies of the same
 single-room house, 12 identical Pokécenters, 8 identical Marts, 5 identical gate

@@ -13,7 +13,8 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
   font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 button,select,input{font:inherit;color:inherit}
-#app{display:grid;grid-template-columns:200px 1fr 260px;grid-template-rows:auto 1fr;height:100%}
+#app{display:grid;grid-template-columns:200px 1fr 260px;grid-template-rows:auto 1fr;
+  height:100vh;height:100dvh}
 header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:8px 14px;
   background:var(--panel);border-bottom:1px solid var(--line)}
 h1{margin:0;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:600}
@@ -27,7 +28,8 @@ aside{border-right:1px solid var(--line)}
 .sec h2{margin:0 0 8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
 #stage{position:relative;overflow:auto;background:
   repeating-conic-gradient(#171a21 0 25%,#14161c 0 50%) 0 0/16px 16px}
-#stage canvas{display:block;image-rendering:pixelated}
+/* touch-action:none is what makes a drag paint instead of scrolling the page */
+#stage canvas{display:block;image-rendering:pixelated;touch-action:none}
 #palette{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
 #palette canvas{width:100%;image-rendering:pixelated;border:2px solid transparent;
   border-radius:2px;cursor:pointer;display:block}
@@ -66,6 +68,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padd
     <button id="undo" title="Ctrl+Z">Undo</button>
     <button id="redo" title="Ctrl+Y">Redo</button>
     <button id="dlblk">Export .blk</button>
+    <button id="cpblk" title="Base64 of the blockdata — paste it back into chat">Copy .blk</button>
   </header>
 
   <aside>
@@ -114,10 +117,13 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padd
     <div class="sec">
       <h2>Notes</h2>
       <p class="note">
-        Paint with left click and drag. <kbd>Alt</kbd> picks a block.
+        Paint by dragging — mouse, touch or pen. <kbd>Alt</kbd> or the Pick tool
+        samples a block.
         Neighbors render dimmed so seams line up.
         Collision shows walkable tiles in green.
         Buffer must stay at or under 1300: <code>(w+6)&times;(h+6)</code>.
+        On a phone use <b>Copy .blk</b> and paste the text back into chat;
+        <b>Export .blk</b> downloads the raw file for desktop.
       </p>
     </div>
   </div>
@@ -376,6 +382,36 @@ function save(name, bytes, mime){
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
+// Downloading a .blk and re-uploading it is painful on a phone, so offer the
+// blockdata as pasteable text instead. Round-trips via base64 with the name and
+// dimensions attached, so the receiving end can verify it before writing it out.
+function blkText(){
+  let s = '';
+  for (const b of cur.blk) s += String.fromCharCode(b);
+  return `${curName} ${cur.w}x${cur.h} blk-base64\n${btoa(s)}`;
+}
+function copyText(txt){
+  const done = ok => {
+    const b = $('cpblk');
+    b.textContent = ok ? 'Copied' : 'Copy failed';
+    setTimeout(() => b.textContent = 'Copy .blk', 1400);
+  };
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(txt).then(() => done(true), () => fallback(txt, done));
+  } else fallback(txt, done);
+}
+function fallback(txt, done){
+  // file:// and other non-secure contexts have no clipboard API
+  const t = document.createElement('textarea');
+  t.value = txt;
+  t.style.cssText = 'position:fixed;top:8px;left:8px;width:90vw;height:40vh;z-index:9';
+  document.body.appendChild(t); t.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(_){}
+  if (ok) t.remove(); else setTimeout(() => t.remove(), 15000);
+  done(ok);
+}
+
 // ---- wiring ----------------------------------------------------------------
 function initUI(){
   initPalette();
@@ -403,11 +439,20 @@ function initUI(){
     undoStack.push(cur.blk.slice()); cur.blk = redoStack.pop(); draw(); };
   $('dlblk').onclick = () => save(curName + '.blk', new Uint8Array(cur.blk), 'application/octet-stream');
   $('dlasm').onclick = () => save(curName + '.asm', encAsm(), 'text/plain');
+  $('cpblk').onclick = () => copyText(blkText());
 
+  // Pointer events, not mouse events: one code path covers mouse, touch and pen.
+  // Touch never fires mousemove, so drag-painting needs this to work on a phone.
   const cv = $('cv');
-  cv.addEventListener('mousedown', down);
-  cv.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', up);
+  cv.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button === 0){
+      cv.setPointerCapture(e.pointerId);   // keep tracking if the drag leaves the canvas
+      down(e);
+    }
+  });
+  cv.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
   window.addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && e.key === 'z'){ e.preventDefault(); $('undo').click(); }
     if ((e.ctrlKey||e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))){ e.preventDefault(); $('redo').click(); }
