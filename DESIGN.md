@@ -1,8 +1,9 @@
 # Open Kanto — Design & Handoff
 
 A Pokémon Yellow romhack that fills the empty space between Kanto's routes.
-Vanilla Kanto occupies **32.8%** of its own bounding box: 10,035 blocks used out
-of a 170×180 block area. Everything below is in service of the other 67%.
+Vanilla Kanto occupies **35.4%** of its own bounding box: 10,845 blocks used out
+of a 170×180 block area. Everything below is in service of the other 65%.
+See `REGIONS.md` for what goes where.
 
 **Scope decision: no engine modifications.** Every constraint in §2 is worked
 *within*, not around. If a design idea requires changing the engine, it goes in
@@ -77,7 +78,7 @@ Kanto into one giant map.
 Map IDs are a single byte and `LAST_MAP EQU $ff`. Yellow uses **249 of 255**.
 
 **22 unused slots ship in the ROM**, plus 6 free at the top of the range — **28
-available IDs, no engine work.** For scale, vanilla Kanto has only 34 overworld
+available IDs, no engine work.** For scale, vanilla Kanto has only 36 outdoor
 maps, so this nearly doubles the outdoor world.
 
 Claim them in order and tick them off here:
@@ -133,15 +134,22 @@ Route 12 at 10×54 — stay as they are and are not split.
 ### Origin
 
 Re-centred on the bounding box, not anchored to Pallet Town. `tools/layout.json`
-holds the solved global position of all 34 vanilla maps in block coordinates,
-with `minx`/`miny` giving the offset to bounding-box space.
+holds the solved global position of all 36 vanilla outdoor maps in block
+coordinates, with `minx`/`miny` giving the offset to bounding-box space.
 
 ### Verifying a layout change
 
 `tools/render_kanto.py` walks the connection graph from Pallet Town and places
-every overworld map. **If it reports conflicts, a connection offset is wrong** —
-the same map was reached by two paths that disagree on where it sits. Fix before
-building.
+every outdoor map — `OVERWORLD` and `PLATEAU` both, so Route 23 and Indigo
+Plateau are included. It reports two distinct failures:
+
+- **Conflicts** — the same map was reached by two paths that disagree on where
+  it sits, meaning a connection offset is wrong.
+- **Overlapping map pairs** — two maps cover the same ground. The engine never
+  notices, because unconnected maps never touch; the world just contains the
+  same land twice.
+
+Fix either before building.
 
 ---
 
@@ -162,7 +170,7 @@ For every map whose size or origin changes:
 - [ ] **Trainer sight lines** — range values in object data assume a specific tile distance
 - [ ] **Hidden items** — `data/events/hidden_objects.asm`, coordinates are absolute
 - [ ] **Script X/Y checks** — scripts that compare `wYCoord`/`wXCoord` to trigger events
-- [ ] **Sprite set assignment** — new or moved outdoor maps need a `data/sprite_sets.asm` entry
+- [ ] **Sprite set assignment** — new or moved outdoor maps need a `data/maps/sprite_sets.asm` entry
 - [ ] **Wild encounters** — `data/wild/maps/<Name>.asm` must exist for any map with grass
 - [ ] **Rebuild and check the md5 changed** — an unchanged md5 means the edit did not take
 
@@ -209,8 +217,8 @@ Point it at the disassembly with `POKEYELLOW=/path/to/pokeyellow` (defaults to
 any map is reached by two paths that disagree. On clean vanilla source it places
 34/34 maps with no conflicts.
 
-**`tools/layout.json`** — solved positions and dimensions of all 34 vanilla
-overworld maps. Regenerate after layout changes.
+**`tools/layout.json`** — solved positions and dimensions of all 36 vanilla
+outdoor maps. Regenerate with `render_kanto.py --json` after layout changes.
 
 **`tools/gen_encounters.py`** — generates a starting encounter table for a new
 map by blending the 3 nearest vanilla tables, inverse-distance weighted, and
@@ -269,6 +277,6 @@ free map IDs      28
 free block slots  128 of 256
 free tile art     3 of 96
 free ROM          177,191 bytes
-vanilla fill      32.8% of 170×180 blocks
+vanilla fill      35.4% of 170×180 blocks
 clean build md5   d9290db87b1f0a23b89f99ee4469e34b
 ```

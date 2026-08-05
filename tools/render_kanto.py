@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render pokeyellow .blk maps to PNG, and stitch the Kanto overworld via connections."""
-import re, os, glob
+import re, os, sys, glob, json
 from PIL import Image
 
 ROOT = os.environ.get('POKEYELLOW', os.path.expanduser('~/pokeyellow'))
@@ -48,6 +48,12 @@ def parse_headers():
         maps[name] = {'const': const, 'tileset': tileset, 'conn': conns}
     return maps
 
+# Tilesets that make up the connected outdoor world. PLATEAU matters: Route 23 is
+# 10x72 and Indigo Plateau sits above it, together occupying ~890 blocks west of
+# Route 22. Filtering to OVERWORLD alone reports that land as empty, which is how
+# a new map gets sited on top of it without anything complaining.
+OUTDOOR = ('OVERWORLD', 'PLATEAU')
+
 # --- map dimensions come from the .blk size + width in map_constants ---------
 def parse_dims():
     txt = open(f'{ROOT}/constants/map_constants.asm').read()
@@ -86,8 +92,8 @@ if __name__ == '__main__':
         raise SystemExit(f'pokeyellow source not found at {ROOT}; set $POKEYELLOW')
     maps = parse_headers()
     dims = parse_dims()
-    ow = {k: v for k, v in maps.items() if v['tileset'] == 'OVERWORLD'}
-    print(f'overworld maps: {len(ow)}')
+    ow = {k: v for k, v in maps.items() if v['tileset'] in OUTDOOR}
+    print(f'outdoor maps: {len(ow)}')
     for k in sorted(ow):
         d = dims.get(ow[k]['const'], ('?', '?'))
         print(f"  {k:24s} {d[0]}x{d[1]}  conns={list(ow[k]['conn'])}")
@@ -97,6 +103,37 @@ if __name__ == '__main__':
     unreached = sorted(set(ow) - set(pos))
     if unreached:
         print(f'unreachable via connections: {unreached}')
+
+    # occupancy: any two maps covering the same block is a design collision, even
+    # when the engine tolerates it (separate tilesets never share a connection)
+    occ = {}
+    overlaps = []
+    for k, (x, y) in pos.items():
+        w, h = dims[ow[k]['const']]
+        for yy in range(y, y + h):
+            for xx in range(x, x + w):
+                if (xx, yy) in occ:
+                    overlaps.append((occ[(xx, yy)], k, xx, yy))
+                occ[(xx, yy)] = k
+    xs = [x for x, _ in occ]; ys = [y for _, y in occ]
+    minx, miny = min(xs), min(ys)
+    W, H = max(xs) - minx + 1, max(ys) - miny + 1
+    print(f'bounding box {W}x{H}, {len(occ)} blocks used = {100*len(occ)/(W*H):.1f}%')
+    if overlaps:
+        seen = {}
+        for a, b, xx, yy in overlaps:
+            seen.setdefault(tuple(sorted((a, b))), []).append((xx, yy))
+        print(f'\n{len(seen)} OVERLAPPING MAP PAIR(S):')
+        for (a, b), cells in seen.items():
+            print(f'  {a} / {b}: {len(cells)} blocks, e.g. {cells[0]}')
+
+    if '--json' in sys.argv:
+        out = {'minx': minx, 'miny': miny, 'W': W, 'H': H, 'pos': pos,
+               'dims': {k: list(dims[ow[k]['const']]) for k in pos}}
+        p = os.path.join(os.path.dirname(__file__), 'layout.json')
+        json.dump(out, open(p, 'w'))
+        print(f'wrote {p}')
+
     if conflicts:
         print(f'\n{len(conflicts)} CONFLICT(S) — a connection offset is wrong:')
         for cur, d, nb, had, want in conflicts:
