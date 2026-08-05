@@ -81,6 +81,12 @@ Map IDs are a single byte and `LAST_MAP EQU $ff`. Yellow uses **249 of 255**.
 IDs that cost no engine work. **For indoor maps.** Outdoor maps are a different
 and much tighter story.
 
+> **Status:** 18 of the 22 have since been retired with
+> `tools/reclaim_map_ids.py --all`, and four outdoor maps have been added.
+> `NUM_MAPS` is **235 of 255 — 20 free IDs.** The four slots left alone are
+> listed in that tool's `KEEP` table; each is referenced by something and needs
+> that reference dealt with before it can go.
+
 ### Outdoor maps must have an ID below `FIRST_INDOOR_MAP`
 
 Two tables are sized to the outdoor range rather than to `NUM_MAPS`:
@@ -133,12 +139,23 @@ job the build actually checks for you.
 
 This is data work, not engine work, so it stays inside the §0 scope decision.
 
-**The real ceiling is `NUM_MAPS <= LAST_MAP`: 6 new maps of any kind.** Beyond
-that, an outdoor map has to be paid for by retiring an unused indoor slot —
-delete `UNUSED_MAP_69`, add the outdoor constant before `FIRST_INDOOR_MAP`, and
-drop the matching filler row from each `NUM_MAPS` table. That keeps `NUM_MAPS`
-flat and is how the 22 slots become genuinely spendable, one relocation at a
-time.
+**The real ceiling is `NUM_MAPS <= LAST_MAP`.** Beyond the six that shipped
+free, an outdoor map is paid for by retiring an unused indoor slot: delete its
+`map_const` and drop the matching row from each `NUM_MAPS` table, which lowers
+`NUM_MAPS` and frees headroom for a new constant before `FIRST_INDOOR_MAP`.
+
+`tools/reclaim_map_ids.py` does this. It removes rows by **index**, not by
+matching a comment — only some of these tables tag their filler rows, and
+`grass_water.asm` does not tag them at all — and it checks each table's row
+count against `NUM_MAPS` before touching anything. All edits are computed in
+memory and written only once every table validates.
+
+Four slots are held back in the tool's `KEEP` table because they are not really
+unused: `UNUSED_MAP_6F` carries hidden events and a hidden item,
+`UNUSED_MAP_ED` is a live warp target from the Silph Co elevator,
+`UNUSED_MAP_F4` has toggle entries, and `UNUSED_MAP_0B` is the boundary marker
+between `NUM_CITY_MAPS` and `FIRST_ROUTE_MAP` (and sits below
+`FIRST_INDOOR_MAP`, so retiring it would shift the outdoor tables too).
 
 ### Reserve, if the ID budget runs out
 
@@ -315,10 +332,10 @@ Still open:
 
 ```
 buffer limit      (w+6) × (h+6) ≤ 1300
-free map IDs      28
+free map IDs      20 (NUM_MAPS 235 of 255)
 free block slots  128 of 256
 free tile art     3 of 96
 free ROM          177,191 bytes
 vanilla fill      35.4% of 170×180 blocks
-clean build md5   d9290db87b1f0a23b89f99ee4469e34b
+vanilla build md5 d9290db87b1f0a23b89f99ee4469e34b
 ```
