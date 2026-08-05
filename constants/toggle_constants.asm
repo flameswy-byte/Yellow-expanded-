@@ -405,4 +405,8 @@ ENDM
 	const TOGGLE_DAISY_WALKING_COPY            ; ED
 	const TOGGLE_TOWN_MAP_COPY                 ; EE
 
+	toggle_consts_for CELADON_WOODS
+	const TOGGLE_CELADON_WOODS_ITEM_1          ; EF X
+	const TOGGLE_CELADON_WOODS_ITEM_2          ; F0 X
+
 DEF NUM_TOGGLEABLE_OBJECTS EQU const_value

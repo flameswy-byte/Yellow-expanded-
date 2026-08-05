@@ -73,8 +73,8 @@ existing map; positions are bounding-box block coordinates.
 
 | # | Attach | Dir | Offset | Occupies | Poster terrain | Notes |
 |---|---|---|---|---|---|---|
-| A | Route11 | north | 0 | (105,−47) | open plains, scattered woodland | Dead-end pocket bounded by Routes 8/11/12. Early-mid levels. **First build.** |
-| B | CeladonCity | south | 0 | (50,−45) | dense forest | Biggest inland void; city-edge exit needs care |
+| A | Route11 | north | 0 | (105,−47) | open plains, scattered woodland | Dead-end pocket bounded by Routes 8/11/12. Early-mid levels. |
+| B | CeladonCity | south | 0 | (50,−45) | dense forest | **Built — Celadon Woods, map ID `$25`.** |
 | C | Route17 | east | 5 | (40,−45) | forest | Cycling Road's east edge is cliff the whole way |
 | D | PewterCity | north | −2 | (−7,−114) | the northern mountains | Best thematic match; wants cliff blockwork first |
 | E | Route15 | north | 0 | (75,−2) | the bay | Water map, needs Surf |
@@ -86,24 +86,39 @@ Water regions (E–G) are held back deliberately: they are only reachable with
 Surf, which makes them late and makes their encounter tables a different
 problem. Land first.
 
-## 5. First build — region A
+## 5. Built — region B, Celadon Woods
 
-North of Route 11, 22×24 at (105,−47), single connection south to Route 11.
+22×24 at (50,−45), map ID `$25`, one connection north to Celadon City. A dead
+end: the poster's forest, entered from the city's south side and going nowhere
+else.
 
-Chosen because it is the lowest-risk site that still fills real space:
+**Why it was safe to build first.** No vanilla map changes size or origin, so
+the §5 coordinate audit in `DESIGN.md` never fires — every warp, sign and
+trainer coordinate in Kanto is untouched. Celadon gains one `connection` line
+and two repainted blocks in its southern boundary at (5,17) and (6,17), meeting
+the walkable strip that already ran along row 16.
 
-- **No vanilla map changes size or origin**, so the `DESIGN.md` §5 coordinate
-  audit does not fire. Route 11 gains one `connection` line and a repainted gap
-  in its northern treeline; every warp, sign and trainer coordinate in Kanto
-  stays exactly where it is.
-- **Dead end, one connection.** Route 8's south edge is also free, so this
-  pocket *could* link Route 11 to Route 8 — and deliberately does not. That
-  would be an optional bypass around Saffron, which is routing the base game
-  did not plan for. A dead end is unambiguously skippable, per §8.
-- **Level curve blends cleanly.** Route 11 sits around level 14 and Route 8
-  around 18, so `gen_encounters` has two close, mutually consistent neighbours
-  to interpolate from — the failure mode the tool warns about (Route 22 next to
-  Victory Road) does not apply here.
-- **Terrain is buildable from stock blocks.** Grass, trees, water edge and
-  ledges all exist in the overworld blockset. No new block art required, which
-  keeps the open question in §8 open instead of blocking the first map.
+**Why it is a dead end on purpose.** Route 16's and Route 17's edges are nearby
+and it would be easy to run this through to Cycling Road. That would be an
+optional bypass the base game never planned for, so the south, east and west
+edges are solid treeline — verified, no walkable block touches them.
+
+**Encounters.** `gen_encounters.py` blended Route 7, 16 and 17 and returned
+Cycling Road plains species — Doduo, Ponyta, Fearow, Spearow. Right level band
+(15–28), wrong biome, which is exactly the quarter of the output DESIGN.md says
+to hand-fix. Retuned to forest species at levels 18–25: Oddish, Bellsprout,
+Pidgey, Venonat, Gloom, Weepinbell, Pidgeotto.
+
+**Verification.**
+
+- assembles; md5 moved from `d9290db8…` to `f6187539…` as §5 requires
+- `render_kanto.py`: 37/37 outdoor maps placed, no conflicts, no overlaps
+- fill 35.4% → 37.2%
+- every block used is uniformly walkable or uniformly solid, so the map can be
+  checked at block level: 138/138 walkable blocks reachable from the entrance,
+  nothing stranded, both item balls reachable, all three sealed edges solid
+- Celadon's new opening is reachable from the city centre
+
+**Not yet done.** No trainers — rosters are an open question in §8 and adding
+them is a separate change. No sign at the entrance. Nothing here has been
+walked in an emulator yet; that is the one check still outstanding.

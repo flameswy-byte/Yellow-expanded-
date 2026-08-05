@@ -1223,6 +1223,13 @@ INCLUDE "data/maps/objects/AgathasRoom.asm"
 AgathasRoom_Blocks: INCBIN "maps/AgathasRoom.blk"
 
 
+SECTION "Maps 23", ROMX
+
+INCLUDE "data/maps/headers/CeladonWoods.asm"
+INCLUDE "scripts/CeladonWoods.asm"
+INCLUDE "data/maps/objects/CeladonWoods.asm"
+CeladonWoods_Blocks: INCBIN "maps/CeladonWoods.blk"
+
 SECTION "Maps 22", ROMX
 
 INCLUDE "scripts/ViridianCity_2.asm"

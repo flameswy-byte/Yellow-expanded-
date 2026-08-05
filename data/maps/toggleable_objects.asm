@@ -433,6 +433,10 @@ ToggleableObjectStates:
 	db BLUES_HOUSE, BLUESHOUSE_DAISY2,   OFF
 	db BLUES_HOUSE, BLUESHOUSE_TOWN_MAP, ON
 
+	toggleable_objects_for CELADON_WOODS
+	toggle_object_state CELADONWOODS_ETHER,  ON
+	toggle_object_state CELADONWOODS_NUGGET, ON
+
 	assert_table_length NUM_TOGGLEABLE_OBJECTS
 
 	db -1, 1, ON ; end
