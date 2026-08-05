@@ -66,6 +66,8 @@ DEF FIRST_ROUTE_MAP EQU const_value
 	map_const ROUTE_25,                      30,  9 ; $24
 	map_const CELADON_WOODS,                 22, 24 ; $25
 	map_const ROUTE_26,                      22, 39 ; $26
+	map_const ROUTE_27,                      20,  9 ; $27
+	map_const ROUTE_28,                      20, 18 ; $28
 
 DEF FIRST_INDOOR_MAP EQU const_value
 	map_const REDS_HOUSE_1F,                  4,  4 ; $25

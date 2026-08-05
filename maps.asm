@@ -1235,6 +1235,16 @@ INCLUDE "scripts/Route26.asm"
 INCLUDE "data/maps/objects/Route26.asm"
 Route26_Blocks: INCBIN "maps/Route26.blk"
 
+INCLUDE "data/maps/headers/Route27.asm"
+INCLUDE "scripts/Route27.asm"
+INCLUDE "data/maps/objects/Route27.asm"
+Route27_Blocks: INCBIN "maps/Route27.blk"
+
+INCLUDE "data/maps/headers/Route28.asm"
+INCLUDE "scripts/Route28.asm"
+INCLUDE "data/maps/objects/Route28.asm"
+Route28_Blocks: INCBIN "maps/Route28.blk"
+
 SECTION "Maps 22", ROMX
 
 INCLUDE "scripts/ViridianCity_2.asm"

@@ -441,6 +441,12 @@ ToggleableObjectStates:
 	toggle_object_state ROUTE26_RARE_CANDY, ON
 	toggle_object_state ROUTE26_CARBOS,     ON
 
+	toggleable_objects_for ROUTE_27
+	toggle_object_state ROUTE27_POTION, ON
+
+	toggleable_objects_for ROUTE_28
+	toggle_object_state ROUTE28_POKE_BALL, ON
+
 	assert_table_length NUM_TOGGLEABLE_OBJECTS
 
 	db -1, 1, ON ; end

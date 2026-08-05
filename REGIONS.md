@@ -122,3 +122,50 @@ Pidgey, Venonat, Gloom, Weepinbell, Pidgeotto.
 **Not yet done.** No trainers — rosters are an open question in §8 and adding
 them is a separate change. No sign at the entrance. Nothing here has been
 walked in an emulator yet; that is the one check still outstanding.
+
+## 6. Built — the Pallet Town loop (Routes 27 and 28)
+
+Testing ground. Everything else built so far is mid-game and needs a
+playthrough to reach; this is walkable within seconds of a new game.
+
+Two maps west of the starting area, forming a **loop**:
+
+```
+Pallet Town --west--> Route 27 --north--> Route 28 --east--> Route 1 --south--> Pallet Town
+```
+
+| Map | ID | Size | At | Buffer |
+|---|---|---|---|---|
+| Route 27 | `$27` | 20×9 | (−20,0) | 390 |
+| Route 28 | `$28` | 20×18 | (−20,−18) | 624 |
+
+Every connection offset is 0, because each new map's east edge aligns exactly
+with the vanilla map it meets.
+
+**Why west and not east.** East of Pallet runs into Route 17 — Cycling Road is
+10×72 spanning y −50…21, so it occupies x 30…39 at Pallet's latitude. Anything
+east of Pallet has to stop at x 29. The west side is clear.
+
+**Why this shape.** Route 27's east edge is exactly Pallet's 9 rows and Route
+28's is exactly Route 1's 18 rows. That is forced: if either map were taller,
+its east edge would touch two vanilla maps at once, which `connection` cannot
+express.
+
+**Vanilla edits.** Route 1 needed none — its entire west column is already
+`$0a` and walkable, so it only needed the connection. Pallet Town needed one
+block: the west boundary fence at (0,3) became town path, opening onto the main
+street. `$4e` is a fence block, solid on its left step cells and walkable on
+its right, which is why the town reads as enclosed. No map changes size or
+origin.
+
+**Verification.** Builds; 40/40 outdoor maps placed, no conflicts, no overlaps;
+fill 40.0% → 41.7%. All three seams share walkable rows/columns, both new maps
+traverse from one seam to the other, and Pallet's new gap connects to the
+component holding all three of its warps. The collision model validates here —
+Pallet's warps all land in one component, which is the check Celadon fails.
+
+**Remaining option.** Route 27's east edge could also reach Route 17's west
+edge, giving Pallet a direct path to Cycling Road. Deliberately not taken: it
+would drop a level-5 player into level-30 territory and bypass the bike gate
+entirely. Route 17's west edge can only ever host one of these maps, so
+spending it is a one-time decision.

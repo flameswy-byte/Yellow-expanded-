@@ -40,6 +40,8 @@ MapHeaderBanks::
 	db BANK(Route25_h)
 	db BANK(CeladonWoods_h)
 	db BANK(Route26_h)
+	db BANK(Route27_h)
+	db BANK(Route28_h)
 	db BANK(RedsHouse1F_h)
 	db BANK(RedsHouse2F_h)
 	db BANK(BluesHouse_h)

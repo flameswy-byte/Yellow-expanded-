@@ -39,6 +39,8 @@ WildDataPointers:
 	dw Route25WildMons         ; ROUTE_25
 	dw CeladonWoodsWildMons    ; CELADON_WOODS
 	dw Route26WildMons         ; ROUTE_26
+	dw Route27WildMons         ; ROUTE_27
+	dw Route28WildMons         ; ROUTE_28
 	dw NothingWildMons         ; REDS_HOUSE_1F
 	dw NothingWildMons
 	dw NothingWildMons
@@ -279,6 +281,8 @@ INCLUDE "data/wild/maps/Route24.asm"
 INCLUDE "data/wild/maps/Route25.asm"
 INCLUDE "data/wild/maps/CeladonWoods.asm"
 INCLUDE "data/wild/maps/Route26.asm"
+INCLUDE "data/wild/maps/Route27.asm"
+INCLUDE "data/wild/maps/Route28.asm"
 INCLUDE "data/wild/maps/Route9.asm"
 INCLUDE "data/wild/maps/Route5.asm"
 INCLUDE "data/wild/maps/Route6.asm"

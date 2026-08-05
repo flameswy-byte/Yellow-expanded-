@@ -413,4 +413,10 @@ ENDM
 	const TOGGLE_ROUTE_26_ITEM_1               ; F1 X
 	const TOGGLE_ROUTE_26_ITEM_2               ; F2 X
 
+	toggle_consts_for ROUTE_27
+	const TOGGLE_ROUTE_27_ITEM_1               ; F3 X
+
+	toggle_consts_for ROUTE_28
+	const TOGGLE_ROUTE_28_ITEM_1               ; F4 X
+
 DEF NUM_TOGGLEABLE_OBJECTS EQU const_value
