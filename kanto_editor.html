@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kanto Block Editor</title>
+<style>
+:root{
+  --bg:#14161c; --panel:#1a1d25; --panel2:#20242e; --line:#2b3040;
+  --ink:#c9cedb; --dim:#7d859b; --accent:#9d7bd8; --amber:#d8a84a; --ok:#5fb98a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+button,select,input{font:inherit;color:inherit}
+#app{display:grid;grid-template-columns:200px 1fr 260px;grid-template-rows:auto 1fr;height:100%}
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:8px 14px;
+  background:var(--panel);border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:600}
+header .sep{flex:1}
+.badge{font-size:11px;color:var(--dim)}
+.badge b{color:var(--ink);font-weight:600}
+aside,#side{background:var(--panel);overflow-y:auto}
+aside{border-right:1px solid var(--line)}
+#side{border-left:1px solid var(--line)}
+.sec{padding:10px 12px;border-bottom:1px solid var(--line)}
+.sec h2{margin:0 0 8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
+#stage{position:relative;overflow:auto;background:
+  repeating-conic-gradient(#171a21 0 25%,#14161c 0 50%) 0 0/16px 16px}
+#stage canvas{display:block;image-rendering:pixelated}
+#palette{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+#palette canvas{width:100%;image-rendering:pixelated;border:2px solid transparent;
+  border-radius:2px;cursor:pointer;display:block}
+#palette canvas.on{border-color:var(--accent)}
+.row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.row label{color:var(--dim);min-width:52px;font-size:11px}
+select,input[type=number],input[type=text]{background:var(--panel2);border:1px solid var(--line);
+  border-radius:3px;padding:3px 5px;width:100%;min-width:0}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:3px;
+  padding:5px 8px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.on{background:var(--accent);border-color:var(--accent);color:#14161c;font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,#palette canvas:focus-visible{
+  outline:2px solid var(--accent);outline-offset:1px}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.wide{width:100%;margin-top:6px}
+.slot{display:grid;grid-template-columns:26px 42px 1fr;gap:4px;margin-bottom:3px;align-items:center}
+.slot span{color:var(--dim);font-size:10px;text-align:right}
+.note{color:var(--dim);font-size:11px;line-height:1.5}
+.warn{color:var(--amber)}
+.ok{color:var(--ok)}
+kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:0 4px;font-size:11px}
+@media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 320px auto}
+  aside,#side{max-height:220px;border:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Kanto Block Editor</h1>
+    <select id="mapsel" style="width:200px"></select>
+    <span class="badge">size <b id="dims">–</b></span>
+    <span class="badge">buffer <b id="buf">–</b></span>
+    <span class="sep"></span>
+    <button id="undo" title="Ctrl+Z">Undo</button>
+    <button id="redo" title="Ctrl+Y">Redo</button>
+    <button id="dlblk">Export .blk</button>
+  </header>
+
+  <aside>
+    <div class="sec">
+      <h2>Blocks</h2>
+      <div id="palette"></div>
+    </div>
+  </aside>
+
+  <div id="stage"><canvas id="cv"></canvas></div>
+
+  <div id="side">
+    <div class="sec">
+      <h2>Tools</h2>
+      <div class="tools">
+        <button data-tool="paint" class="on">Paint</button>
+        <button data-tool="fill">Fill</button>
+        <button data-tool="rect">Rect</button>
+        <button data-tool="pick">Pick</button>
+      </div>
+      <div class="toggles" style="margin-top:6px">
+        <button id="tGrid">Grid</button>
+        <button id="tColl">Collision</button>
+        <button id="tNbr" class="on">Neighbors</button>
+        <button id="tZoom">Zoom 1x</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Map size</h2>
+      <div class="row"><label>width</label><input type="number" id="mw" min="1" max="60"></div>
+      <div class="row"><label>height</label><input type="number" id="mh" min="1" max="60"></div>
+      <button class="wide" id="applysize">Resize map</button>
+      <p class="note" id="sizenote"></p>
+    </div>
+
+    <div class="sec">
+      <h2>Wild encounters</h2>
+      <div class="row"><label>grass %</label><input type="number" id="grate" min="0" max="255"></div>
+      <div id="grass"></div>
+      <div class="row" style="margin-top:8px"><label>water %</label><input type="number" id="wrate" min="0" max="255"></div>
+      <div id="water"></div>
+      <button class="wide" id="dlasm">Export encounters .asm</button>
+    </div>
+
+    <div class="sec">
+      <h2>Notes</h2>
+      <p class="note">
+        Paint with left click and drag. <kbd>Alt</kbd> picks a block.
+        Neighbors render dimmed so seams line up.
+        Collision shows walkable tiles in green.
+        Buffer must stay at or under 1300: <code>(w+6)&times;(h+6)</code>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {"tileset": "iVBORw0KGgoAAAANSUhEUgAAAIAAAAAwAgAAAAC2LzXDAAAE30lEQVR42mWUf2wTZRjH362rlGbSFloMEWUDV6VLxsK5GcOgPzicS9iYbd+Mqss2mEeoi7Hosj/GgIUughqm0Yu2DEMQZvcWFjOMhB7YYhXEdgydzcBkoCExoWEdYfvH5NbH524zSLw0d+/1Pu/3+T7P+7wvASDEDue7KQUAWRkDMCYwFsIBZPsJwPWnDTAxIUn4nlR/OKWVkMWQXwAkyQH7Lg5nUWATY3tRwnahjdK66bhsV4Fhxtv3XZRiOPsmY6+hhE1uI6QOYGZMBfwht2FiAj3IG0OU+lCiXA7Y5HqAsRkVYALfv3t3NAbJv9CbsCsJ6+RAOQLf/QuEXGtEkWXlTYICCHvtFm9gnaKQGleBMNMFp/ZFY8kMYkwUP0sSErB466ch5UHgy5eiMf+Q9liGVomiSCneBhgLEFKPicsPogh8cTc8aNnTSauF+RBCB0DAxNdP5uCBCkhsMPzxwa7/AaigUYFhNuS36pszL/p8Psbw9jqGQCCXk/Uq4A8N+Q+lWjofApTOe7ifUgEmDIY1Z5oyGMJLyHIMgQClqJA8Mw+EwoNLRmhPtfCGk1InAoS8TcjjknRtRAXCzD9Ufpo2VYmfmgkxW5Q09Ywdz+XKTyOAI3wDWG+sEp0u/b1eJx2AhAHXWJLObmAMgfd+VVpjq6Paa7bpYxHz8g7Zfh+mbk3dKmpQeoOsmlUAV2GV08W+v8N6nR0zAPaj5z95weRJcLgW84Dj0PNmG+P0LGJemQLoz+V+aOB5wwyh9Nkbigf36gIXi19L5Vmv4wrANkmyeMiy4kqidSxuVRT4oNkWhfJhyEbMCoAKDr7BUEMatQcvqR5KErY4VMxAPqK5Gv+7X5IKSO+iRI2apgLogoDtWn4BWxdSGap4KPq8ArPo7qK0zGjxri7Z01hxz9ouigBXsqe2UXpW65GwDvlJgDpXnzvN13sLz43WCsJ0/md2CkNM/dKQQwWIE+LWtdWNGF1u3a1vnhIEiCshhrNHz34gpWWSm3P3eUu3l7UHHYcrVrRbfT5s1iwqxHJ3juTSlejBfdj7jLH0ptFtXbvrRp/PF4fx7KlVlEoNf0rFhMxN77zq7nUFhSK+ryS0Q4sh8rP+k/ujsdyTJ9+qSZPu/TtH60w6p7fXVeKyNH6EAMzxW4BlJafzHAKTcz37y/hSc2GZLrj9QGFEFKcBMi2ACr8tV7LofndDF1u4lIJZ263tyhPXGbLvn4iS/PiRSbJwJQjRjNaO1maaWFS2K5sfOwqWXI/j5BOKAtZa/vZA4THcrw+Be9LSjYYkN2avuZ+oJKS4nRArqoMKKCH2VPC1HMdpivG2nrEPbxBS5vkxymRbxJ49vCNKEjHjMo4zcFxl5QzX1ZzG00mrAoqCAmyN8Br8bLCjAtfUnG5Es5rEQojj+ihZsZaY7QYuqQIAafyuO67PzptkDBWCjs1K0kUdKQ/X05MuwaFsZ6oHtRzVpUbz7dsAl0YQaO5MYy0Wyfa8GkIFLgcdmi6sZeVVBDDE17grHwH+EE0Fu79ibKs15VHqgFk89gjwDvXW/r6L0pUrUp41AD9dxzQf8TC7lF8VxhNi8+XxLaWUvtxqMiEA+YVzHUino6Bl8NXwYDAw+8QWSl/ZzvOtKqAuDQKTjdqeu2/6h0wDcy3KH3qT6bn/KvwDAMBAj/8ZQ4YAAAAASUVORK5CYII=", "blockset": "CgooKUtLSx8KCgofGhoaTyMjIyM5IyMjIyMjIyMjOSMFBgcHFRYXFyUmCwxOGhscBwcICRcXGBkKCigpGhoaTxQUFBQUFBQUFBQqKxQUOjs8PDw8BDwEPDw8PDw8PDw8ERERERERERFISTc3WFk3NywsLCwsLCwsLCwsLDc3Nzc5OTk5OTk5OTk5Rkc5OVZXBwcHBxcXFxcjCgojGhoaGiwsLCwsLCwsLCwsLCwsLCxSUlJSUlJSUlJSUlJSUlJSBQZTUxU4EhIVOBISFRYXF1NTU1MSEhISEhISEhcXFxdTUwgJEhI4GRISOBkXFxgZQEFAQVBRUFFAQUBBUFFQUSUmCgoPIiIiDwoKCk4aGhoiLz8iIiIiIgoKCgoaGhoaCgooKSIiIh8LDAofGxwaTyorKis6Ozo7KisqKzo7OjsqKxQUOjsUFCorKis6Ozo7FBQqKxQUOjsqKyorOjs6OyorKis6Ozo7KisUFDo7FBQqKyorOjs6OxQUKisUFDo7KisUFDo7FBQqKxQUOjsUFBQUKisUFDo7FBQqKxQUOjs5OTk5OTk5OTk5OTk2Nzc3Dg4jI1VVIyMODiMjVVUjIyMjIyM5IyMjQEFAQVBRUFEzMzMzMhQUFDIUFBQyFBQUMzMzMxQUFFQUFBRUFBQUVDMzMzMUFBQUFBQUFBQUFBRMU1NTWhISEloSEhJcFxcXU1NTTRISEloSEhJaFxcXXSEjIxAjIyMQIyMjECEjIxAgICAgIyMjIyMjIyMgICAgJycREScnEREnNjc3Njc3NxERJCQRESQkNzc0JDc3NzQQIyMhECMjIxAjIyMQIyMhECMjEBAjIxAQIyMQECMjECcnEREnJxERJycREScnERERESQkEREkJBERJCQRESQkERERERERERE3ExEREycRERERERERERERERE1NxERJDURERERERERERERERERERERFBQUMxQUFBQUFBQUFBQUFDMUFBQUFBQUFBQUFBQUFBQsLCwsLCwsLCwsLCw3NDw8BQYHBxUWFxclJgoiThoaGjk5OTk5OTk5OTk5OTk5OTlAQS0uUFE9PkBBLCxQUSwsQEFAQVBRUFEsLC0uLCw9Pi0uLCw9PiwsQEFAQVBRUFEsLC0uLCw9PkBBLCxQUSwsQEFAQVBRUFEsLEBBLCxQUQ8KCgoPS0tLD0tLS04aGhojIyMjOSMjIwUGBwcVFhcXIyMjIzkjIyMHBwgJFxcYGQpLSwpLS0tLCwwKChscGhoBAQI5EREkAhERJCQRESQkJSYKIlwXFxcPIgsMThobHAoKKCkXFxddCgoiHxoaGk8jHgEBHicREScnEREnJxERAQEBARERERERERERERERESorLCw6OywsLCwsLCwsLCwsLCwsLCwsLCorLCw6OywsLCxAQSwsUFEsLEBBNzRQURQUFBQUFBQUFBQUFBQUFBQQIyMhECMjIxAjIyMhICAgISMjECMjIxAjIyMQICAgISc5OTknOTk5Jzk5OSc5OTk5OQ0kOTkNJDk5DSQ5OQ0kICAgISMjIxAjIyMQISMjECEgICAQIyMjECMjIxAjIyEnOTk5Jzk5OSc5OTk2Nzw8OTkNJDk5DSQ5OQ0kNjc3NCwsLCwsLCwsQEEsLFBRLCwsLCorLCw6OywsKissLDo7KissLDo7LCwqKywsOjssLCwsKissLDo7KisqKzo7OjsqKywsOjssLCorKis6Ozo7KisqKzo7OjssLCwsLCwsLCwsLCwsLCwsKisqKzo7OjssLCorLCw6OywsLCwsLCwsPDw8PDw8PDw8PDw8PDw8PFtbW1tbW1tbW1tbW1tbW1s5OTk5OTk5OQ4ORkdVVVZXERERERERERE3Nzc3Nzc3NycsLCwnLCwsJywsLCcsLCwsLB0kLCwdJCwsHSQsLB0kJywsLCcsLCwnLCwsNjc3NywsHSQsLB0kLCwdJDc3NzQ5OTk5OTk5OTk5OTk8PDY3ISMjIRAjIxAQIyMQECMjEBAjIxAQIyMQECMjECEjIyEjIw4OIyNVVSMjDg4jI1VVLCxAQSwsUFEtLkBBPT5QUTk5OTk5OTk5KisqKzo7OjsqKyorOjs6OyorLCw6OywsKisqKzo7OjssLCorLCw6OxQUFFQUFBRUFBQUVBQUFFQyFBQUMhQUFDIUFBQyFBQUMhQUVDIUFFQyFBRUMhQUVCorMzM6OxQUKisUFDo7FBQPCgoKD0tLSw8KCgoPS0tLCgoKH0tLSx8KCgofS0tLHzMzKisUFDo7FBQqKxQUOjsUFBQUFBQUFCorKis6Ozo7QEFAQVBRUFEsLCwsLCwsLEBBLCxQUSwsQEEsLFBRLCwsLEBBLCxQUSwsQEEsLFBRLCwsLCwsLCxAQUBBUFFQURERJCQRESQkSEk0JFhZNzQSEhISEhISEhcXFxciIiIiCgoKH0tLSx9CQ0sfSkoaTwoKCh9LS0sfREVLH0pKGk8sLCwsLAMsAwMsAywsLCwsFTgSEhU4EhIVFhcXJSYiIhISOBkSEjgZFxcYGSIiKCk5OTk5OTk5OQ4ODg5VVVVVMTExMRQUFBQUFBQUFBQUFDAwMDAwMDAwMDBGRzAwVlcsMCwwMCwwLCwwLDAwLDAsMDkwOTkwOTAwOTA5OTA5MA8KCgoPS0tLD0sLDE4aGxwKCgoKS0tLS0tLS0saGhoaCgoKH0tLSx9LS0sfGhoaTwoKCgpLS0tLCgoKCktLS0s=", "walkable": [0, 16, 27, 32, 33, 35, 44, 45, 46, 48, 49, 51, 57, 60, 62, 82, 84, 88, 91], "minx": -25, "miny": -117, "W": 170, "H": 180, "maps": {"PalletTown": {"x": 0, "y": 0, "w": 10, "h": 9, "blk": "Uk9SUk8LUFJSUE4BODkBATg5AU1OCDw9AQg8PQFNTgEBAQEBAQEBTU4Bd1YBDA0OAU1OAXR0ARA6AAFNTgEBAQF3VncxTU4KHR4xdHQKMU1QCmVkYWFhYWFP", "enc": null}, "Route1": {"x": 0, "y": -18, "w": 10, "h": 18, "blk": "Ck1SUk8xUFJSTgpNCgoKMQoKdE4KTQcHQhoaMTFOCm50dG4LCwsLbQpuBwdCCwsLC20Kbgp0dAoxMTFtCm5vBwdvHAsLbQpNCgp0dDELC04KTQoxMTExdHROCk0vGi8HBwcHTgpNCjExMTExMU4KTW9vb28LCxpOCk0KCnR0CwsxTgpNGjEIGhoaGk4KbgoLCzEKCwttCm4LC3QxCwt0bQpuUVFjC2JRUW0KbgoKTQtOCgpt", "enc": {"grassRate": 25, "grass": [[3, "PIDGEY"], [4, "PIDGEY"], [2, "RATTATA"], [3, "RATTATA"], [2, "PIDGEY"], [3, "PIDGEY"], [5, "PIDGEY"], [4, "RATTATA"], [6, "PIDGEY"], [7, "PIDGEY"]], "waterRate": 0, "water": []}}, "Route21": {"x": 0, "y": 9, "w": 10, "h": 45, "blk": "UWNlZFFRUWJRUQpNZWQKdHROCgp0TWVkCwsLTnQKdE1lZAsLC04KCnRNZWQLCwtOCgp0TWUtHx8fZx8fUk9lQ0NDQxhDQ2cfLkNDQ0MUa2sYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENUVENDQ0NDGRhDeHhDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NUVBkYQ0NDQ0NDeHgZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NrFRhDQ0NDQ0MZQ0MYQ0NDQ1RDGUND", "enc": {"grassRate": 25, "grass": [[15, "PIDGEY"], [13, "RATTATA"], [13, "PIDGEY"], [11, "PIDGEY"], [17, "PIDGEY"], [15, "RATTATA"], [15, "RATICATE"], [17, "PIDGEOTTO"], [19, "PIDGEOTTO"], [15, "PIDGEOTTO"]], "waterRate": 5, "water": [[5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [20, "TENTACOOL"], [30, "TENTACOOL"], [35, "TENTACOOL"], [40, "TENTACOOL"]]}}, "ViridianCity": {"x": -5, "y": -36, "w": 20, "h": 18, "blk": "LCwpDw8PDw8bCA8PDw8PDw8PDw8sLCkPDw8PDxsBDw8xMTExMTEPDywsKQpSUlI0AQEBMTExDA0OMQ8PLCwpTQ8PDw8bARsxMQgQERIxDw8sLClNDw8PDxsBAgMaGgcHBxoPDywsKU0PDw8PGwEBAQEBAQEBMQ8PV1clTQ8PDw8bAXd3d3d3d3d3Dw8KCgpNDw8PDxsBAgMBAQEBAQEPDzEBAQpsbGxsCAF3dwEKICEKAQ8PPzsBAQEBAQEBAXR0AQp8cwoBDw8sKRxvCgoKCgEBAQEBAQEBAQEPDywpAQo0dHQKAXQBICEBdAoKAQ8PLCkBCh0fHgoBCgF8cgEKCnQBDw9XJRoHZUNkLxovGhoaGhoaGhoPDwpNAXQKCgoKAQoICnR0AXR0AQ8PCk13d3d3d3d3dwF3d3d3d3d3Dw8KCgoKCgpNCgpNAU4KCk4KCgoKCgoKCgoKCk0KCk0BTgoKTgoKCgoK", "enc": null}, "CinnabarIsland": {"x": 0, "y": 54, "w": 10, "h": 9, "blk": "GGQgDSF7ewwNDhhkNzp+e3kQERIYZHt7eXt7e3t7GGQgDSF7e3t7exhkNzp+ICEgIXsYZHt7eXxyfHN7GC0ee3t7e3t7exhDLR8fHx8fHx8Ua2tra2tra2tr", "enc": null}, "Route2": {"x": 0, "y": -72, "w": 10, "h": 36, "blk": "Dw8PDwEPDw8PDwsLCwsBGzExMTELCwsLARsxMTExCwsLCwE+Pz87MTExMTExJAZXJTFsbTJsbAgxdHQKCiAhCgoxMTExMVJ8flJSUlIKCjFVVVVVDw8PCgoxGhoaGg8PDwIDMQsBCwsPDw8xMTEPDw8PDw8PMmxsDw8PDw8PDwoKCg8PDw8PDw8HLwcPDw8PDw8PCgp0Dw8PDw8PDwcvBw8PDw8PDw8KCnQPDw8PDw8PUgpSDw8PDw8PDyANIWxtMmxsDw98fX4KICEKCg8PCgoKUnx+UlIPDy8HB1VVVVVVbgoKCgoaGhoaAW4KCnR0dAELCwtuBy8HB3QBCwsLbgoKCgp0AQpvb280CgoKdAFuDw8PbQoKCnQBCmxsbG10Cgp0ATExMQptdHQKDwcHLxoHNC8HBw90dAoxCm0KCgoPMQgxMQptdHQKDwF0dDEKbXR0Cg8BAQEBbzRvb28PDw8bAQ8PDw8P", "enc": {"grassRate": 25, "grass": [[3, "RATTATA"], [3, "PIDGEY"], [4, "RATTATA"], [4, "NIDORAN_M"], [4, "NIDORAN_F"], [5, "PIDGEY"], [6, "NIDORAN_M"], [6, "NIDORAN_F"], [7, "PIDGEY"], [7, "PIDGEY"]], "waterRate": 0, "water": []}}, "Route22": {"x": -25, "y": -32, "w": 20, "h": 9, "blk": "EyANDQ0NISgsLCwsLCwrV1dXKiw7aH9/f39pJFdXV1dXVyUHLwcoLCk3fX06fX4TVVVVVVVVVVVVVSRXKVVVVVVVVRMHBwcdHj47LwdiCgopBwcHBy8HEwsLC2VkKCkLC04BASkxMVZ3d3cTCwsLVVUoKQsLTgE+KQcHBwcHBwcHBwcHByQlBy8HBygpVVVVVVVVVVVVVVVVVVVVVVVVKCw/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8s", "enc": {"grassRate": 25, "grass": [[2, "NIDORAN_M"], [2, "NIDORAN_F"], [3, "MANKEY"], [3, "RATTATA"], [4, "NIDORAN_M"], [4, "NIDORAN_F"], [5, "MANKEY"], [2, "SPEAROW"], [4, "SPEAROW"], [6, "SPEAROW"]], "waterRate": 0, "water": []}}, "Route20": {"x": 10, "y": 54, "w": 50, "h": 9, "blk": "a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tlQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0MZZD4/O3p6enp6ZUNDQ0NDQ0NDQ0NDQ0NDQ0NDQ2VDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQxlkJAYlenp6enplQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDZUNDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDGWR6VAh6ej4/O2VDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NlQ0NDQ0NDQ0NDQ0NDQ0NDVFRDQ0MZZHpUenp6JAYlZUNDQ0NDQ0NDQ0NDQ0NDQ0NDQ2VDQ0NDQ0NDQ0NDQ0NDQ0N4eENDQxktH0MfH2oIVHoYQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDZUNDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDGWtra2trFR9DHxhDQ0NDQ0NDQ0NDQ0NDQ0NDQ0MuQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDGENDQ0NDQ0NDQ0NDQ0NDQ0NDQ2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2sUa2tra2tra2tra2tra2tra2tr", "enc": {"grassRate": 0, "grass": [], "waterRate": 5, "water": [[5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [20, "TENTACOOL"], [30, "TENTACOOL"], [35, "TENTACOOL"], [40, "TENTACOOL"]]}}, "PewterCity": {"x": -5, "y": -90, "w": 20, "h": 18, "blk": "CgpSUlJSUlJSUlJSUlJSUlJvb28/OwF0dAwNDQ4gDSFvbwp0dG4PDywpAXR0dXFxdnx9fgo0CnR0bg8PLCkaLwc3fTp+GgcHB0IHLwdCDw8sKQEBAQEBCAEBCgoKCgoKCm4PDywpAXR0dHR0dAEBAQEBAQEBPj8/LCkBAQEBAQEBAQoKCgoCAwEoLCwsKQEKCgEMDQ4BASAhAQEBASRXVywpAQoKCBAREgEKfHMKCgoBAQEBLCkBAQEBAQEBGwEBAQEBAQgBAQEsKRxvbxxvb28bCgoKCgoKAT4/PywpAQEBASAhAQExd1Z3dzEBKCwsLCkBCgoKfHJ0AW50dHR0bQEkV1csKQEBAQEBAQEBbnR0dHRtAU0KCislAQIDdAoKCghuBy8HB20BTQoKKRMBAQEBAQEBAQEBAQEBAQFNCgolUVFRUVEPDw8BDw8PUVFRUVEKCgoKCgoKCg8PDwEPDw8KCgoKCgoK", "enc": null}, "Route19": {"x": 60, "y": 36, "w": 10, "h": 27, "blk": "KCwpGhoaGygsKSgsKRoaGhskVyUkVyUaGhobGENDQxkxMTExMRhDQ0MZAgMxMTEYQ0NrFTExMQgxFGtrGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRhDQ0NDQ0NDQxkYQ0NDQ0NDQ0MZGENDQ0NDQ0NDGRNDQ0NDQ0NDQxlDQ0NDQ0NDQ0MZQ0NDQ0NDQ0NDGUNDQ0NDQ0NDQxlDQ0NDQ0NDQ0MZQ0NDQ0NDQ0NDGUNDQ0NDQ0NDQxlra2tra2tra2sT", "enc": {"grassRate": 0, "grass": [], "waterRate": 5, "water": [[5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [5, "TENTACOOL"], [10, "TENTACOOL"], [15, "TENTACOOL"], [20, "TENTACOOL"], [30, "TENTACOOL"], [35, "TENTACOOL"], [40, "TENTACOOL"]]}}, "Route3": {"x": 15, "y": -86, "w": 35, "h": 9, "blk": "LCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsKW0BAQEoLCwsLCwsK1dXV1dXV1dXVyosK1dXV1dXV1dXKiwpCgEBASgsLCwsLCwpCgoKCgoKCgp0KCwpCgoKCgoKCgooLCkKAT4/LCwsV1dXVyUvBwdCBwdCBy8kVyUHLz4/OwcHLygsKQcvJFdXKiwBCkAKCgoKCm4KCm4KCgoKCgoKKCwpCgoKJFclClYLCwsoLAEKQQpuBwcvQgcHQgsLCwsLCwsoLCl0dAoKCgoKCwsLCygsPz8/PzsKCgoKCgpuCwsLCwsLCygsKXR0dAoKCgoLCwsLKCwsLCwsKT4/Pz8/Pz87Dw8PDw8PKCwpPj8/Pz8/Pz8/Pz8sLFdXV1clKCwsLCwsLCkPDw8PDw8oLCkoLCwsLCwsLCwsLCws", "enc": {"grassRate": 20, "grass": [[8, "SPEAROW"], [9, "SPEAROW"], [9, "MANKEY"], [10, "SPEAROW"], [8, "SANDSHREW"], [10, "RATTATA"], [10, "SANDSHREW"], [12, "RATTATA"], [11, "SPEAROW"], [12, "SPEAROW"]], "waterRate": 0, "water": []}}, "FuchsiaCity": {"x": 55, "y": 18, "w": 20, "h": 18, "blk": "Dw8PDw8PDw8gDSEPDw8PDw8PDw8Pem9vb29vejc6fnpvb29vb296Dw9uHR4PdHRtVlV3bgEBDwEBAW0PD253Vg93Vm16b29gd1YPd1Z3bQ8Penp6enp6em56enp6enp6enp6Dw96ICFvb29vYHogDSFubGxsbXoPD3p8c3p6enp6ejc6fmB3Vndteg8Pb29vb295enpuVlVWenp6enpvDwEBZx8fH216em4BVQFsbGxsbDExTgEUa2trUFJSYAFVAXd3d3cxMQ9OAQEBAQEBAQEBAVVfdB0fHhtuD04+Pz8/Pz8/Pz8/O190CgoKG24PTiQgDSFXV1dXICElXzg5ODkbbg9OWHwRfgIDMAN8clkxPD08PTFuD05YCDExMTExMTExWV9WdzF3G24PTloHB1xvb29cBwdbAQEBATExbg9QUlJSUj4/O3R0dHRQUlJSUlJuDzExMTExKCwpMTExMT4/Ow8PDw8P", "enc": null}, "Route4": {"x": 40, "y": -95, "w": 45, "h": 9, "blk": "LCwsLCtXVyosLCwsLCwsLCwrV1dXV1dXV1dXV1dXV1dXV1dXV1dXVyosLCwsLCtXVyUgISQqLCwsLCwsLCwpClgKWVkKClgKWAoKWAoKCgoKMTExMSRXV1dXLCkBAQF8cgEkBiorBldXV1clClovW1kKClgKWAoKWgcHBwcHGhoaGmFhYWFhLCkaGgEBAQEIASgpMQgxCgoKCgoKClkKClgKWi8HBwcHBwcHGhoaGmcfHx8fLCkBAQEBARoaGigpBwcHBwcvBwcHB1sKCloHBwcHL28HBwcHGhwaGhRra2trLCkaGhoaAQEBASgpCgoKCgoKCgoKCgoKCgoKCgoKCm0LCwsLC24xMTExMTExLCkBAQEBARoaGigsPz8/Pz8/Pz87LwcHBwcvBwcHB20LCwsLC24vB2JRUVFRLCw7GhoBAQEBASgsLCwsLCwsLCwpdHR0CgoKCgoKCm0LCwsLCwoKCk4KCgoKLCwpAQEBAT4/PywsLCwsLCwsLCwsPz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/O3R0", "enc": {"grassRate": 20, "grass": [[8, "SPEAROW"], [9, "SPEAROW"], [9, "MANKEY"], [10, "SPEAROW"], [8, "SANDSHREW"], [10, "RATTATA"], [10, "SANDSHREW"], [12, "RATTATA"], [11, "SPEAROW"], [12, "SPEAROW"]], "waterRate": 0, "water": []}}, "Route18": {"x": 30, "y": 22, "w": 25, "h": 9, "blk": "GENkMTExMWVDQxRrMTExMTExMTExMTExMRhDZDF0dDFlQ0NDZDExMTExMTExMTExMTEYQ2QxdHQxZUNDQ2R3d3d3ViANITExMTExGENkMXR0MXR0dHR0dHR0dHRof2l3Vnd3dxhDZDExMTExMTExMTExMTExN31+AQEBAQEYQy0fHx8fHx8fHx8fHx8fH2JRUUBNUVFjGENDQ0NDQ0NDQ0NDQ0NDQ0NOCwsLTXR0TRhDQ0NDQ0NDQ0NDQ0NDQ0NDTgsLC010dE0Ua2tra2tra2tra2tra2tra1BSUlJPUlJP", "enc": {"grassRate": 25, "grass": [[22, "SPEAROW"], [22, "DODUO"], [23, "RATTATA"], [24, "DODUO"], [24, "RATTATA"], [26, "DODUO"], [23, "SPEAROW"], [24, "FEAROW"], [25, "RATICATE"], [26, "RATICATE"]], "waterRate": 0, "water": []}}, "Route15": {"x": 75, "y": 22, "w": 30, "h": 9, "blk": "CgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKChMTb0wKCgoKClJSUlJSUlJSUlJSUlJSUlJSUlJSUhMTDw8KCgoKCk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVDw9SUiANIVAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHMTExMTd9flVVCwsLdHR0CwsLMQgxdHQLC3QLCwt0Dw9RUQoKCk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVDw8KCgoKCk4xMTExMTExMTExMTExMTExMTExMTExbAoKCgoKClFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoK", "enc": {"grassRate": 15, "grass": [[26, "ODDISH"], [26, "BELLSPROUT"], [24, "VENONAT"], [32, "PIDGEOTTO"], [28, "ODDISH"], [28, "BELLSPROUT"], [30, "GLOOM"], [30, "WEEPINBELL"], [27, "VENONAT"], [30, "VENOMOTH"]], "waterRate": 0, "water": []}}, "CeruleanCity": {"x": 85, "y": -99, "w": 20, "h": 18, "blk": "LCwsLCwsKUNDGVROChhDQ0NDQ0MsLCtXV1clQ0MZVFAHGENDQ0NDQywsKUNDQ0NDQxkKTgoYQ0NDQ0NDLCwpGWxsbGxsNgptbmxsbGwPD20sLCkZVVVVVVVuCm1uVVVVVQ8PbVdXcBkCCQMwCQMBAQECCQMBMAkDMTExGQEBAQEBAQEKAQoKChsKCk4fHx8ZXAcCCQMgIQoBAQEBGwEBUGtraxUBCgoKCnxyBwwNDQ4BCgEKAQEBAQEBAQEBAQEIEBEREhovXGJRUU4BCnR0dHR0dAEBCDExMV8BTnR0TgEBASAhAQEBASAhdHR0XwFOdHROAQpWfH4BMAkDfHMwCQNfAU50dE4BAQEBAQEBAQEBAQEBAV8BTnR0YmxsbGw2VjJsbGxsbGxsbAFOdHROAQEBAQEBAQEBAQEBAQEBAU50dFBSUm1dbgcHBwdOXU1SUlJSTnR0dHR0bSduCgoKCk4nTXR0dHR0", "enc": null}, "Route17": {"x": 30, "y": -50, "w": 10, "h": 72, "blk": "Tl10dF10TmVDQ04ndHQndE5lQ0NOJ3R0J3RRUVFjTid0dCd0dHR0TU4ndHQndAsLC01OJ3R0J3QLCwtNTid0dCd0CwsLTU4ndHQndAsLC01OJ3R0J3QLCwtNTid0dCd0CwsLTU4ndHQndHR0dE1OJ3R0J3R0dHRNTid0dCd0dHR0TU4ndHQnHR5ddE1OJ3R0J2VkJ3RNTid0dCdlZCd0TU4ndHQnZWQndE1OJ3R0J2VkJ3RNTid0dF5lZCd0TU4nHR4xZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQxZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQIZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQxZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQIZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQxZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQIZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4nZWQxZWQndE1OJ2VkMWVkJ3RNTidlZDFlZCd0TU4ndDEIZWQndE1OJ3QdHy5kJ3RNTid0ZUNDZCd0TU4ndGVDQ2QndE1OJ3RlQ0NkJ3RNTid0ZUNDZCd0TU4ndGVDQ2QndE1OJ3RlQ0NkJ3RNTid0ZUNDZCd0TU4ndGVDQ2QndE1OJ3RlQ0NkJ3RNTid0ZUNDZCd0TU4nMTEIMTEnMU1OJzEdHx8eJzFNTicxZUNDZCcxTU4nMWVDQ2QnMU1OJzExMTExJzFNTl4xMTExMV4xTU53dzF3dzF3d01nHx5dMTFdHR9qGENkJzExJ2VDGRhDZCcxMSdlQxkYQ2QnMTEnZUMZGENkJzExJ2VDGRhDZCcxMSdlQxkYQ2QnMTEnZUMZGENkJzExJ2VDGRhDZF4IMV5lQxkYQ2QaGlwaZUMZ", "enc": {"grassRate": 25, "grass": [[26, "DODUO"], [27, "FEAROW"], [27, "DODUO"], [28, "DODUO"], [28, "PONYTA"], [30, "PONYTA"], [29, "FEAROW"], [28, "DODUO"], [32, "PONYTA"], [29, "DODRIO"]], "waterRate": 0, "water": []}}, "Route14": {"x": 105, "y": 4, "w": 10, "h": 27, "blk": "Ck0xMTExMTExMQpNd3d3d3d3d3cKTTF3d3d3d3d3Ck13d3d3dzF3dwpNdzF3d3d3d3cKTXd3d3cxd3d3Ck0xMTEKVQoIdwpNMTExClVNDw8KTRwcHApVTQ8PCk0LCwttVU0PDwpNCwsLbVVNHx8KTQsLC21VTUNDCk1uBwdtVU1DQwpNNQpVbVVNQ0MKTQoKVW1VCmNDCk0KClVtVQpNQwpNCgpVNVUKTUMKTQoKVW1VCk1DExMKClVtVQpNQxMTCgpVbVUKTUNVblVVVQpVCk1DBzUKCgoKVQpNQwoKCgoKClUKTUNVVVVVVVVVCk1DCgoKCgoKCgpNQ1FRUVFRUVFRUUMKCgoKCgoKCgpD", "enc": {"grassRate": 15, "grass": [[26, "ODDISH"], [26, "BELLSPROUT"], [24, "VENONAT"], [30, "PIDGEOTTO"], [28, "ODDISH"], [28, "BELLSPROUT"], [30, "GLOOM"], [30, "WEEPINBELL"], [27, "VENONAT"], [30, "VENOMOTH"]], "waterRate": 0, "water": []}}, "Route24": {"x": 90, "y": -117, "w": 10, "h": 18, "blk": "LCwsLCwsLCwsLCwrV1dXV1dXV1csKTExMTFHMVgKLCkaXBoaSzFaBywpMTExMTExMTEsKQoKCjFiUVFRLCl0dAoxTgo+PywpdHQKMU4KKCwsKQodalROCigsLCkLZRlUTgooLCwpC2UZVE4KJFcsKQtlGVROTUNDLCkLZRlUTk1DQywpC2UZVE5NQ0MsKQtlGVROTUNDLCkLZRlUTk1DQywpHy4ZVE5NQ0MsKUNDGVROTUND", "enc": {"grassRate": 25, "grass": [[12, "ODDISH"], [12, "BELLSPROUT"], [13, "PIDGEY"], [14, "ODDISH"], [14, "BELLSPROUT"], [15, "PIDGEY"], [13, "VENONAT"], [16, "VENONAT"], [17, "PIDGEY"], [17, "PIDGEOTTO"]], "waterRate": 0, "water": []}}, "Route5": {"x": 90, "y": -81, "w": 10, "h": 18, "blk": "bSduCgoKCk4nTW0nbgcHBwdOJ01tJ24LCwsLTidNbSduBwcHB04nTW0nbgsLCwtOJ01tJ24HBwcHTidNbSduCwsLC04nTW0nbgcHBwdOJ01tJ18xMTExGydNbSdfMQwOMRsnTW1eXzEQEjEbXk1tAV8aGhoaGwFNbQEBAQEBAQEgIW0BAQEBAQEBfH5tAQEBG18BAQhNbQEBIA0NIQEBTW53dzd9On53d21udHQKCgoKdHRt", "enc": {"grassRate": 15, "grass": [[15, "PIDGEY"], [14, "RATTATA"], [7, "ABRA"], [16, "PIDGEY"], [16, "RATTATA"], [17, "PIDGEY"], [17, "PIDGEOTTO"], [3, "JIGGLYPUFF"], [5, "JIGGLYPUFF"], [7, "JIGGLYPUFF"]], "waterRate": 0, "water": []}}, "Route9": {"x": 105, "y": -95, "w": 30, "h": 9, "blk": "JFdXV1dXV1dXV1dXV1dXV1cqK1dXV1dXV1cqLCwrdHRNCwsLCwsKCgoKCj47CwsoKQoKCgoKCgooLCwpdHRNCwsLCws+OwcHLygpLwckJS8HBwc+OwcoLCwpUlJPBwcHB0woKTExCCQlMTExMTExMTEkJTEkV1clCgo1MTExMT4sKRoaGgcvPjsxPjsxPjsxMTExMTExUVFjPjsaGiRXJTExMTEKJCUHJCUvKCkaPjsaPj8/dHRNKCkHBwcHLxoaPjsvBwcHBwcHJCUaJCUaKCwsdHRNKCkxMTExMTExKCkKCgoKCgoKCgoKCgoKKCwsdHRNKCw/Pz8/Pz8/LCw/Pz8/Pz8/Pz8/Pz8/LCws", "enc": {"grassRate": 15, "grass": [[16, "NIDORAN_M"], [16, "NIDORAN_F"], [18, "RATTATA"], [18, "NIDORAN_M"], [18, "NIDORAN_F"], [17, "SPEAROW"], [18, "NIDORINO"], [18, "NIDORINA"], [20, "RATICATE"], [19, "FEAROW"]], "waterRate": 0, "water": []}}, "Route16": {"x": 30, "y": -59, "w": 20, "h": 9, "blk": "UlJSUlJSUlJSUlJSUlJSUlJSDw9OCgoKCgoKCgogDSEKCgsLCwsPD04BAQIDAQEBATd9fgEBCwsLCw8PTgEBAQEBCgoKIA0hCgEBAQEBDw9Qd3d3d3d3d3dof2lvb29vb2APD04xCgoxMTExMTd9fndWd3d3d3d3TjEKCjExMTExMTExDw8PDw8PDw9OMQoKMTFiUVFRUVEPDw8PDw8PD04xCDExCk4dHx8fHw8PDw8PDw8P", "enc": {"grassRate": 25, "grass": [[22, "SPEAROW"], [22, "DODUO"], [23, "RATTATA"], [24, "DODUO"], [24, "RATTATA"], [26, "DODUO"], [23, "SPEAROW"], [24, "FEAROW"], [25, "RATICATE"], [26, "RATICATE"]], "waterRate": 0, "water": []}}, "Route13": {"x": 115, "y": 4, "w": 30, "h": 9, "blk": "MTExMTExMTExMTExMTExMTEcDw8PDw8PD1RDQ0MZd3d3d3d3d3d3d3d3d3d3d3cPbGxsbGxsD1RDQ0MZd3d3d3d3ATF3d3d3MRt3d1Y0CgsLCwsLblRDQ0MZd3d3d3cxd3cbd3d3d3d3dwEPbQsLCwsLblRDQ0MZd3cxd3d3G3d3d3d3dzEbdwEPD29vb29vD1RDQ0MZd3d3GzF3d3d3d3cxG3d3VncxVFRUVFRUVFRDQ0MZG3d3MXd3d1Ybd3d3d3d3d3d3eHh4eHh4eHhDQ0MZDw9RUVFRUVFRHx8fHx8fHx9qQ0NDQ0NDQ0NDQ0MZDw8fHx8fHx8fQ0NDQ0NDQ0MZa2tra2tra2tra2sV", "enc": {"grassRate": 15, "grass": [[25, "ODDISH"], [25, "BELLSPROUT"], [28, "PIDGEOTTO"], [28, "PIDGEY"], [27, "ODDISH"], [27, "BELLSPROUT"], [29, "GLOOM"], [29, "WEEPINBELL"], [26, "FARFETCHD"], [31, "FARFETCHD"]], "waterRate": 3, "water": [[15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWBRO"], [20, "SLOWBRO"]]}}, "Route25": {"x": 100, "y": -117, "w": 30, "h": 9, "blk": "LCwsLCtXV1dXV1dXV1dXV1dXV1dXJTg5JFdXV1clV1dXVyVuCm4KCm4KCmB0dHR0TXd3Vjw9d3d3UkNDCgsLCwoKTExMCm5sbnR0bnR0dHR0VVVVVQoKTUNDBwcHB0xsTAptbG4KdHRvdHR0dHR0VVVVVQoKTUNDMTExMTFtbAptTAoKdHRtdHR0dB0fH1RUHx8eTUNDUVFRUVFRUVFRUVFRUVFRUVFRUWVDQ1RUQ0NkTUNDPz8/Pz8/Pz8/Pz8/Pz8/Pz87UlJSUlJSUlJST0NDLCwsLCwsLCwsLCwsLCwsLCwpHx8fHx8fHx8fH0NDLCwsLCwsLCwsLCwsLCwsLCwpQ0NDQ0NDQ0NDQ0ND", "enc": {"grassRate": 15, "grass": [[12, "ODDISH"], [12, "BELLSPROUT"], [13, "PIDGEY"], [14, "ODDISH"], [14, "BELLSPROUT"], [15, "PIDGEY"], [13, "VENONAT"], [16, "VENONAT"], [17, "PIDGEY"], [17, "PIDGEOTTO"]], "waterRate": 0, "water": []}}, "SaffronCity": {"x": 85, "y": -63, "w": 20, "h": 18, "blk": "UlJSUlJPUlJSMTEMDQ4MDQ0OODlOODk4OTg5MTExMRAREhARERIQAE4QADw9EAB3VncxMXdWdzF3VndNTkkjIyMjIyMjIyMjIyMjIyMjSE1OJzg5ODk4OTExMTEgITg5ODknTQonEAAQADw9IA0NIXxzEAAQACdNCiYjIyMjIyNof39pIyMjIyMjIk0KJ1VVVVVVVWh/f2lVVVVVVVUnTQEnMSAhICExaH9/aSAhICEgIScBViIxaGloaTFof39paGloaWhpJlYKJ1Y3fjd+Vjc6fX43fjd+N34nTQomIyMjIyMjIyMjIyMjIyMjIyJNTidVVVVVVVVVVVVVVVVVVVVVJ01OJzg5ICE4OTg5ODkxMSAhODknTU4nEAB8chAAEAAQAHdWfH4QACdNTkQjIyMjIyMjIyMjIyMjIyMjRU0gITg5ODk4OTg5MTE4OTg5ODkgITd+EAAQABAAEAAKdxAAEAAQADd+", "enc": null}, "Route10": {"x": 135, "y": -95, "w": 10, "h": 36, "blk": "V1dXV1dXV1dXKkNDQ0NDQ0NDQyhhAWFhYWFhYWUoAQoLCwsLC01lKAEKCwsLCwtNZSg7BwcHBwcvT2UoKQoKCgoKCk1lKCw/Pz87CgpNZSgrV1dXcCAhTWUoKTF3VjV8ck1lKCkKCgo1VVVNZSgpVVVVNQoKTWUoKVVVVTUKCk1lKClVVVUKCgpNZSgpCgoKCgoKT2UoLD8/Pz8/O3tlKCtXV1dXKil7ZSgpIA0NISgpe2UoKWh/f2koKXtlKCk3fTp+KCl7ZSgpe3l7eygpe2UoKXt7e3skJXtlKCl7e3t7e3t7ZSgpHx8fHx8fHy4oLD8/Pz8/Pz8/LCwsLCwsLCtXVyorV1dXBlclCkwoKTExMQgxMQoKKCkxMTExPjsvBygpGj4/PywpCgooKXokV1dXJQcvKCkKCgoKCgoKeigsPz8/OwoKCgooLCwrVyUvDA0OKCwsKXp6enVxdigsLCl6MT5of2ks", "enc": {"grassRate": 15, "grass": [[16, "MAGNEMITE"], [18, "RATTATA"], [18, "MAGNEMITE"], [20, "MAGNEMITE"], [17, "NIDORAN_M"], [17, "NIDORAN_F"], [22, "MAGNEMITE"], [20, "RATICATE"], [16, "MACHOP"], [18, "MACHOP"]], "waterRate": 0, "water": []}}, "CeladonCity": {"x": 50, "y": -63, "w": 25, "h": 18, "blk": "D2xsbGxsbGxsbGxsbGxsbGxsbGxsbGxsDw8KCgoKCgoKCgpvbwpvb28Kb29vb29vCm4PICFVVVVVIA0hVSANIVVVVVVVVVVVVW1uD2hpIA0NIWh/aVVof2kgISAhICEgIVVtbg83fmh/f2k3fX55Nzp+N343fjd+fHJVDw8PVVVof39pVVVVVVVVVVVVVVVVVVVVVVVVD1VVNzo6c1VVVVVVVVVVVVVVVVVVVVUPDw9VVVVVVVVVVXkwCQNWd3d3d1V3d3d3Dw8PVVVVVVVVVVVVTlRNIA0hICFVICEgIQ9ud1VVVVVVVVVVVWcfajc6fnx+VTd+N34Pbg9VVVVVVVVVVVUYQxlWd3dWd1VWd3d3NW4PVVVVVVVVVVVVVVVVVVVVVVVVVVVVVW1uDyAhDA0NDiAhICFVVSAhICEgISAhICEKbg83fhARERI3fjd+VVU3fnx+fH43fnx+Cm4PVVVVVVV5VVUgIVVVVVVVVVVVVVVVVQpuDwcvBwcHBwcHN35VVVVVVVVVVVVVVVUKbg8KCgoKCgoKCgoKbGxsbGxsMjZsbGxsCm4Pb29vb29vb29vb29vb29vb282b29vb28P", "enc": null}, "Route12": {"x": 135, "y": -50, "w": 10, "h": 54, "blk": "LCwsKTEoLCwsLCwrVyUxJFdXV1csKUNDVENDGUNDLClDQ1RDQxlraywpQ0NUQ0NDQxksKVRUelRDQ0MZLClUeHhUeVRUGSwpVENDVHh4eBksKVRDIA0hQ0MZLCl4Q2h/aUNDGSwpa2s3On5raxUsKUNDQ1RDQ0MZLClDQ0NUQ0NDGSwpVFRUelRUQxksKXh4eHh4VEMZLClUQ0NUVFRDGSwpVENDVHh4QxksKXpUVFRDVEMZVyVUeHh4Q1RDGQ8PVENDQ0N4QxkPD3pUelRUVEMZDw9UeFR4eHhDGQ8PeENUVFRDQxkPD0NDeHh6VEMZDw9UVFRDVHhDGQ8PVHhUQ1RUQxkPD1RDVFR6VEMZDw9UQ3h4eHhDGQ8PVFRUelRUQxkPD3h4eFR4eEMZNjZra2tUQ0NDGUxMYWFheUNDQxkPD3h4eFRDQ0MZDw9DQ0NUQ0NDGQ8PQ0NDVENDQxkPD0NDQ1RDQ0MZCm5DQ0NUVFRDGQpuQ0NDeHhUQxkKblQxMQIDMUMZCm5Ud3d3d3dDGQpuVHh4eHh4QxkKblRUVHpUQ0MZCm54eHhUeENDGQpubDZDVENDQxkKbgo1VFRDQ0MZCm5sCnh6VFRDGQpuVFRUVHh4QxkKbnh4eFRUVEMZCm5DQ0N4eFRDGQpubGwzVHpUQxkKbgsLbnhUeEMZCm4LC25DVENDGQpuCwtuVHpDQxkKbgsLblR4Q0MZ", "enc": {"grassRate": 15, "grass": [[25, "ODDISH"], [25, "BELLSPROUT"], [28, "PIDGEY"], [28, "PIDGEOTTO"], [27, "ODDISH"], [27, "BELLSPROUT"], [29, "GLOOM"], [29, "WEEPINBELL"], [26, "FARFETCHD"], [31, "FARFETCHD"]], "waterRate": 3, "water": [[15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWPOKE"], [15, "SLOWBRO"], [20, "SLOWBRO"]]}}, "Route6": {"x": 90, "y": -45, "w": 10, "h": 18, "blk": "dHR0Ck1NCnR0dFFRUVEgDSFRUVF0dHQKaH9pdHR0By8HBzc6fgcvBwoKCgoKCgoKCgoHBwcvBwcHByAhMTExMTExMTF8fgsLMQsLCwsxMQgLCzELCwsLCwsLCwsxCwsLCwsLCwsLMTExMTExMQsLCwsLCwsLCzELHR8fHx8fHgsxC2VDQ0NDQ2QLMQtRYwoKMTExMTELCk1SUjEKCwsLCx8fH2oxYlFRUVFDQ0MZMU4KCgoK", "enc": {"grassRate": 15, "grass": [[15, "PIDGEY"], [14, "RATTATA"], [7, "ABRA"], [16, "PIDGEY"], [16, "RATTATA"], [17, "PIDGEY"], [17, "PIDGEOTTO"], [3, "JIGGLYPUFF"], [5, "JIGGLYPUFF"], [7, "JIGGLYPUFF"]], "waterRate": 3, "water": [[15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "PSYDUCK"], [15, "GOLDUCK"], [20, "GOLDUCK"]]}}, "Route7": {"x": 75, "y": -59, "w": 10, "h": 9, "blk": "Dw8PDw8PDw8PDzExMUcLCwsLX3sPMTFHCwsLdF97DxpcS3QxMTFfew8xMTExXyANIQEPGiAhXBo3fX53Dwh8fjExMTFfew8xMTExMTExX3sPDw8PDw8PDw8P", "enc": {"grassRate": 15, "grass": [[20, "PIDGEY"], [22, "PIDGEY"], [20, "RATTATA"], [15, "ABRA"], [19, "ABRA"], [24, "PIDGEOTTO"], [26, "ABRA"], [19, "JIGGLYPUFF"], [24, "JIGGLYPUFF"], [24, "JIGGLYPUFF"]], "waterRate": 0, "water": []}}, "Route8": {"x": 105, "y": -59, "w": 30, "h": 9, "blk": "ExMoLCwrV1dXV1dXV1dXV1dXV1dXV1dXV1dXJSgrExMkV1clAgMIGhpOCgoKCgoKCgoKCgpNExMPDygpExNOAQEBAQFNMTFOCkkjIyMjIyMjSApNE2J0dCgpExNOAXR0dAFNGhpOCicKUlJSUlIKJwpNE04KCiQlASANIVFRdAFNMTFOCidNdAsLC3ROJwpNE04KAXd3dzd9fncBAQFNYWEKCidNdAsLC3Q1JwpNE04KXT47ExNOCgoKCl0KCgoKCic1dAsLC3ROJwoKCgoKJygpExNOCgoKCkQjIyMjI0VNdHR0dHRORCMjIyMjRSgpExM+Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pyws", "enc": {"grassRate": 15, "grass": [[20, "PIDGEY"], [22, "PIDGEY"], [20, "RATTATA"], [15, "ABRA"], [19, "ABRA"], [24, "PIDGEOTTO"], [19, "JIGGLYPUFF"], [24, "JIGGLYPUFF"], [20, "KADABRA"], [27, "KADABRA"]], "waterRate": 0, "water": []}}, "LavenderTown": {"x": 135, "y": -59, "w": 10, "h": 9, "blk": "V1cle3soaH9pLHsgIXt5KDd9fix7fHJ7eyRXBlcqe3t7e3t7e3t5KHt7eQIDeXt7eyh7e3t7e3t7ICEoewIDAgN7e3xzKHt7e3t7e3t7eyg/Pz87ez4/Pz8s", "enc": null}, "Route11": {"x": 105, "y": -23, "w": 30, "h": 9, "blk": "MTExMW1JIyMjIyNICwsLSSMjIyNICwsKCgoKCg8PMT4/O20nCwsLCwsnCwsLJwsLCwteCwsKCgoKCg8PViQGJW0nCwsLCwsnCwsLJwsLCwsLCwsKTAoKCg8PMTExMTEiCwtJIyMiCwsLJiMjSAsLCwtvbyANDSEPHx8fHm0nCwsnCwsnCwsLJwsLJwsLCwEBATd9fX4KQ0NDZG1EIyNFCwtEIyMjIgsLJwsLC11sbAoKCg8PQ0NDZG0LCwsLCwsLCwsLJwsLJwsLCycKCgoKCg8PDw8PD21dCwsLCwsLCwsLJiMjIgsLCycKCgoKCg8PDw8PDw9EIyMjIyMjIyMjRQsLRCMjI0UKCgoKCg8P", "enc": {"grassRate": 15, "grass": [[16, "PIDGEY"], [15, "RATTATA"], [18, "PIDGEY"], [15, "DROWZEE"], [17, "RATTATA"], [17, "DROWZEE"], [18, "PIDGEOTTO"], [20, "PIDGEOTTO"], [19, "DROWZEE"], [17, "RATICATE"]], "waterRate": 0, "water": []}}, "VermilionCity": {"x": 85, "y": -27, "w": 20, "h": 18, "blk": "Q0NDICEgISAhMSAhMTExMTExMTFDa2t8fnxyN34xN353Vnd3dzExMRlDZDExMTExMTExMTExMTExGzExGUMtHx4xMTExMTExMTFJSDEbMTEZQ0NDLR8fHjExMTExMURFMRsxMRlDQ0MgIUMgITExICExMTExGzExGUNkCHx+MXx+MTF8c3d3d3cTVncZQ2QxMTExMTExMTExMQgxMTExMRlDZDEMDQ4xMTExICEdHlQdHx8fGUNkVhAREjUdHjF8fmVkVGVDQ0MZQ2QxMTExMWVkMTExZS1ULkNDQxlDZDExMTExZS0fHx8uQ1RDZA8PGUMtHx8fHx8uQ0NDQ0NDVENkDw8ZQ0NDQ0NDQ0NUVFRUVFRUQy1nHxlDQ0NDQ0NDQ1R4eHh4eHhDQxhDGWtra2tra2sTVBNra2tra2trGENDQ0NDQ0NDQ0MFQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ1RDQ0NDQ0NDQ0ND", "enc": null}}, "species": ["NO_MON", "RHYDON", "KANGASKHAN", "NIDORAN_M", "CLEFAIRY", "SPEAROW", "VOLTORB", "NIDOKING", "SLOWBRO", "IVYSAUR", "EXEGGUTOR", "LICKITUNG", "EXEGGCUTE", "GRIMER", "GENGAR", "NIDORAN_F", "NIDOQUEEN", "CUBONE", "RHYHORN", "LAPRAS", "ARCANINE", "MEW", "GYARADOS", "SHELLDER", "TENTACOOL", "GASTLY", "SCYTHER", "STARYU", "BLASTOISE", "PINSIR", "TANGELA", "GROWLITHE", "ONIX", "FEAROW", "PIDGEY", "SLOWPOKE", "KADABRA", "GRAVELER", "CHANSEY", "MACHOKE", "MR_MIME", "HITMONLEE", "HITMONCHAN", "ARBOK", "PARASECT", "PSYDUCK", "DROWZEE", "GOLEM", "MAGMAR", "ELECTABUZZ", "MAGNETON", "KOFFING", "MANKEY", "SEEL", "DIGLETT", "TAUROS", "FARFETCHD", "VENONAT", "DRAGONITE", "DODUO", "POLIWAG", "JYNX", "MOLTRES", "ARTICUNO", "ZAPDOS", "DITTO", "MEOWTH", "KRABBY", "VULPIX", "NINETALES", "PIKACHU", "RAICHU", "DRATINI", "DRAGONAIR", "KABUTO", "KABUTOPS", "HORSEA", "SEADRA", "SANDSHREW", "SANDSLASH", "OMANYTE", "OMASTAR", "JIGGLYPUFF", "WIGGLYTUFF", "EEVEE", "FLAREON", "JOLTEON", "VAPOREON", "MACHOP", "ZUBAT", "EKANS", "PARAS", "POLIWHIRL", "POLIWRATH", "WEEDLE", "KAKUNA", "BEEDRILL", "DODRIO", "PRIMEAPE", "DUGTRIO", "VENOMOTH", "DEWGONG", "CATERPIE", "METAPOD", "BUTTERFREE", "MACHAMP", "GOLDUCK", "HYPNO", "GOLBAT", "MEWTWO", "SNORLAX", "MAGIKARP", "MUK", "KINGLER", "CLOYSTER", "ELECTRODE", "CLEFABLE", "WEEZING", "PERSIAN", "MAROWAK", "HAUNTER", "ABRA", "ALAKAZAM", "PIDGEOTTO", "PIDGEOT", "STARMIE", "BULBASAUR", "VENUSAUR", "TENTACRUEL", "GOLDEEN", "SEAKING", "PONYTA", "RAPIDASH", "RATTATA", "RATICATE", "NIDORINO", "NIDORINA", "GEODUDE", "PORYGON", "AERODACTYL", "MAGNEMITE", "CHARMANDER", "SQUIRTLE", "CHARMELEON", "WARTORTLE", "CHARIZARD", "FOSSIL_KABUTOPS", "FOSSIL_AERODACTYL", "MON_GHOST", "ODDISH", "GLOOM", "VILEPLUME", "BELLSPROUT", "WEEPINBELL", "VICTREEBEL"]};
+const TS = 8, BS = 32;                       // tile px, block px
+let tiles = [], blocks = [], cur = null, curName = null;
+let sel = 0, tool = 'paint', zoom = 1;
+let showGrid = false, showColl = false, showNbr = true;
+let undoStack = [], redoStack = [], rectStart = null;
+const walk = new Set(DATA.walkable);
+
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const $ = id => document.getElementById(id);
+
+// ---- load graphics ---------------------------------------------------------
+function boot(){
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const cols = img.width / TS, rows = img.height / TS;
+    for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++){
+      const t = document.createElement('canvas'); t.width = t.height = TS;
+      t.getContext('2d').drawImage(c, q*TS, r*TS, TS, TS, 0, 0, TS, TS);
+      t.tileId = r*cols + q;
+      tiles.push(t);
+    }
+    const bs = b64(DATA.blockset);
+    for (let i = 0; i < bs.length; i += 16) blocks.push(bs.slice(i, i+16));
+    initUI();
+  };
+  img.src = 'data:image/png;base64,' + DATA.tileset;
+}
+
+function blockCanvas(id, size){
+  const c = document.createElement('canvas');
+  c.width = c.height = size || BS;
+  const x = c.getContext('2d');
+  const b = blocks[id] || blocks[0];
+  const s = (size || BS) / 4;
+  for (let i = 0; i < 16; i++){
+    const t = tiles[b[i]];
+    if (t) x.drawImage(t, (i%4)*s, ((i/4)|0)*s, s, s);
+  }
+  return c;
+}
+
+// ---- palette ---------------------------------------------------------------
+function initPalette(){
+  const p = $('palette'); p.innerHTML = '';
+  blocks.forEach((_, i) => {
+    const c = blockCanvas(i);
+    c.title = 'block $' + i.toString(16).padStart(2,'0');
+    c.tabIndex = 0;
+    if (i === sel) c.classList.add('on');
+    const pick = () => { sel = i;
+      [...p.children].forEach(k => k.classList.toggle('on', k === c)); };
+    c.onclick = pick;
+    c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(); } };
+    p.appendChild(c);
+  });
+}
+
+// ---- map state -------------------------------------------------------------
+function loadMap(name){
+  curName = name;
+  const m = DATA.maps[name];
+  cur = { x:m.x, y:m.y, w:m.w, h:m.h, blk:Array.from(b64(m.blk)),
+          enc: m.enc ? JSON.parse(JSON.stringify(m.enc))
+                     : {grassRate:0,grass:[],waterRate:0,water:[]} };
+  undoStack = []; redoStack = [];
+  $('mw').value = cur.w; $('mh').value = cur.h;
+  syncHeader(); buildEnc(); draw();
+}
+function syncHeader(){
+  $('dims').textContent = cur.w + '\u00d7' + cur.h;
+  const b = (cur.w+6)*(cur.h+6);
+  const el = $('buf');
+  el.textContent = b + ' / 1300';
+  el.className = b > 1300 ? 'warn' : 'ok';
+}
+function snapshot(){ undoStack.push(cur.blk.slice()); if (undoStack.length > 60) undoStack.shift(); redoStack = []; }
+
+// ---- drawing ---------------------------------------------------------------
+function draw(){
+  const pad = showNbr ? 8 : 0;                      // blocks of context margin
+  const cv = $('cv'), x = cv.getContext('2d');
+  const W = (cur.w + pad*2) * BS * zoom, H = (cur.h + pad*2) * BS * zoom;
+  cv.width = W; cv.height = H;
+  x.imageSmoothingEnabled = false;
+  x.fillStyle = '#0d0f14'; x.fillRect(0,0,W,H);
+  const ox = cur.x - pad, oy = cur.y - pad;
+  const put = (bx, by, id, dim) => {
+    const px = (bx-ox)*BS*zoom, py = (by-oy)*BS*zoom;
+    x.drawImage(blockCanvas(id), px, py, BS*zoom, BS*zoom);
+    if (dim){ x.fillStyle = 'rgba(20,22,28,.62)'; x.fillRect(px,py,BS*zoom,BS*zoom); }
+  };
+  if (showNbr){
+    for (const [n, m] of Object.entries(DATA.maps)){
+      if (n === curName) continue;
+      if (m.x > cur.x+cur.w+pad || m.x+m.w < cur.x-pad ||
+          m.y > cur.y+cur.h+pad || m.y+m.h < cur.y-pad) continue;
+      const d = b64(m.blk);
+      for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++)
+        put(m.x+i, m.y+j, d[j*m.w+i], true);
+    }
+  }
+  for (let j = 0; j < cur.h; j++) for (let i = 0; i < cur.w; i++)
+    put(cur.x+i, cur.y+j, cur.blk[j*cur.w+i], false);
+
+  if (showColl){
+    x.globalAlpha = .38;
+    for (let j = 0; j < cur.h; j++) for (let i = 0; i < cur.w; i++){
+      const b = blocks[cur.blk[j*cur.w+i]] || blocks[0];
+      for (let k = 8; k < 16; k++){                 // lower half = feet
+        const px = (i+pad)*BS*zoom + (k%4)*8*zoom;
+        const py = (j+pad)*BS*zoom + (((k/4)|0))*8*zoom;
+        x.fillStyle = walk.has(b[k]) ? '#5fb98a' : '#c8556a';
+        x.fillRect(px, py, 8*zoom, 8*zoom);
+      }
+    }
+    x.globalAlpha = 1;
+  }
+  if (showGrid){
+    x.strokeStyle = 'rgba(157,123,216,.30)'; x.lineWidth = 1;
+    for (let i = 0; i <= cur.w; i++){
+      x.beginPath(); x.moveTo((i+pad)*BS*zoom+.5, pad*BS*zoom);
+      x.lineTo((i+pad)*BS*zoom+.5, (pad+cur.h)*BS*zoom); x.stroke();
+    }
+    for (let j = 0; j <= cur.h; j++){
+      x.beginPath(); x.moveTo(pad*BS*zoom, (j+pad)*BS*zoom+.5);
+      x.lineTo((pad+cur.w)*BS*zoom, (j+pad)*BS*zoom+.5); x.stroke();
+    }
+  }
+  x.strokeStyle = '#9d7bd8'; x.lineWidth = 2;
+  x.strokeRect(pad*BS*zoom, pad*BS*zoom, cur.w*BS*zoom, cur.h*BS*zoom);
+}
+
+// ---- editing ---------------------------------------------------------------
+function cellAt(e){
+  const pad = showNbr ? 8 : 0, r = $('cv').getBoundingClientRect();
+  const i = Math.floor((e.clientX - r.left) / (BS*zoom)) - pad;
+  const j = Math.floor((e.clientY - r.top ) / (BS*zoom)) - pad;
+  return (i >= 0 && j >= 0 && i < cur.w && j < cur.h) ? [i,j] : null;
+}
+function setCell(i, j, id){ cur.blk[j*cur.w+i] = id; }
+function flood(i, j, id){
+  const from = cur.blk[j*cur.w+i]; if (from === id) return;
+  const q = [[i,j]];
+  while (q.length){
+    const [a,b] = q.pop();
+    if (a<0||b<0||a>=cur.w||b>=cur.h) continue;
+    if (cur.blk[b*cur.w+a] !== from) continue;
+    cur.blk[b*cur.w+a] = id;
+    q.push([a+1,b],[a-1,b],[a,b+1],[a,b-1]);
+  }
+}
+let painting = false;
+function down(e){
+  const c = cellAt(e); if (!c) return;
+  const [i,j] = c;
+  if (e.altKey || tool === 'pick'){
+    sel = cur.blk[j*cur.w+i];
+    [...$('palette').children].forEach((k,n) => k.classList.toggle('on', n === sel));
+    return;
+  }
+  snapshot();
+  if (tool === 'fill'){ flood(i,j,sel); draw(); return; }
+  if (tool === 'rect'){ rectStart = [i,j]; return; }
+  painting = true; setCell(i,j,sel); draw();
+}
+function move(e){
+  if (!painting) return;
+  const c = cellAt(e); if (!c) return;
+  setCell(c[0], c[1], sel); draw();
+}
+function up(e){
+  if (tool === 'rect' && rectStart){
+    const c = cellAt(e);
+    if (c){
+      const [x0,y0] = rectStart, [x1,y1] = c;
+      for (let j = Math.min(y0,y1); j <= Math.max(y0,y1); j++)
+        for (let i = Math.min(x0,x1); i <= Math.max(x0,x1); i++) setCell(i,j,sel);
+      draw();
+    }
+    rectStart = null;
+  }
+  painting = false;
+}
+
+function resize(){
+  const w = +$('mw').value, h = +$('mh').value;
+  if (!(w > 0 && h > 0)) return;
+  const buf = (w+6)*(h+6);
+  if (buf > 1300){
+    $('sizenote').innerHTML = '<span class="warn">Buffer would be ' + buf +
+      '. The engine caps the loaded map at 1300 bytes. Reduce width or height.</span>';
+    return;
+  }
+  snapshot();
+  const next = new Array(w*h).fill(sel);
+  for (let j = 0; j < Math.min(h, cur.h); j++)
+    for (let i = 0; i < Math.min(w, cur.w); i++) next[j*w+i] = cur.blk[j*cur.w+i];
+  cur.blk = next; cur.w = w; cur.h = h;
+  $('sizenote').innerHTML = '<span class="ok">Resized to ' + w + '\u00d7' + h +
+    '. Update the map header and re-check connection offsets.</span>';
+  syncHeader(); draw();
+}
+
+// ---- encounters ------------------------------------------------------------
+function slotRow(list, n, host){
+  const d = document.createElement('div'); d.className = 'slot';
+  const lab = document.createElement('span'); lab.textContent = n+1;
+  const lv = document.createElement('input'); lv.type = 'number'; lv.min = 1; lv.max = 100;
+  lv.value = list[n] ? list[n][0] : 5;
+  const sp = document.createElement('select');
+  DATA.species.forEach(s => { const o = document.createElement('option');
+    o.value = o.textContent = s; sp.appendChild(o); });
+  sp.value = list[n] ? list[n][1] : DATA.species[0];
+  lv.oninput = () => { list[n] = [ +lv.value, sp.value ]; };
+  sp.onchange = () => { list[n] = [ +lv.value, sp.value ]; };
+  if (!list[n]) list[n] = [ +lv.value, sp.value ];
+  d.append(lab, lv, sp); host.appendChild(d);
+}
+function buildEnc(){
+  const e = cur.enc;
+  $('grate').value = e.grassRate; $('wrate').value = e.waterRate;
+  $('grate').oninput = () => e.grassRate = +$('grate').value;
+  $('wrate').oninput = () => e.waterRate = +$('wrate').value;
+  const g = $('grass'), w = $('water'); g.innerHTML = ''; w.innerHTML = '';
+  for (let i = 0; i < 10; i++) slotRow(e.grass, i, g);
+  for (let i = 0; i < 10; i++) slotRow(e.water, i, w);
+}
+function encAsm(){
+  const e = cur.enc, L = [];
+  L.push(curName + 'WildMons:');
+  L.push('\tdef_grass_wildmons ' + e.grassRate + ' ; encounter rate');
+  if (e.grassRate > 0) e.grass.forEach(s => L.push('\tdb ' + String(s[0]).padStart(2) + ', ' + s[1]));
+  L.push('\tend_grass_wildmons');
+  L.push('');
+  L.push('\tdef_water_wildmons ' + e.waterRate + ' ; encounter rate');
+  if (e.waterRate > 0) e.water.forEach(s => L.push('\tdb ' + String(s[0]).padStart(2) + ', ' + s[1]));
+  L.push('\tend_water_wildmons');
+  return L.join('\n') + '\n';
+}
+
+// ---- export ----------------------------------------------------------------
+function save(name, bytes, mime){
+  const blob = new Blob([bytes], {type: mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// ---- wiring ----------------------------------------------------------------
+function initUI(){
+  initPalette();
+  const sel_ = $('mapsel');
+  Object.keys(DATA.maps).sort().forEach(n => {
+    const o = document.createElement('option'); o.value = o.textContent = n; sel_.appendChild(o);
+  });
+  sel_.value = 'Route1';
+  sel_.onchange = () => loadMap(sel_.value);
+
+  document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
+    tool = b.dataset.tool;
+    document.querySelectorAll('[data-tool]').forEach(k => k.classList.toggle('on', k === b));
+  });
+  $('tGrid').onclick = e => { showGrid = !showGrid; e.target.classList.toggle('on', showGrid); draw(); };
+  $('tColl').onclick = e => { showColl = !showColl; e.target.classList.toggle('on', showColl); draw(); };
+  $('tNbr').onclick  = e => { showNbr  = !showNbr;  e.target.classList.toggle('on', showNbr);  draw(); };
+  $('tZoom').onclick = e => { zoom = zoom === 1 ? 2 : zoom === 2 ? .5 : 1;
+    e.target.textContent = 'Zoom ' + zoom + 'x'; draw(); };
+
+  $('applysize').onclick = resize;
+  $('undo').onclick = () => { if (!undoStack.length) return;
+    redoStack.push(cur.blk.slice()); cur.blk = undoStack.pop(); draw(); };
+  $('redo').onclick = () => { if (!redoStack.length) return;
+    undoStack.push(cur.blk.slice()); cur.blk = redoStack.pop(); draw(); };
+  $('dlblk').onclick = () => save(curName + '.blk', new Uint8Array(cur.blk), 'application/octet-stream');
+  $('dlasm').onclick = () => save(curName + '.asm', encAsm(), 'text/plain');
+
+  const cv = $('cv');
+  cv.addEventListener('mousedown', down);
+  cv.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+  window.addEventListener('keydown', e => {
+    if ((e.ctrlKey||e.metaKey) && e.key === 'z'){ e.preventDefault(); $('undo').click(); }
+    if ((e.ctrlKey||e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))){ e.preventDefault(); $('redo').click(); }
+  });
+  loadMap('Route1');
+}
+boot();
+</script>
+</body>
+</html>
