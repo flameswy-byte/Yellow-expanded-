@@ -46,16 +46,27 @@ button.on{background:var(--accent);border-color:var(--accent);color:#14161c;font
 button:focus-visible,select:focus-visible,input:focus-visible,#palette canvas:focus-visible{
   outline:2px solid var(--accent);outline-offset:1px}
 .tools{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.toggles{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.toggles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.zoomrow{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-top:6px}
+.zoomrow b{text-align:center;font-size:11px;min-width:34px}
 .wide{width:100%;margin-top:6px}
 .slot{display:grid;grid-template-columns:26px 42px 1fr;gap:4px;margin-bottom:3px;align-items:center}
 .slot span{color:var(--dim);font-size:10px;text-align:right}
 .note{color:var(--dim);font-size:11px;line-height:1.5}
 .warn{color:var(--amber)}
 .ok{color:var(--ok)}
+/* what you are painting with, always visible */
+.swatch{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+.swatch canvas{width:26px;height:26px;image-rendering:pixelated;display:block;
+  border:1px solid var(--accent);border-radius:2px}
+.swatch b{color:var(--ink);font-weight:600}
 kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:0 4px;font-size:11px}
-@media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 320px auto}
-  aside,#side{max-height:220px;border:0;border-bottom:1px solid var(--line)}
+@media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto}
+  aside,#side{max-height:200px;border:0;border-bottom:1px solid var(--line)}
+  /* 128 blocks at 4 columns is ~30 rows; in a 220px box that is two rows of
+     swatches. More columns and a taller box make the palette scannable. */
+  aside{max-height:30dvh}
+  #palette{grid-template-columns:repeat(8,1fr);gap:2px}
   /* the header is a single flex row; unwrapped it overflows a phone and the
      buttons end up underneath the map selector, unclickable */
   header{flex-wrap:wrap;gap:8px}
@@ -72,6 +83,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padd
     <select id="mapsel"></select>
     <span class="badge">size <b id="dims">–</b></span>
     <span class="badge">buffer <b id="buf">–</b></span>
+    <span class="swatch"><canvas id="curswatch" width="32" height="32"></canvas><b id="curblk">$00</b></span>
     <span class="sep"></span>
     <button id="undo" title="Ctrl+Z">Undo</button>
     <button id="redo" title="Ctrl+Y">Redo</button>
@@ -101,7 +113,11 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padd
         <button id="tGrid">Grid</button>
         <button id="tColl">Collision</button>
         <button id="tNbr" class="on">Neighbors</button>
-        <button id="tZoom">Zoom 1x</button>
+      </div>
+      <div class="zoomrow">
+        <button id="zOut" title="Zoom out">&minus;</button>
+        <b id="zLbl">1x</b>
+        <button id="zIn" title="Zoom in">+</button>
       </div>
     </div>
 
@@ -142,6 +158,7 @@ const DATA = {"tileset": "iVBORw0KGgoAAAANSUhEUgAAAIAAAAAwAgAAAAC2LzXDAAAE30lEQV
 const TS = 8, BS = 32;                       // tile px, block px
 let tiles = [], blocks = [], cur = null, curName = null;
 let sel = 0, tool = 'paint', zoom = 1;
+const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
 let showGrid = false, showColl = false, showNbr = true;
 let undoStack = [], redoStack = [], rectStart = null;
 const walk = new Set(DATA.walkable);
@@ -229,6 +246,20 @@ function requestDraw(){
   requestAnimationFrame(() => { drawPending = false; draw(); });
 }
 
+// Selecting a block happens from the palette and from the eyedropper, so both
+// go through here and the header indicator cannot fall out of step.
+function setSel(i, reveal){
+  sel = i;
+  const p = $('palette');
+  [...p.children].forEach((k, n) => k.classList.toggle('on', n === sel));
+  const sw = $('curswatch'), x = sw.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, sw.width, sw.height);
+  x.drawImage(blockCanvas(sel), 0, 0, sw.width, sw.height);
+  $('curblk').textContent = '$' + sel.toString(16).padStart(2, '0');
+  if (reveal && p.children[sel]) p.children[sel].scrollIntoView({block: 'nearest'});
+}
+
 // ---- palette ---------------------------------------------------------------
 function initPalette(){
   const p = $('palette'); p.innerHTML = '';
@@ -237,8 +268,7 @@ function initPalette(){
     c.title = 'block $' + i.toString(16).padStart(2,'0');
     c.tabIndex = 0;
     if (i === sel) c.classList.add('on');
-    const pick = () => { sel = i;
-      [...p.children].forEach(k => k.classList.toggle('on', k === c)); };
+    const pick = () => setSel(i);
     c.onclick = pick;
     c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(); } };
     p.appendChild(c);
@@ -344,8 +374,7 @@ function down(e){
   const c = cellAt(e); if (!c) return;
   const [i,j] = c;
   if (e.altKey || tool === 'pick'){
-    sel = cur.blk[j*cur.w+i];
-    [...$('palette').children].forEach((k,n) => k.classList.toggle('on', n === sel));
+    setSel(cur.blk[j*cur.w+i], true);   // reveal it in the palette too
     return;
   }
   snapshot();
@@ -483,8 +512,16 @@ function initUI(){
   $('tGrid').onclick = e => { showGrid = !showGrid; e.target.classList.toggle('on', showGrid); draw(); };
   $('tColl').onclick = e => { showColl = !showColl; e.target.classList.toggle('on', showColl); draw(); };
   $('tNbr').onclick  = e => { showNbr  = !showNbr;  e.target.classList.toggle('on', showNbr);  draw(); scrollToMap(); };
-  $('tZoom').onclick = e => { zoom = zoom === 1 ? 2 : zoom === 2 ? .5 : 1;
-    e.target.textContent = 'Zoom ' + zoom + 'x'; draw(); scrollToMap(); };
+  const setZoom = d => {
+    const i = Math.min(ZOOMS.length - 1, Math.max(0, ZOOMS.indexOf(zoom) + d));
+    zoom = ZOOMS[i];
+    $('zLbl').textContent = zoom + 'x';
+    $('zOut').disabled = i === 0;
+    $('zIn').disabled = i === ZOOMS.length - 1;
+    draw(); scrollToMap();
+  };
+  $('zOut').onclick = () => setZoom(-1);
+  $('zIn').onclick  = () => setZoom(+1);
 
   $('applysize').onclick = resize;
   $('undo').onclick = () => { if (!undoStack.length) return;
@@ -512,6 +549,7 @@ function initUI(){
     if ((e.ctrlKey||e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))){ e.preventDefault(); $('redo').click(); }
   });
   loadMap('Route1');
+  setSel(sel);
 }
 boot();
 </script>
