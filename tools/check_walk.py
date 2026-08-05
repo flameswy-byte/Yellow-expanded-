@@ -12,13 +12,23 @@ CONFIRMED: one map coordinate is two tiles. _GetTileAndCoordsInFrontOfPlayer
 reads (8,11) when facing down — a step is +2 tiles. So this grid is 2 cells per
 block per axis, matching the space warp_event and object_event coordinates use.
 
-NOT CONFIRMED: which tile of the 2x2 group a step cell samples. This uses row
-2b+1, column 2a (bottom-left, where the feet land), which is consistent with
-block $07 being a ledge — its bottom row is $37, listed hoppable-downward in
-data/tilesets/ledge_tiles.asm. But it does not reproduce vanilla Celadon: the
-Gym door comes out walled off from the Mart door, with or without allowing
-ledge hops, and that is certainly wrong. Something about doors, warp tiles or
-the sampling parity is still missing.
+DERIVED, NOT YET VALIDATED: which tile of the 2x2 group a step cell samples.
+LoadCurrentMapView (home/overworld.asm) copies the screen from wSurroundingTiles
+offset by 2*wXBlockCoord columns and 2*wYBlockCoord rows, and the player's tile
+is screen (8,9). So inside a block the player stands on local tile
+(col 2a, row 2b+1) — index 4*(2b+1)+2a, which is what this uses. It also agrees
+with block $07 being a ledge: its bottom row is $37, listed hoppable-downward in
+data/tilesets/ledge_tiles.asm.
+
+But it does not reproduce vanilla Celadon. The south-west pocket containing the
+Gym door comes out as its own component, unreachable from the other twelve warp
+tiles, with or without allowing ledge hops. Since the sampling rule above is
+read off the engine rather than guessed, the missing piece is more likely in the
+collision data — pair_collision_tile_ids, or door/warp tiles being steppable by
+a path other than the plain collision list — than in the geometry.
+
+Until that is closed, treat a NEGATIVE result as unproven rather than as a
+defect.
 
 So: treat a NEGATIVE result from this tool as unproven, not as a defect. A
 positive result on a map built only from uniformly-walkable and uniformly-solid
