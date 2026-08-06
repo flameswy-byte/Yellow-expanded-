@@ -1,34 +1,16 @@
-# compiled objects
+# build output, both projects
 *.o
-
-# compiled graphics
-*.1bpp
-*.2bpp
-*.pic
-
-# compiled audio
-*.pcm
-
-# compiled roms
 *.gbc
 *.gb
-*.patch
-
-# rgbds extras
+*.gba
+*.elf
 *.map
 *.sym
-
-# tool binaries
-*.exe
-
-# precompiled python
-*.pyc
-*$py.class
-
-# save game files
-*.sgm
-*.sav
-*.rtc
-*.sn*
-*.sa*
-*.sg1
+*.patch
+*.1bpp
+*.2bpp
+*.4bpp
+*.pic
+*.pcm
+build/
+gen3-hoenn/pokeemerald/tools/agbcc/
