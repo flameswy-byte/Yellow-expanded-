@@ -34,8 +34,11 @@ PEN_CLASS = {'water': WATER, 'grass': GRASS, 'tall grass': TALL, 'path': PATH,
 
 WATER_MB = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x17, 0x18, 0x1a, 0x22, 0x2a}
 SAND_MB = {0x06, 0x21}
-TALL_MB = {0x02}                      # MB_TALL_GRASS
-MOUNTAIN_MB = {0x20, 0x38, 0x39}      # MB_MOUNTAIN_TOP and friends
+TALL_MB = {0x02, 0x03, 0x09, 0x24}    # tall, long and ash grass
+MOUNTAIN_MB = {0x0c}                  # MB_MOUNTAIN_TOP. Checked against the
+                                      # header: 0x20 is MB_ICE and 0x38/0x39
+                                      # are ledges, which an earlier guess had
+                                      # in here reading as cliff
 
 def behaviors(tileset):
     p = os.path.join(R.tileset_dir(tileset), 'metatile_attributes.bin')
@@ -125,16 +128,29 @@ def mask3(cls, x, y, w, h, default):
 def mask4(m3):
     return (m3[1], m3[3], m3[4], m3[5], m3[7])
 
+GENERATED = os.path.join(HERE, '..', 'generated_maps.txt')
+
+def generated():
+    """the maps this project produced, which must never be learned from.
+
+    Once they exist, R.solve() returns them alongside the vanilla ones, and a
+    model trained on its own output drifts a little further from Hoenn every
+    time it is rebuilt. newmaps.py writes the list."""
+    if not os.path.exists(GENERATED):
+        return set()
+    return {l.strip() for l in open(GENERATED) if l.strip()}
+
 def learn(maps_wanted=None, primary='gTileset_General'):
     """Walk vanilla maps and tally metatile choices per class neighbourhood."""
     lay, maps, pos = R.solve()
+    skip = generated()
     rend = R.Renderer()
     t3 = collections.defaultdict(collections.Counter)
     t4 = collections.defaultdict(collections.Counter)
     t1 = collections.defaultdict(collections.Counter)
     used = []
     for k in sorted(maps_wanted or pos):
-        if k not in maps:
+        if k not in maps or k in skip:
             continue
         L = lay[maps[k]['layout']]
         if L['primary_tileset'] != primary:
@@ -179,7 +195,15 @@ class Painter:
         for y in range(h):
             for x in range(w):
                 m3 = mask3(cls, x, y, w, h, GRASS)
-                v = (best(self.m['t3'], m3) or best(self.m['t4'], mask4(m3))
+                # If vanilla never drew this arrangement, paint the cell as
+                # though it were the middle of its own terrain. The obvious
+                # fallback - that class's most common metatile - is wrong:
+                # for a path it picks the mountain-top tile, whose art expects
+                # a plateau edge, so a one-cell-wide path came out fringed
+                # with rock. The homogeneous tile is the one that tiles.
+                v = (best(self.m['t3'], m3)
+                     or best(self.m['t4'], mask4(m3))
+                     or best(self.m['t3'], (m3[4],) * 9)
                      or best(self.m['t1'], m3[4]) or 1)
                 out.append(v)
         return out

@@ -295,6 +295,23 @@ def voronoi(seeds, w, h, default=T.GRASS):
                 q.append((nx, ny))
     return grid
 
+def line_cells(x0, y0, x1, y1):
+    """every cell on the segment, 4-connected, so a 1-wide path has no gaps."""
+    dx, dy = abs(x1 - x0), abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    err = dx - dy
+    while True:
+        yield x0, y0
+        if x0 == x1 and y0 == y1:
+            return
+        e2 = err * 2
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        elif e2 < dx:                  # step one axis at a time: no diagonal
+            err += dx                  # jumps, so the path is 4-connected
+            y0 += sy
+
 def bfs_dist(sources, blocked, w, h):
     d = [None] * (w * h)
     q = collections.deque()
@@ -353,22 +370,25 @@ def build_classes(spec, wcls):
     for (x, y), c in rim.items():                # the rim is not negotiable
         grid[y*w + x] = c
 
-    # 3. paths, at width 3 with a noise wobble. A path is a promise that the
-    #    player can walk it, so nothing solid is allowed within two cells of
-    #    one and the surrounding band is forced to open ground.
+    # 3. paths, one cell wide. The sketch samples a stroke every few cells, so
+    #    the points are joined with a line rather than dotted down - otherwise
+    #    a single-width path comes out as a dashed one. A path is still a
+    #    promise that the player can walk it, so nothing solid is left
+    #    immediately beside one, but the cleared band is now a single cell
+    #    either side instead of two.
     path = set()
     for pts in lines:
-        for x, y in pts:
-            r = 1 + (1 if T.fbm(x, y, seed + 31, octaves=2, freq=0.15) > 0.62 else 0)
-            for dx in range(-r, r+1):
-                for dy in range(-r, r+1):
-                    if 0 <= x+dx < w and 0 <= y+dy < h:
-                        path.add((x+dx, y+dy))
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            for x, y in line_cells(x0, y0, x1, y1):
+                if 0 <= x < w and 0 <= y < h:
+                    path.add((x, y))
+        if pts:
+            path.add(pts[-1])
     for x, y in path:
         grid[y*w + x] = T.PATH
     for x, y in list(path):
-        for dx in range(-2, 3):
-            for dy in range(-2, 3):
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
                 p = (x+dx, y+dy)
                 if p in path or not (0 <= p[0] < w and 0 <= p[1] < h):
                     continue
@@ -400,7 +420,187 @@ def build_classes(spec, wcls):
                 grid[i] = T.TREE
             elif n > 0.60 - 0.34 * t:
                 grid[i] = T.TALL
+
+    # 5. scattered singles. The gradient above runs on one low-frequency field,
+    #    so its trees only ever appear as the dense core of a clump. A second,
+    #    much higher frequency field sprinkles lone trees out in the open,
+    #    which is what a Hoenn route actually looks like - and it thins the
+    #    tall grass, which was running to two thirds of some maps.
+    for y in range(h):
+        for x in range(w):
+            i = y*w + x
+            if grid[i] not in (T.GRASS, T.TALL) or (x, y) in rim:
+                continue
+            d = dist[i]
+            if d is None or d <= 2:
+                continue                        # keep the path's margins open
+            t = min(1.0, max(0.0, (d - 2) / 22.0))
+            # calibrated against the field's own distribution rather than
+            # guessed: p90 is 0.72 and p95 0.76, so this is roughly the top
+            # 7% of open ground near a path rising to the top 18% far from one
+            s = T.fbm(x, y, seed + 61, octaves=2, freq=0.34)
+            if s > 0.75 - 0.10 * t:
+                grid[i] = T.TREE
+
+    # 6. connectivity. Scattering trees can wall a pocket off, and a stranded
+    #    pocket is worse than a plain one. Everything walkable is flooded, and
+    #    any component of real size that is not part of the largest gets a
+    #    one-cell corridor cut back to it through whatever is in the way.
+    repair_connectivity(grid, w, h)
     return grid
+
+# MB_JUMP_* - the ledges you hop down. Vanilla only ever draws them as long
+# runs; the learned painter will happily emit a single one wherever a height
+# change happened to look like the top of a ledge, and a lone ledge is visual
+# litter and a one-way wall in the middle of a field.
+# you hop east or west across a ledge that runs vertically, and north or
+# south across one that runs horizontally
+JUMP_MB = {0x38: 'v', 0x39: 'v', 0x3A: 'h', 0x3B: 'h',
+           0x3C: 'c', 0x3D: 'c', 0x3E: 'c', 0x3F: 'c'}
+MIN_LEDGE = 3
+
+def tidy(blocks, w, h, spec):
+    """Clean up what the per-cell painter cannot see: stray ledges and stray
+    elevations. Both are invisible walls as far as the player is concerned."""
+    beh = T.behaviors('gTileset_General')
+    sec = spec.get('secondary')
+    if sec:
+        try:
+            beh = beh + T.behaviors(sec)
+        except SystemExit:
+            pass
+    mb = lambda v: beh[v & 0x3FF] if (v & 0x3FF) < len(beh) else 0
+    fixed_l = fixed_e = 0
+
+    # ledges shorter than MIN_LEDGE go back to whatever is around them
+    for y in range(h):
+        for x in range(w):
+            i = y*w + x
+            d = JUMP_MB.get(mb(blocks[i]))
+            if not d:
+                continue
+            if d == 'c':                     # a corner only belongs next to
+                run = 1 + sum(                # a ledge it is the corner of
+                    1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                    if 0 <= x+dx < w and 0 <= y+dy < h
+                    and JUMP_MB.get(mb(blocks[(y+dy)*w + x+dx])))
+                if run >= 2:
+                    continue
+                run = 1
+            run, k = (run if d == 'c' else 1), 1
+            step = (1, 0) if d == 'h' else (0, 1)
+            for sgn in (1, -1):
+                while True:
+                    nx, ny = x + step[0]*k*sgn, y + step[1]*k*sgn
+                    if not (0 <= nx < w and 0 <= ny < h):
+                        break
+                    if JUMP_MB.get(mb(blocks[ny*w + nx])) != d:
+                        break
+                    run += 1
+                    k += 1
+                k = 1
+            if run >= MIN_LEDGE:
+                continue
+            nb = collections.Counter(
+                blocks[(y+dy)*w + x+dx]
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                if 0 <= x+dx < w and 0 <= y+dy < h
+                and not JUMP_MB.get(mb(blocks[(y+dy)*w + x+dx]))
+                and ((blocks[(y+dy)*w + x+dx] >> 10) & 3) == 0)
+            if nb:
+                blocks[i] = nb.most_common(1)[0][0]
+                fixed_l += 1
+
+    # a walkable cell whose elevation disagrees with everything around it is
+    # a step the player cannot take, for no reason the map shows
+    for y in range(h):
+        for x in range(w):
+            i = y*w + x
+            if (blocks[i] >> 10) & 3:
+                continue
+            e = (blocks[i] >> 12) & 0xF
+            nb = collections.Counter(
+                (blocks[(y+dy)*w + x+dx] >> 12) & 0xF
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                if 0 <= x+dx < w and 0 <= y+dy < h
+                and not ((blocks[(y+dy)*w + x+dx] >> 10) & 3))
+            if not nb or e in nb:
+                continue
+            best, n = nb.most_common(1)[0]
+            if n >= 3:
+                blocks[i] = (blocks[i] & ~0xF000) | (best << 12)
+                fixed_e += 1
+    return fixed_l, fixed_e
+
+WALKABLE = (T.GRASS, T.TALL, T.PATH, T.SAND, T.OTHER)
+
+def repair_connectivity(grid, w, h, min_pocket=12):
+    def walk(i):
+        return grid[i] in WALKABLE
+    seen = [False] * (w * h)
+    comps = []
+    for start in range(w * h):
+        if seen[start] or not walk(start):
+            continue
+        comp, q = [], collections.deque([start])
+        seen[start] = True
+        while q:
+            i = q.popleft()
+            comp.append(i)
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if 0 <= nx < w and 0 <= ny < h and not seen[j] and walk(j):
+                    seen[j] = True
+                    q.append(j)
+        comps.append(comp)
+    if len(comps) < 2:
+        return 0
+    comps.sort(key=len, reverse=True)
+    main = set(comps[0])
+    cut = 0
+    for comp in comps[1:]:
+        if len(comp) < min_pocket:
+            continue
+        # 0-1 BFS out of the pocket: crossing a walkable cell is free, cutting
+        # through a solid one costs 1, so it finds the thinnest wall
+        INF = float('inf')
+        cost = [INF] * (w * h)
+        prev = [-1] * (w * h)
+        q = collections.deque()
+        for i in comp:
+            cost[i] = 0
+            q.append(i)
+        hit = -1
+        while q:
+            i = q.popleft()
+            if i in main:
+                hit = i
+                break
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+                j = ny*w + nx
+                # water is a moat, not a wall - cutting through it would make
+                # a land bridge the sketch never asked for
+                if grid[j] == T.WATER:
+                    continue
+                c = cost[i] + (0 if walk(j) else 1)
+                if c < cost[j]:
+                    cost[j] = c
+                    prev[j] = i
+                    (q.appendleft if c == cost[i] else q.append)(j)
+        if hit < 0:
+            continue
+        i = hit
+        while i != -1 and cost[i] > 0:
+            if not walk(i):
+                grid[i] = T.GRASS
+                cut += 1
+            i = prev[i]
+        main |= set(comp)
+    return cut
 
 # --- softening the old map borders ---------------------------------------
 # Every vanilla map ends in a hard line of trees or rock, because it used to
@@ -772,6 +972,11 @@ def main():
     a = ap.parse_args()
     dry = a.dry_run
 
+    # record what we generate before the model is loaded: terrain.py must not
+    # learn from our own maps
+    if not dry:
+        with open(T.GENERATED, 'w') as f:
+            f.write('\n'.join(s['const'] for s in NEWMAPS) + '\n')
     model = T.load()
     painter = T.Painter(model)
 
@@ -792,12 +997,15 @@ def main():
     for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
         blocks = painter.paint(cls, spec['w'], spec['h'])
+        nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
         built[spec['const']] = blocks
         n = collections.Counter(cls)
         mix = ', '.join(f'{100*v//len(cls)}% {T.CLASS_NAME[k]}'
                         for k, v in n.most_common() if 100*v//len(cls))
         print(f'  {spec["name"]}  {spec["w"]}x{spec["h"]}  '
               f'buffer {(spec["w"]+15)*(spec["h"]+14)}/10240   {mix}')
+        if nl or ne:
+            print(f'            tidied {nl} stray ledges, {ne} stray elevations')
         write_map(spec, blocks, dry)
 
     # A declared connection with no crossable cell is worse than no

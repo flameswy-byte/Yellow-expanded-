@@ -218,14 +218,17 @@ Nothing is invented and nothing is hand-placed.
 
 ### The five rules, and how each is enforced
 
-1. **Paths must be walkable end to end.** Path cells are stamped last so
-   nothing overwrites them, and no tree or cliff is allowed within two cells
-   of one. `tools/check_seams.py` then confirms it from the built data.
+1. **Paths must be walkable end to end.** One cell wide, drawn as a line
+   between the sketch's sampled points so they do not come out dashed. Stamped
+   last so nothing overwrites them, with a single cell of clearance either
+   side. `tools/check_seams.py` then confirms it from the built data.
 2. **No straight lines.** Two halves. The generated boundaries are domain
    warped through fractal noise, which bends every nearest-seed bisector into
    something meandering; the amplitude tapers to zero at the rim so the seams
    still match. And the *old* maps' bounding-box lines get feathered — see
-   below.
+   below. Scattered single trees come from a second, much higher frequency
+   field, because the gradient's own noise only ever produces trees as the
+   dense core of a clump.
 3. **Vegetation grades outward from the path.** Distance is measured from
    where the player actually walks, and open ground gives way to tall grass,
    then scattered trees, then closed canopy as it grows. The clumping is
@@ -234,6 +237,44 @@ Nothing is invented and nothing is hand-placed.
 4. **Cliffs stay climbable.** Not exercised yet — Gap 1 has almost no cliff.
    It binds on Gap 3, which is volcanic.
 5. **The desert swath is sand.** Recorded in `DESERT_BOX`; it lands in Gap 5.
+
+### Three things a per-cell painter cannot see
+
+The painter chooses each metatile from its own 3×3 neighbourhood, which leaves
+three classes of defect that only show up at map scale.
+
+**An unseen arrangement needs the right fallback.** Narrowing paths to one cell
+produced something vanilla never draws — a path cell with grass on all sides —
+so the lookup fell through to "that class's most common metatile", which for a
+path is the mountain-top tile. Its art expects a plateau edge, and every
+one-wide path came out fringed with pink rock. The fallback is now the
+*homogeneous* tile: if vanilla never drew this arrangement, paint the cell as
+though it were the middle of its own terrain. That is the tile that tiles.
+
+**Stray ledges and stray elevations are invisible walls.** `MB_JUMP_*` ledges
+are drawn in vanilla only as long runs; the painter will emit a single one
+wherever a height change happens to look like the top of one, and a lone ledge
+is a one-way wall in an open field. Likewise a walkable cell whose elevation
+disagrees with everything around it is a step the player cannot take, for no
+reason the map shows. `tidy()` removes ledge runs shorter than three and
+snaps an isolated elevation to its neighbours' — 136 ledges and 35 elevations
+across the fourteen maps.
+
+**Scattering trees can strand a pocket.** `repair_connectivity()` floods
+everything walkable and cuts a one-cell corridor from any sizeable pocket back
+to the main body, choosing the thinnest wall by 0-1 BFS. Water is treated as a
+moat rather than a wall, so it never builds a land bridge the sketch did not
+ask for.
+
+While fixing the ledges, two behaviour constants turned out to be wrong in the
+classifier: `MOUNTAIN_MB` held `0x20`, `0x38` and `0x39`, which are actually
+`MB_ICE`, `MB_JUMP_EAST` and `MB_JUMP_WEST`. `MB_MOUNTAIN_TOP` is `0x0c`.
+Ledges had been reading as cliff.
+
+**The model must not learn from its own output.** Once the new maps exist,
+`R.solve()` returns them alongside the vanilla ones, and a rebuild trained on
+63 maps instead of 49 — drifting a little further from Hoenn every time.
+`newmaps.py` now writes `generated_maps.txt` and `terrain.py` skips those.
 
 ### Softening the old borders
 
