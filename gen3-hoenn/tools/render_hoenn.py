@@ -152,11 +152,13 @@ def empty_regions(occ, W, H):
     return sorted(out, key=lambda r: -r[0])
 
 WATER = {f'ROUTE{n}' for n in range(124, 135)}
-GAPS = [('GAP 1', 'lv 2-4', 'beside Littleroot, coastal'),
-        ('GAP 2', 'lv 2-14', 'Petalburg / Rustboro / Mauville'),
-        ('GAP 3', 'lv 6-18', 'Fallarbor / Lavaridge, volcanic'),
-        ('GAP 4', 'lv 24-28', 'Fortree, rainforest'),
-        ('GAP 5', 'lv 19-27', 'desert / rainforest seam')]
+# keyed by the top-left corner of the empty region, so filling one gap does
+# not shift every other gap's label onto the wrong hole
+GAPS = {(40, 242): ('GAP 1', 'lv 2-4', 'beside Littleroot, coastal'),
+        (40, 142): ('GAP 2', 'lv 2-14', 'Petalburg / Rustboro / Mauville'),
+        (40, 20): ('GAP 3', 'lv 6-18', 'Fallarbor / Lavaridge, volcanic'),
+        (320, 20): ('GAP 4', 'lv 24-28', 'Fortree, rainforest'),
+        (240, 0): ('GAP 5', 'lv 19-27', 'desert / rainforest seam')}
 
 def main():
     ap = argparse.ArgumentParser()
@@ -212,7 +214,7 @@ def main():
         xs = [p[0] for p in comp]; ys = [p[1] for p in comp]
         cx = (min(xs) + max(xs)) // 2 * S
         cy = (min(ys) + max(ys)) // 2 * S + HDR
-        name, lv, desc = GAPS[idx]
+        name, lv, desc = GAPS.get((min(xs), min(ys)), ('GAP', '', ''))
         big, small = F(int(S * 4.5), True), F(int(S * 2.2))
         line2 = f'{lv}  ·  {desc}'
         pad = S * 2
@@ -225,9 +227,11 @@ def main():
     T, ST = F(int(S * 5), True), F(int(S * 2.4))
     d.text((S * 2, int(S * 1.2)), 'OPEN HOENN  —  empty regions to populate', font=T,
            fill=(238, 242, 248))
+    fill = 100.0 * len(occ) / (W * H)
+    chunks = sum(n for n, _, _ in inland[:5]) / (64 * 64)
     d.text((S * 2, int(S * 7)),
-           f'vanilla Hoenn fills 40.0% of its {W}x{H} bounding box  ·  red = the five inland gaps, '
-           f'the priority  ·  ~13 chunks of 64x64  ·  the ocean gets a few small islands later',
+           f'{fill:.1f}% of its {W}x{H} bounding box is walkable map  ·  red = the inland gaps '
+           f'still empty, ~{chunks:.0f} chunks of 64x64  ·  the ocean gets a few small islands later',
            font=ST, fill=(150, 162, 180))
     canvas = canvas.convert('P', palette=Image.ADAPTIVE, colors=256)
     canvas.save(a.out, optimize=True)

@@ -8,8 +8,8 @@ mostly empty and open it up — and, more importantly, the same working method.
 | Base | [pret/pokeyellow](https://github.com/pret/pokeyellow) | [pret/pokeemerald](https://github.com/pret/pokeemerald) |
 | Language | assembly | C |
 | Verified build | `d9290db8…` vanilla | `f3ae0881…` vanilla |
-| World | 170×180 blocks, 35.4% filled at the start | 800×383 metatiles, 40.0% filled |
-| Status | 4 new maps built, 41.7% filled | surveyed, nothing built yet |
+| World | 170×180 blocks, 35.4% filled at the start | 800×383 metatiles, 40.0% filled at the start |
+| Status | 4 new maps built, 41.7% filled | Gap 1 built, 45.0% filled |
 
 Neither project needs a ROM. Both decompilations build a complete, byte-exact
 ROM from source and verify it themselves. Nothing in this repo distributes a

@@ -35,7 +35,13 @@ def gap_boxes():
                 occ[(xx - minx, yy - miny)] = k
     regs = [r for r in R.empty_regions(occ, W, H) if r[0] >= 2000]
     inland = [r for r in regs if len({k.replace('MAP_', '') for k in r[2]} & R.WATER) < 2]
-    return [(R.GAPS[i][0], comp) for i, (n, comp, bd) in enumerate(inland[:5])], occ, W, H
+    # GAPS is keyed by the region's top-left corner rather than by position in
+    # the size-sorted list, so filling one gap does not rename the others
+    out = []
+    for n, comp, bd in inland[:5]:
+        key = (min(x for x, _ in comp), min(y for _, y in comp))
+        out.append((R.GAPS.get(key, ('GAP ?',))[0], comp))
+    return out, occ, W, H
 
 def main():
     ap = argparse.ArgumentParser()
