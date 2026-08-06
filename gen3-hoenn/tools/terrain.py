@@ -25,9 +25,16 @@ sys.path.insert(0, HERE)
 import render_hoenn as R
 
 # --- terrain classes ------------------------------------------------------
-WATER, SAND, GRASS, TALL, PATH, TREE, CLIFF, OTHER = range(8)
+# PLATEAU is the walkable top of a mountain, CLIFF the impassable rock face.
+# Vanilla draws a mountain as terraces: a walkable top at a raised elevation,
+# ringed by rock at elevation 0, joined to the ground by a handful of ordinary
+# walkable tiles also at elevation 0. Lumping the two together made every
+# generated mountain a solid wall - Route 143 was 3,719 impassable cells with
+# no top at all.
+WATER, SAND, GRASS, TALL, PATH, TREE, CLIFF, OTHER, PLATEAU = range(9)
 CLASS_NAME = {WATER: 'water', SAND: 'sand', GRASS: 'grass', TALL: 'tall grass',
-              PATH: 'path', TREE: 'trees', CLIFF: 'cliff', OTHER: 'other'}
+              PATH: 'path', TREE: 'trees', CLIFF: 'cliff', OTHER: 'other',
+              PLATEAU: 'plateau'}
 # what the sketch pens mean in terms of classes
 PEN_CLASS = {'water': WATER, 'grass': GRASS, 'tall grass': TALL, 'path': PATH,
              'trees': TREE, 'cliff': CLIFF, 'building': OTHER, 'cave': CLIFF}
@@ -80,7 +87,7 @@ class Classifier:
                 # a green blocker is a tree; anything else solid reads as cliff
                 c = TREE if green else CLIFF
             elif b in MOUNTAIN_MB:
-                c = CLIFF
+                c = PLATEAU            # walkable mountain top, not a wall
             elif green:
                 c = GRASS
             elif r > 120 and g > 100 and bl < g:

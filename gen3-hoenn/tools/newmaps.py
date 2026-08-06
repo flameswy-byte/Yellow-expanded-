@@ -422,6 +422,124 @@ def build_classes(spec, wcls):
     repair_connectivity(grid, w, h)
     return grid
 
+# --- mountains as terraces -------------------------------------------------
+# Vanilla does not draw a mountain as a flat impassable blob. Route 115 has
+# ground at elevation 3 and plateaus at 5; Route 114 stacks 3, 4, 5 and 7. Each
+# terrace is a walkable top ringed by impassable rock at elevation 0, and the
+# only way up is a handful of ordinary walkable tiles also left at elevation 0 -
+# six of them on the whole of Route 115. Elevation is what separates the levels,
+# not the metatile: vanilla puts plain grass (0x001) at elevation 5 on a summit.
+#
+# Ours had none of this. Every generated mountain was solid: Route 143 was
+# 3,719 impassable cells with no walkable top at all, so its "mountain" was a
+# wall you could only walk around.
+GROUND_LEVEL = 3
+TIER_LEVELS = (5, 7)          # first and second terrace, as vanilla uses
+MIN_MASS = 80                 # a cliff smaller than this stays a plain rock
+MIN_TOP = 24                  # and a terrace smaller than this is not worth it
+WALK_CLASSES = (T.GRASS, T.TALL, T.PATH, T.SAND, T.PLATEAU)
+
+def _erode(cells, w, h):
+    """cells whose whole 8-neighbourhood is also in the set."""
+    return {i for i in cells
+            if all((i % w + dx, i // w + dy) != (-1, -1) and
+                   0 <= i % w + dx < w and 0 <= i // w + dy < h and
+                   (i // w + dy) * w + (i % w + dx) in cells
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1))}
+
+def terrace(grid, w, h):
+    """Turn solid cliff masses into walkable terraces, and return the elevation
+    of every cell. Also reports how many stairs were cut."""
+    level = [GROUND_LEVEL] * (w * h)
+    for i, c in enumerate(grid):
+        if c == T.WATER:
+            level[i] = 1
+        elif c in (T.TREE, T.CLIFF):
+            level[i] = 0
+
+    seen = [False] * (w * h)
+    stairs = 0
+    for start in range(w * h):
+        if seen[start] or grid[start] != T.CLIFF:
+            continue
+        mass, q = set(), [start]
+        seen[start] = True
+        while q:
+            i = q.pop()
+            mass.add(i)
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if 0 <= nx < w and 0 <= ny < h and not seen[j] and grid[j] == T.CLIFF:
+                    seen[j] = True
+                    q.append(j)
+        if len(mass) < MIN_MASS:
+            continue
+        tier = _erode(mass, w, h)
+        if len(tier) < MIN_TOP:
+            continue
+        for t, lv in enumerate(TIER_LEVELS):
+            for i in tier:
+                grid[i] = T.PLATEAU
+                level[i] = lv
+            if t + 1 >= len(TIER_LEVELS):
+                break
+            # the step between terraces is one cell of wall, not two: a stair
+            # is a single cell that has to touch both levels at once, and a
+            # two-cell wall left the upper terrace unreachable
+            # a three-cell band for the lower terrace, then one cell of wall.
+            # Eroding once for each left the lower level a single-cell ledge,
+            # which reads as a step rather than as ground you stand on.
+            step = tier
+            for _ in range(3):
+                step = _erode(step, w, h)
+            inner = _erode(step, w, h)
+            if len(inner) < MIN_TOP:
+                break
+            for i in step - inner:
+                grid[i] = T.CLIFF
+                level[i] = 0
+            tier = inner
+        stairs += cut_stairs(grid, level, mass, w, h)
+    return level, stairs
+
+def cut_stairs(grid, level, mass, w, h, want=2):
+    """Open a way up. A wall cell that touches the terrace on one side and the
+    ground on the other becomes an ordinary walkable tile at elevation 0, which
+    is compatible with both levels - exactly what vanilla's connectors are."""
+    tops = collections.defaultdict(set)
+    for i in mass:
+        if grid[i] == T.PLATEAU:
+            tops[level[i]].add(i)
+    cut = 0
+    for lv, top in sorted(tops.items()):
+        cand = []
+        for i in mass:
+            if grid[i] != T.CLIFF:
+                continue
+            x, y = i % w, i // w
+            nb = [(y+dy)*w + (x+dx) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                  if 0 <= x+dx < w and 0 <= y+dy < h]
+            if any(j in top for j in nb) and any(
+                    grid[j] in WALK_CLASSES and level[j] < lv for j in nb):
+                cand.append(i)
+        if not cand:
+            continue
+        # spread them out: take the two furthest apart, then any that are far
+        # from both, so a big terrace is not entered from one corner only
+        picked = [max(cand, key=lambda i: (i % w) + (i // w))]
+        while len(picked) < want and len(picked) < len(cand):
+            far = max(cand, key=lambda i: min(
+                abs(i % w - p % w) + abs(i // w - p // w) for p in picked))
+            if far in picked:
+                break
+            picked.append(far)
+        for i in picked:
+            grid[i] = T.GRASS
+            level[i] = 0
+            cut += 1
+    return cut
+
 # --- vegetation, targeted at vanilla's own proportions --------------------
 # Measured by tools/study.py across the 21 vanilla land routes, as a share of
 # each map's land rather than of the whole map - a route that is half sea is
@@ -523,6 +641,20 @@ def vegetate(grid, dist, rim, w, h, seed):
 JUMP_MB = {0x38: 'v', 0x39: 'v', 0x3A: 'h', 0x3B: 'h',
            0x3C: 'c', 0x3D: 'c', 0x3E: 'c', 0x3F: 'c'}
 MIN_LEDGE = 3
+
+def apply_levels(blocks, level, cls, w, h):
+    """Stamp the terrace elevations onto the painted blockdata.
+
+    Elevation is orthogonal to the metatile - vanilla puts the same grass tile
+    at 3 on the ground and 5 on a summit - so the painter picks the art and
+    this picks the level. The map's outermost ring is left alone: those cells
+    were copied from the neighbour across the seam and have to keep matching it.
+    """
+    for i, lv in enumerate(level):
+        x, y = i % w, i // w
+        if x == 0 or y == 0 or x == w-1 or y == h-1:
+            continue
+        blocks[i] = (blocks[i] & ~0xF000) | ((lv & 0xF) << 12)
 
 def tidy(blocks, w, h, spec):
     """Clean up what the per-cell painter cannot see: stray ledges and stray
@@ -1061,7 +1193,9 @@ def main():
     built = {}
     for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
+        level, stairs = terrace(cls, spec['w'], spec['h'])
         blocks = painter.paint(cls, spec['w'], spec['h'])
+        apply_levels(blocks, level, cls, spec['w'], spec['h'])
         nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
         built[spec['const']] = blocks
         n = collections.Counter(cls)
@@ -1069,8 +1203,9 @@ def main():
                         for k, v in n.most_common() if 100*v//len(cls))
         print(f'  {spec["name"]}  {spec["w"]}x{spec["h"]}  '
               f'buffer {(spec["w"]+15)*(spec["h"]+14)}/10240   {mix}')
-        if nl or ne:
-            print(f'            tidied {nl} stray ledges, {ne} stray elevations')
+        if nl or ne or stairs:
+            print(f'            tidied {nl} ledges, {ne} elevations; '
+                  f'{stairs} stairs cut')
         write_map(spec, blocks, dry)
 
     # A declared connection with no crossable cell is worse than no

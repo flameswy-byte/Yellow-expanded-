@@ -325,6 +325,65 @@ The lesson is the one this project keeps relearning: a single crop cannot tell
 you a map is wrong. Route 135 was fine at every stage; Route 139 was two
 orders of magnitude off and looked much the same.
 
+### How vanilla draws a mountain
+
+`tools/study.py` and a walk over the elevation bits answered this. Vanilla does
+not draw a mountain as a flat impassable blob — it draws **terraces**.
+
+Route 115 has ground at elevation 3 and plateaus at 5. Route 114 stacks 3, 4, 5
+and 7. Route 120 uses 3 and 5, Route 119 uses 3 and 4. Each terrace is a
+walkable top ringed by impassable rock at elevation 0, and the only way up is a
+handful of ordinary walkable tiles *also* left at elevation 0 — six of them on
+the whole of Route 115, all `MB_NORMAL`.
+
+The mechanism is `elev_ok`: two cells at different non-zero elevations cannot be
+walked between, but elevation 0 is compatible with anything. So a terrace is
+made by elevation, not by the metatile — vanilla puts plain grass (`0x001`) at
+elevation 5 on a summit, and the same tile at 3 on the ground below.
+
+Ours had none of it. Every generated map used elevations 0, 1 and 3 only, and
+every cliff was solid:
+
+```
+ROUTE143   3,719 impassable cells,     0 walkable top
+ROUTE148   2,401 impassable cells,     0 walkable top
+```
+
+A mountain you can only walk around is a wall.
+
+`terrace()` now rebuilds them. Every cliff mass of 80 cells or more is eroded:
+the interior becomes a walkable plateau at elevation 5, and if a further
+erosion still leaves a worthwhile area, a second terrace at 7 sits inside a
+one-cell wall. `cut_stairs()` then opens the way up — a wall cell that touches
+the terrace on one side and lower ground on the other becomes an ordinary
+walkable tile at elevation 0, which is exactly what vanilla's connectors are.
+Stairs are placed at the two points furthest apart, which is the earlier rule
+about cliffs needing at least two access points on opposite ends.
+
+```
+ROUTE143   2,652 walkable terrace cells at 5 and 7, 12 stairs, 100% reachable
+ROUTE148   1,737                                     8 stairs, 100% reachable
+ROUTE144   1,125                                     6 stairs, 100% reachable
+```
+
+Two things this needed:
+
+**A new terrain class.** The classifier had been calling a walkable mountain
+top and a solid rock face the same thing, so the painter could never draw the
+difference. `PLATEAU` is now separate from `CLIFF`, and relearning splits
+cleanly: 1,713 plateau cells (`071/c0`) against 20,840 cliff (`071/c1`, `073`,
+`07C`).
+
+**Elevation applied separately from art.** Since elevation is orthogonal to the
+metatile, `apply_levels()` stamps it on after painting rather than hoping the
+learned model produces the right one. The map's outermost ring is left alone —
+those cells were copied from the neighbour across the seam and have to keep
+matching it.
+
+The wall between terraces has to be exactly one cell. At two cells thick no
+single stair can touch both levels, and the upper terrace came out at 26%
+reachable — the lower band was fine, so the map looked right and was not.
+
 ### Softening the old borders
 
 Every vanilla map ends in a hard line of trees or rock, because it used to end
