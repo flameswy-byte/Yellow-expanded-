@@ -111,18 +111,33 @@ wants it. At 80×80 the same space is about 29 chunks.
 
 ### Inland gaps — about 13 chunks
 
-Holes between existing land routes. These are the natural first targets.
+Holes between existing land routes, and the priority. Level bands are from
+`land_mons` in `src/data/wild_encounters.json`; fishing and surfing are excluded
+because they span the whole game and tell you nothing about where an area sits.
 
-| Empty | Chunks | Borders |
-|---|---|---|
-| 15,360 | 3.8 | Route 105, 103, **Littleroot**, 108 |
-| 12,500 | 3.1 | Route 103, 116, 117, 110 |
-| 12,120 | 3.0 | Route 116, 114, 112, 113 |
-| 7,200 | 1.8 | Route 119, 120, 123, **Fortree** |
-| 5,600 | 1.4 | Route 111, 119, 118 |
+| # | Empty | Chunks | Biggest clean rect | Level band | Borders |
+|---|---|---|---|---|---|
+| 1 | 15,360 | 3.8 | ~56×112 | **2–4** | **Littleroot**, Route 103, and the water Routes 105/107/108 |
+| 2 | 12,500 | 3.1 | ~80×88 | **2–14** | Route 103, 104, 116, 117, 110 |
+| 3 | 12,120 | 3.0 | ~56×104 | **6–18** | Route 116, 114, 112, 113, **Lavaridge** |
+| 5 | 5,600 | 1.4 | ~40×112 | **19–27** | Route 111, 119, 118 |
+| 4 | 7,200 | 1.8 | ~40×112 | **24–28** | Route 119, 120, 123, **Fortree** |
 
-The first borders Littleroot, which gives the same "testable seconds into a new
-game" property the Kanto project wanted and never quite got.
+**They form a difficulty ladder on their own.** Ordered by level band the gaps
+run 2–4, 2–14, 6–18, 19–27, 24–28, which tracks Hoenn's own progression. Each
+one can be built to suit its neighbourhood rather than needing a global answer
+to the level-curve question, and they can be populated in that order.
+
+Tileset context, which constrains what each can look like without new art:
+
+- **Gap 1** — Petalburg and Dewford. Coastal: three of its five neighbours are
+  water routes, so this is a shoreline gap, not a landlocked one. Also the only
+  gap adjacent to the starting town.
+- **Gap 2** — Petalburg, Rustboro, Mauville. The early-game corridor.
+- **Gap 3** — Rustboro, Fallarbor, Lavaridge. Volcanic and ash terrain.
+- **Gap 5** — Mauville and Fortree: the seam between Route 111's desert and
+  Route 119's rainforest. A 40-wide north–south strip.
+- **Gap 4** — Fortree and Lilycove. Rainforest.
 
 ### Open ocean — about 31 chunks
 
@@ -135,8 +150,14 @@ coastline, and filling it with land would misread what it is.
 | 40,400 | 9.9 | Route 123, 126, 110, Lilycove |
 | 37,600 | 9.2 | Route 125, 124, 120, Lilycove |
 
-Islands, archipelago, underwater — or left as water. A different design problem
-from the inland gaps and worth treating separately.
+**Decided:** a few small islands to break up the monotony, rather than trying to
+fill it. The rest stays water. Each island is independent of the others and of
+the inland work, so this can wait until the gaps are done.
+
+Vanilla already layers underwater maps over surface ones via Dive — Underwater
+Route 126 occupies the same world coordinates as Route 126. That is effectively
+a second Z level costing no horizontal space, and worth exploiting rather than
+working around.
 
 ---
 
