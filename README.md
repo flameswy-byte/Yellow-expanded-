@@ -9,11 +9,24 @@ mostly empty and open it up — and, more importantly, the same working method.
 | Language | assembly | C |
 | Verified build | `d9290db8…` vanilla | `f3ae0881…` vanilla |
 | World | 170×180 blocks, 35.4% filled at the start | 800×383 metatiles, 40.0% filled at the start |
-| Status | 4 new maps built, 41.7% filled | Gap 1 built, 45.0% filled |
+| Status | 4 new maps built, 41.7% filled | all 5 inland gaps built, 56.8% filled |
 
 Neither project needs a ROM. Both decompilations build a complete, byte-exact
 ROM from source and verify it themselves. Nothing in this repo distributes a
 game; the built ROMs are gitignored and stay out of it.
+
+What a hack ships is a **patch**, not a ROM — the built `.gba` is a complete
+copy of the commercial game with the changes applied. `gen3-hoenn/tools/
+make_patch.py` diffs a vanilla build against a modified one and emits IPS,
+which the player applies to a ROM they already own. Build vanilla for the
+baseline the same way you build anything else here:
+
+```bash
+git worktree add /tmp/vanilla <commit-before-your-changes>
+cd /tmp/vanilla/gen3-hoenn/pokeemerald && make      # sha1 f3ae0881…
+python3 gen3-hoenn/tools/make_patch.py /tmp/vanilla/…/pokeemerald.gba \
+    gen3-hoenn/pokeemerald/pokeemerald.gba -o openhoenn.ips
+```
 
 ## Building
 
