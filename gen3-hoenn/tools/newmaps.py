@@ -609,33 +609,56 @@ def cut_stairs(grid, level, mass, w, h, want=2):
             placed.append((i, wide))
     return placed
 
-# Vanilla does not leave a terrace as bare rock. Route 115's plateaus at
-# elevation 5 are about half plain grass (0x001) and half rock, with patches of
-# long grass on top; the summit is somewhere you walk, not a slab. These run
-# lower than the ground-level targets because a mountain top is still rockier
-# than a field.
-TERRACE_GRASS = 0.45
-TERRACE_TALL = 0.07
+# Vanilla does not leave every terrace as bare rock, but nor does it speckle
+# grass across one. A summit has a consistent surface: some plateaus are rock
+# all over, others are grass all over with patches of long grass on them, and
+# the two kinds sit on different terraces. Route 115's plateaus at elevation 5
+# come out about half and half by area.
+#
+# Speckling grass over rock produced 515 cells where grass met bare mountain
+# top - vanilla has 45 in the whole game, across 49 maps - and because both
+# sides are flat fill tiles with no transition between them, every one of those
+# was a hard arbitrary edge.
+GRASS_TOP_CHANCE = 0.5
+TERRACE_TALL = 0.16
 
 def vegetate_terraces(grid, level, w, h, seed):
-    """Put grass on the summits. Runs after terrace(), so it has to keep each
-    cell's elevation - a grass tile at elevation 5 is exactly what vanilla puts
-    on a plateau, and dropping it to 3 would sink the terrace into the map."""
-    tiers = collections.defaultdict(list)
-    for i, c in enumerate(grid):
-        if c == T.PLATEAU:
-            tiers[level[i]].append(i)
-    for lv, cells in tiers.items():
-        if len(cells) < 12:
+    """Decide each terrace's surface as a whole, not cell by cell.
+
+    Runs after terrace(), so it has to keep each cell's elevation - a grass
+    tile at elevation 5 is exactly what vanilla puts on a plateau, and dropping
+    it to 3 would sink the terrace into the map.
+    """
+    seen = [False] * (w * h)
+    for start in range(w * h):
+        if seen[start] or grid[start] != T.PLATEAU:
             continue
-        rank = sorted(cells, key=lambda i: -T.fbm(i % w, i // w, seed + 91 + lv,
-                                                  octaves=2, freq=0.07))
-        n_grass = int(TERRACE_GRASS * len(cells))
-        n_tall = int(TERRACE_TALL * len(cells))
-        for i in rank[:n_grass]:
+        comp, q, lv = [], [start], level[start]
+        seen[start] = True
+        while q:
+            i = q.pop()
+            comp.append(i)
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and not seen[j]
+                        and grid[j] == T.PLATEAU and level[j] == lv):
+                    seen[j] = True
+                    q.append(j)
+        if len(comp) < 12:
+            continue
+        x0, y0 = comp[0] % w, comp[0] // w
+        if T.fbm(x0, y0, seed + 91, octaves=1, freq=0.21) > GRASS_TOP_CHANCE:
+            continue                       # this one stays a rock summit
+        for i in comp:
             grid[i] = T.GRASS
-        for i in rank[:n_tall]:
-            grid[i] = T.TALL
+        n_tall = int(TERRACE_TALL * len(comp))
+        if n_tall:
+            rank = sorted(comp, key=lambda i: -T.fbm(i % w, i // w,
+                                                     seed + 97 + lv,
+                                                     octaves=1, freq=0.09))
+            for i in rank[:n_tall]:
+                grid[i] = T.TALL
 
 # --- vegetation, targeted at vanilla's own proportions --------------------
 # Measured by tools/study.py across the 21 vanilla land routes, as a share of
@@ -737,7 +760,65 @@ def vegetate(grid, dist, rim, w, h, seed):
 # south across one that runs horizontally
 JUMP_MB = {0x38: 'v', 0x39: 'v', 0x3A: 'h', 0x3B: 'h',
            0x3C: 'c', 0x3D: 'c', 0x3E: 'c', 0x3F: 'c'}
-MIN_LEDGE = 3
+MIN_LEDGE = 4     # strays only; the deliberate runs are stamped after tidy
+
+# Vanilla's ledge is 0x087, MB_JUMP_SOUTH, collision 1 at elevation 3 - you hop
+# down over it southward and cannot come back. It is not a way off a cliff:
+# 179 of them have ordinary grass at elevation 3 both above and below, so they
+# are shortcuts across flat ground. Runs are horizontal, median 4 cells, and
+# 21 vanilla routes carry 74 of them between them.
+LEDGE_TILE = 0x087
+LEDGE_MIN, LEDGE_MAX = 3, 8
+LEDGE_PER_MAP = 3
+LEDGE_APART = 12
+
+def place_ledges(grid, level, w, h, seed):
+    """Pick a few horizontal runs of flat ground to turn into ledges.
+
+    A ledge only makes sense where the player can stand above it and land
+    below, so both rows have to be walkable and at the same elevation, and the
+    landing row must not itself be a ledge or a wall.
+    """
+    def open_at(i):
+        return grid[i] in (T.GRASS, T.TALL, T.PATH, T.SAND)
+
+    runs = []
+    for y in range(2, h - 2):
+        x = 1
+        while x < w - 1:
+            n = 0
+            while (x + n < w - 1 and n < LEDGE_MAX
+                   and open_at((y)*w + x + n)
+                   and open_at((y-1)*w + x + n) and open_at((y+1)*w + x + n)
+                   and level[(y)*w + x + n] == GROUND_LEVEL
+                   and level[(y-1)*w + x + n] == GROUND_LEVEL
+                   and level[(y+1)*w + x + n] == GROUND_LEVEL):
+                n += 1
+            if n >= LEDGE_MIN:
+                runs.append((x, y, n))
+                x += n
+            x += 1
+    if not runs:
+        return []
+    runs.sort(key=lambda r: -(r[2] + 3 * T.fbm(r[0], r[1], seed + 131,
+                                               octaves=1, freq=0.08)))
+    picked = []
+    for x, y, n in runs:
+        if len(picked) >= LEDGE_PER_MAP:
+            break
+        if any(abs(x - px) + abs(y - py) <= LEDGE_APART for px, py, _ in picked):
+            continue
+        # vanilla's runs have a median of 4, not a maximum of 8. Taking the
+        # longest run available every time gave every ledge the same length
+        # and twice vanilla's ledge count by area.
+        u = T.fbm(x, y, seed + 137, octaves=1, freq=0.3)
+        picked.append((x, y, min(n, LEDGE_MIN + int((LEDGE_MAX - LEDGE_MIN + 1) * u * u))))
+    return picked
+
+def stamp_ledges(blocks, ledges, w, h):
+    for x, y, n in ledges:
+        for k in range(n):
+            blocks[y*w + x + k] = LEDGE_TILE | (1 << 10) | (GROUND_LEVEL << 12)
 
 def stamp_stairs(blocks, stairs, w, h):
     """Lay vanilla's staircase art over the cells cut_stairs opened."""
@@ -761,6 +842,76 @@ def apply_levels(blocks, level, cls, w, h):
         if x == 0 or y == 0 or x == w-1 or y == h-1:
             continue
         blocks[i] = (blocks[i] & ~0xF000) | ((lv & 0xF) << 12)
+
+def final_check(blocks, w, h, beh_cache=[]):
+    """Last word on reachability, run against the blockdata as it will ship.
+
+    terrace() and ensure_reachable() work on the class grid, but tidy(),
+    apply_levels() and the ledges all run afterwards and can move a cell. The
+    only check that counts is the one on the bytes that go in the ROM. Small
+    stranded pockets are snapped down to ground level - they are strays, not
+    terraces - and anything larger gets a notch opened into it.
+    """
+    E = lambda i: (blocks[i] >> 12) & 0xF
+    C = lambda i: (blocks[i] >> 10) & 3
+    walk = lambda i: C(i) == 0
+    fixed = 0
+    for _ in range(4):
+        q = collections.deque(i for i in range(w * h) if walk(i) and E(i) == GROUND_LEVEL)
+        seen = set(q)
+        while q:
+            i = q.popleft()
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in seen and walk(j)
+                        and _elev_ok(E(i), E(j))):
+                    seen.add(j)
+                    q.append(j)
+        lost = [i for i in range(w * h)
+                if walk(i) and E(i) in TIER_LEVELS and i not in seen]
+        if not lost:
+            break
+        # group them, then deal with each pocket on its size
+        left = set(lost)
+        while left:
+            start = next(iter(left))
+            comp, st = set(), [start]
+            left.discard(start)
+            while st:
+                i = st.pop()
+                comp.add(i)
+                x, y = i % w, i // w
+                for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                    j = ny*w + nx
+                    if j in left and _elev_ok(E(i), E(j)):
+                        left.discard(j)
+                        st.add(j) if isinstance(st, set) else st.append(j)
+            if len(comp) <= 8:
+                for i in comp:
+                    blocks[i] = (blocks[i] & ~0xF000) | (GROUND_LEVEL << 12)
+                    fixed += 1
+            else:
+                for i in sorted(comp):
+                    x, y = i % w, i // w
+                    done = False
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        j = (y+dy)*w + (x+dx)
+                        if not (0 <= x+dx < w and 0 <= y+dy < h) or walk(j):
+                            continue
+                        for ex, ey in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                            m = (y+dy+ey)*w + (x+dx+ex)
+                            if (0 <= x+dx+ex < w and 0 <= y+dy+ey < h
+                                    and m in seen and walk(m)):
+                                blocks[j] = STAIR_NOTCH
+                                fixed += 1
+                                done = True
+                                break
+                        if done:
+                            break
+                    if done:
+                        break
+    return fixed
 
 def tidy(blocks, w, h, spec):
     """Clean up what the per-cell painter cannot see: stray ledges and stray
@@ -1301,20 +1452,25 @@ def main():
         cls = build_classes(spec, wcls)
         level, stairs = terrace(cls, spec['w'], spec['h'])
         vegetate_terraces(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
+        ledges = place_ledges(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
         blocks = painter.paint(cls, spec['w'], spec['h'])
         stamp_stairs(blocks, stairs, spec['w'], spec['h'])
         apply_levels(blocks, level, cls, spec['w'], spec['h'])
         wide = sum(1 for _, wd in stairs if wd)
         nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
+        # after tidy, so raising its stray-ledge threshold cannot eat these
+        stamp_ledges(blocks, ledges, spec['w'], spec['h'])
+        nf = final_check(blocks, spec['w'], spec['h'])
         built[spec['const']] = blocks
         n = collections.Counter(cls)
         mix = ', '.join(f'{100*v//len(cls)}% {T.CLASS_NAME[k]}'
                         for k, v in n.most_common() if 100*v//len(cls))
         print(f'  {spec["name"]}  {spec["w"]}x{spec["h"]}  '
               f'buffer {(spec["w"]+15)*(spec["h"]+14)}/10240   {mix}')
-        if nl or ne or stairs:
+        if nl or ne or stairs or ledges or nf:
             print(f'            tidied {nl} ledges, {ne} elevations; '
-                  f'{len(stairs)} stairs cut ({wide} staircases)')
+                  f'{len(stairs)} stairs ({wide} staircases), {len(ledges)} ledges'
+                  + (f', {nf} cells repaired' if nf else ''))
         write_map(spec, blocks, dry)
 
     # A declared connection with no crossable cell is worse than no

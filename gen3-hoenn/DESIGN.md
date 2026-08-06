@@ -405,6 +405,54 @@ and puts grass on the summits, keeping each cell's elevation — a grass tile at
 elevation 5 is exactly what vanilla puts on a plateau, and dropping it to 3
 would sink the terrace into the map.
 
+### Ledges
+
+Vanilla's ledge is `0x087`, `MB_JUMP_SOUTH`, collision 1 — you hop south over
+it and cannot come back. The surprise is where they go: **179 of them have
+ordinary grass at elevation 3 both above and below**, so they are not a way off
+a cliff at all, they are shortcuts across flat ground. Runs are horizontal,
+median 4 cells, and 34 vanilla routes carry 409 ledge cells between them, 12 to
+a map.
+
+`place_ledges()` finds horizontal stretches of flat ground with walkable ground
+above and below at the same elevation, takes three per map spaced well apart,
+and cuts each to a length drawn from noise. Taking the longest run available
+every time gave every ledge the same length and twice vanilla's density by
+area. Ours now: 12 per map, median run 4, matching.
+
+They are stamped **after** `tidy()`, so the stray-ledge threshold there can be
+raised to four without eating the deliberate ones.
+
+### A terrace has one surface
+
+Grass was being speckled across the plateaus cell by cell. That produced **515
+cells where grass met bare mountain top; vanilla has 45 in the whole game**, and
+since both sides are flat fill tiles with nothing between them, every one was a
+hard arbitrary edge.
+
+Vanilla's rule is per-terrace, not per-cell: some plateaus are rock all over,
+others are grass all over with patches of long grass on them, and the two kinds
+sit on different terraces — Route 115's plateaus come out about half and half by
+area. `vegetate_terraces()` now decides each connected terrace's surface as a
+whole. Down to 16.
+
+The rock-wall base variants were checked at the same time and were already
+right: vanilla puts `RockWall_GrassBase` on grass and `_RockBase` on rock, and
+so did we, because the learned model had picked that up on its own.
+
+### Verify on the bytes that ship
+
+`terrace()` and `ensure_reachable()` work on the class grid, but `tidy()`,
+`apply_levels()` and the ledges all run afterwards and can move a cell. Checking
+the class grid said every terrace was reachable; checking the **blockdata**
+found five maps where it was not — mostly single stray cells left at elevation
+5 in the middle of ordinary ground, and two real pockets.
+
+`final_check()` now floods the finished blockdata the way the player would.
+Pockets of eight cells or fewer are strays and get snapped down to ground level;
+anything larger gets a notch opened into it. Maps with an unreachable terrace,
+measured on the bytes that go in the ROM: **0**.
+
 ### Furniture the map cannot honour
 
 The painter was emitting signposts, doors and secret-base cave mouths, because
