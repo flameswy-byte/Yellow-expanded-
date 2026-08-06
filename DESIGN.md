@@ -66,6 +66,22 @@ Three consequences worth internalising:
 irregular shorelines. But tile graphics are effectively full at 93/96, so a
 genuinely new terrain type would have to displace existing art.
 
+*Those 128 slots are not free of charge.* `DrawTileBlock` computes the offset as
+`id * 16` by nibble swap with no bounds check, so IDs `$80`–`$ff` work natively.
+The obstacle is placement: the tileset header is `db BANK(\1_GFX)` followed by
+`dw Block, GFX, Coll` — **one bank byte covering all three** — so the blockset
+must share a bank with the tileset graphics. `Overworld` lives in `Tilesets 1`,
+which occupies the whole of bank 25 with **0 bytes free**. Growing
+`overworld.bst` therefore means relocating the Overworld group (1,504 bytes of
+graphics + 32 padding + the blockset, so ~3.6 KB now and ~5.6 KB at the full
+256 blocks) into a bank with room. Bank 23 has 8,352 contiguous bytes free.
+That is a section move in `gfx/tilesets.asm` — data layout, not engine code, so
+it stays inside the §0 scope decision.
+
+The other half of the cost is the editor: `kanto_editor.html` bakes the tileset
+and blockset in as base64, so any blockset change needs that data regenerated
+rather than hand-edited.
+
 **One tileset and one encounter table per map.** A map cannot mix forest and
 cave block palettes, and every patch of grass in it rolls from the same table.
 This is the main reason to keep maps at region scale rather than merging half of

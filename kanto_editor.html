@@ -56,7 +56,14 @@ button:focus-visible,select:focus-visible,input:focus-visible,#palette canvas:fo
 .warn{color:var(--amber)}
 .ok{color:var(--ok)}
 /* what you are painting with, always visible */
-.swatch{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+/* the palette eats the screen on a phone, so it folds away; the header swatch
+   doubles as the handle for it */
+.sectoggle{background:none;border:0;padding:0;width:100%;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit}
+.sectoggle span{color:var(--accent);font-size:13px;line-height:1}
+aside.collapsed #palette{display:none}
+.swatch{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);cursor:pointer}
 .swatch canvas{width:26px;height:26px;image-rendering:pixelated;display:block;
   border:1px solid var(--accent);border-radius:2px}
 .swatch b{color:var(--ink);font-weight:600}
@@ -91,9 +98,9 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padd
     <button id="cpblk" title="Base64 of the blockdata — paste it back into chat">Copy .blk</button>
   </header>
 
-  <aside>
+  <aside id="palPanel">
     <div class="sec">
-      <h2>Blocks</h2>
+      <h2><button id="palToggle" class="sectoggle" aria-expanded="true">Blocks<span id="palCaret">&#9662;</span></button></h2>
       <div id="palette"></div>
     </div>
   </aside>
@@ -268,7 +275,10 @@ function initPalette(){
     c.title = 'block $' + i.toString(16).padStart(2,'0');
     c.tabIndex = 0;
     if (i === sel) c.classList.add('on');
-    const pick = () => setSel(i);
+    const pick = () => {
+      setSel(i);
+      if (window.innerWidth < 900) setPalOpen(false);  // get straight back to the map
+    };
     c.onclick = pick;
     c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(); } };
     p.appendChild(c);
@@ -495,6 +505,14 @@ function fallback(txt, done){
   done(ok);
 }
 
+function setPalOpen(open){
+  $('palPanel').classList.toggle('collapsed', !open);
+  $('palToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+  $('palCaret').innerHTML = open ? '&#9662;' : '&#9656;';
+  scrollToMap();               // the stage just changed size
+}
+const palOpen = () => !$('palPanel').classList.contains('collapsed');
+
 // ---- wiring ----------------------------------------------------------------
 function initUI(){
   initPalette();
@@ -548,8 +566,12 @@ function initUI(){
     if ((e.ctrlKey||e.metaKey) && e.key === 'z'){ e.preventDefault(); $('undo').click(); }
     if ((e.ctrlKey||e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))){ e.preventDefault(); $('redo').click(); }
   });
+  $('palToggle').onclick = () => setPalOpen(!palOpen());
+  document.querySelector('.swatch').onclick = () => setPalOpen(!palOpen());
+
   loadMap('Route1');
   setSel(sel);
+  setPalOpen(window.innerWidth >= 900);   // folded away by default on a phone
 }
 boot();
 </script>
