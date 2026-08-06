@@ -199,14 +199,25 @@ function sketchText(){
     if (s.kind === 'erase') continue;
     if (s.kind === 'label'){
       const m = toMeta(s.p[0], s.p[1]);
-      out.strokes.push({pen: 'label', text: s.text, at: m.map(v => +v.toFixed(1))});
+      out.strokes.push({pen: 'label', text: s.text, at: m.map(Math.round)});
     } else {
-      const pts = s.p.filter((_, i) => i % 3 === 0 || i === s.p.length - 1)
-                     .map(q => toMeta(q[0], q[1]).map(v => +v.toFixed(1)));
-      out.strokes.push({pen: s.label, points: pts});
+      // Thin hard and round to whole metatiles. A placeholder does not need
+      // sub-tile precision, and an over-long paste gets truncated in transit —
+      // which is how the first sketch lost its tail.
+      const raw = s.p.filter((_, i) => i % 5 === 0 || i === s.p.length - 1)
+                     .map(q => toMeta(q[0], q[1]).map(Math.round));
+      const pts = raw.filter((q, i) => i === 0 || q[0] !== raw[i-1][0] || q[1] !== raw[i-1][1]);
+      if (pts.length) out.strokes.push({pen: s.label, points: pts});
     }
   }
   return JSON.stringify(out);
+}
+function sizeHint(){
+  const n = sketchText().length;
+  $('hint').textContent = n > 7000
+    ? `sketch is ${(n/1000).toFixed(1)}k characters — long pastes can get truncated, `
+      + 'consider copying one gap at a time'
+    : `sketch is ${(n/1000).toFixed(1)}k characters`;
 }
 function copyText(t){
   const done = ok => { const b = $('copy');
@@ -256,7 +267,7 @@ function boot(){
   $('zOut').onclick = () => setZoom(-1);
   $('undo').onclick = () => { strokes.pop(); repaint(); };
   $('clr').onclick = () => { if (confirm('Clear the whole sketch?')){ strokes = []; repaint(); } };
-  $('copy').onclick = () => copyText(sketchText());
+  $('copy').onclick = () => { copyText(sketchText()); sizeHint(); };
   $('png').onclick = () => {
     const c = document.createElement('canvas');
     c.width = IW; c.height = IH;
