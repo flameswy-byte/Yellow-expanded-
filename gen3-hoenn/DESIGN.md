@@ -480,6 +480,47 @@ It is deliberately not pushed to 83%. A fully walled coast is one the player can
 never launch a surf from, and `check_seams` has to keep reaching 62 of 63 maps —
 it still does. Ours sits at 53%.
 
+### The fallback rate as a bug detector
+
+Once the painter reports whether each cell's 3×3 neighbourhood exists in the
+learned table, a high rate for one class is a precise statement: *this shape is
+not one vanilla draws*. Working down the list found a real defect every time.
+
+Cliff sat at 50%. Dumping the failing neighbourhoods named the culprit
+immediately — the commonest was
+
+```
+PPP        plateau
+###        a one-cell wall
+PPP        plateau
+```
+
+which **vanilla uses exactly zero times**. Vanilla's rock face has height: 577
+of its cliff cells have plateau above and cliff below, against 77 with plateau
+on both sides, and only 30% of its vertical cliff runs are a single row against
+our 47%.
+
+So the terrace walls are two cells thick now, not one. That in turn forces the
+staircases to be **2×2** — which is what vanilla's are, `0AF`/`0CF` over two
+rows, something the earlier one-row reading had missed. And it re-broke
+`ensure_reachable()`, because a one-cell notch cannot bridge a two-cell wall;
+it carves a passage now, by 0-1 BFS through the thinnest part.
+
+Cliff fallback: **50.3% → 13.3%**, with every terrace still reachable.
+
+| class | fell back | |
+|---|---|---|
+| water | 1.8% | |
+| plateau | 4.1% | |
+| grass | 8.0% | |
+| trees | 9.3% | |
+| cliff | 13.3% | was 50.3% |
+| shallow | 16.3% | was 70.9% |
+| tall grass | 16.8% | |
+| sand | 24.4% | |
+| pond | 42.3% | 182 cells |
+| path | 66.3% | expected — vanilla never draws a one-cell-wide path |
+
 ### Ledges
 
 Vanilla's ledge is `0x087`, `MB_JUMP_SOUTH`, collision 1 — you hop south over

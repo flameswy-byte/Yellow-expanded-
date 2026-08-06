@@ -630,7 +630,7 @@ def shoreline(grid, rim, w, h, seed):
 # wall you could only walk around.
 GROUND_LEVEL = 3
 TIER_LEVELS = (5, 7)          # first and second terrace, as vanilla uses
-MIN_MASS = 80                 # a cliff smaller than this stays a plain rock
+MIN_MASS = 150                # a cliff smaller than this stays a plain rock
 MIN_TOP = 24                  # and a terrace smaller than this is not worth it
 WALK_CLASSES = (T.GRASS, T.TALL, T.PATH, T.SAND, T.PLATEAU, T.SHALLOW)
 
@@ -656,6 +656,7 @@ def terrace(grid, w, h):
 
     seen = [False] * (w * h)
     stairs = []
+    masses = []
     for start in range(w * h):
         if seen[start] or grid[start] != T.CLIFF:
             continue
@@ -672,7 +673,10 @@ def terrace(grid, w, h):
                     q.append(j)
         if len(mass) < MIN_MASS:
             continue
-        tier = _erode(mass, w, h)
+        # a two-cell wall, because vanilla's rock face has height: 577 of its
+        # cliff cells have plateau above and cliff below, and the one-cell
+        # version produced PPP/###/PPP, a pattern vanilla uses exactly 0 times
+        tier = _erode(_erode(mass, w, h), w, h)
         if len(tier) < MIN_TOP:
             continue
         for t, lv in enumerate(TIER_LEVELS):
@@ -684,22 +688,52 @@ def terrace(grid, w, h):
             # the step between terraces is one cell of wall, not two: a stair
             # is a single cell that has to touch both levels at once, and a
             # two-cell wall left the upper terrace unreachable
-            # a three-cell band for the lower terrace, then one cell of wall.
-            # Eroding once for each left the lower level a single-cell ledge,
-            # which reads as a step rather than as ground you stand on.
+            # a three-cell band of lower terrace, then two cells of wall again
             step = tier
             for _ in range(3):
                 step = _erode(step, w, h)
-            inner = _erode(step, w, h)
+            inner = _erode(_erode(step, w, h), w, h)
             if len(inner) < MIN_TOP:
                 break
             for i in step - inner:
                 grid[i] = T.CLIFF
                 level[i] = 0
             tier = inner
+        masses.append(mass)
+    # thicken before cutting stairs, or the thickening walls the stairs back up
+    thicken_cliffs(grid, level, w, h)
+    for mass in masses:
         stairs += cut_stairs(grid, level, mass, w, h)
     stairs += ensure_reachable(grid, level, w, h)
     return level, stairs
+
+def thicken_cliffs(grid, level, w, h):
+    """Give a rock face some height.
+
+    Vanilla's cliffs are masses, not lines: 49% of its cliff cells have cliff
+    both above and below, and only 30% of its vertical runs are a single row.
+    Ours were 27% and 47% - nearly half our rock was one row tall, a shape the
+    painter had never seen, which is most of why 50% of cliff cells were
+    falling past the 3x3 lookup.
+    """
+    add = []
+    for i, c in enumerate(grid):
+        if c != T.CLIFF:
+            continue
+        x, y = i % w, i // w
+        if y == 0 or y + 2 >= h:
+            continue
+        if grid[(y-1)*w + x] == T.CLIFF or grid[(y+1)*w + x] == T.CLIFF:
+            continue                       # already part of a taller run
+        # grow downward, which is the side the face is drawn on, and only into
+        # open ground - never into water, a path or another map's rim
+        j = (y+1)*w + x
+        if grid[j] in (T.GRASS, T.TALL):
+            add.append(j)
+    for j in add:
+        grid[j] = T.CLIFF
+        level[j] = 0
+    return len(add)
 
 def _elev_ok(a, b):
     return a == b or 0 in (a, b) or 15 in (a, b)
@@ -707,13 +741,17 @@ def _elev_ok(a, b):
 def ensure_reachable(grid, level, w, h):
     """No terrace ships unreachable.
 
-    cut_stairs picks the prettiest site it can find, and on a terrace with no
-    two-cell horizontal wall it falls back to a single notch that does not
-    always connect. This checks the result the way the player would - flood the
-    ground, respecting elevation - and opens a plain notch into anything still
-    stranded."""
+    cut_stairs picks the prettiest site it can find and does not always find
+    one. This checks the result the way the player would - flood the ground,
+    respecting elevation - and cuts a passage into anything still stranded.
+
+    It carves a path rather than a single cell: the wall between two terraces
+    is two cells thick, and a one-cell notch cannot bridge it. That was the
+    bug the first version had, and it came back the moment the walls got their
+    proper height.
+    """
     extra = []
-    for _ in range(6):                       # each pass can expose the next tier
+    for _ in range(8):
         seen = set()
         q = collections.deque(i for i in range(w * h)
                               if grid[i] in WALK_CLASSES and level[i] == GROUND_LEVEL)
@@ -730,23 +768,42 @@ def ensure_reachable(grid, level, w, h):
         stranded = [i for i in range(w * h) if grid[i] == T.PLATEAU and i not in seen]
         if not stranded:
             break
-        want = set(stranded)
-        cut = None
-        for i in range(w * h):
-            if grid[i] != T.CLIFF:
-                continue
-            x, y = i % w, i // w
-            nb = [(y+dy)*w + (x+dx) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
-                  if 0 <= x+dx < w and 0 <= y+dy < h]
-            if any(j in want for j in nb) and any(
-                    j in seen and grid[j] in WALK_CLASSES for j in nb):
-                cut = i
+        # 0-1 BFS out of the stranded region: free across walkable cells,
+        # cost 1 to cut a cliff, so it finds the thinnest wall to the outside
+        INF = float('inf')
+        cost = [INF] * (w * h)
+        prev = [-1] * (w * h)
+        dq = collections.deque()
+        for i in stranded:
+            cost[i] = 0
+            dq.append(i)
+        hit = -1
+        while dq:
+            i = dq.popleft()
+            if i in seen:
+                hit = i
                 break
-        if cut is None:
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+                j = ny*w + nx
+                if grid[j] in (T.WATER, T.POND):
+                    continue                  # never cut a channel to the sea
+                step = 0 if grid[j] in WALK_CLASSES else 1
+                if cost[i] + step < cost[j]:
+                    cost[j] = cost[i] + step
+                    prev[j] = i
+                    (dq.appendleft if step == 0 else dq.append)(j)
+        if hit < 0:
             break
-        grid[cut] = T.GRASS
-        level[cut] = 0
-        extra.append((cut, False))
+        i = hit
+        while i != -1:
+            if grid[i] not in WALK_CLASSES:
+                grid[i] = T.GRASS
+                level[i] = 0
+                extra.append((i, False))
+            i = prev[i]
     return extra
 
 # Vanilla's staircase is a horizontal pair - 0x0AF on the left, 0x0CF on the
@@ -778,12 +835,20 @@ def cut_stairs(grid, level, mass, w, h, want=2):
             up, dn = (y-1)*w + x, (y+1)*w + x
             # a staircase needs two cells side by side, the terrace on one
             # side of them and lower ground on the other
-            j = i + 1
-            if (x + 1 < w and grid[j] == T.CLIFF and j in mass
-                    and ((up in top and below(dn)) or (dn in top and below(up)))
-                    and ((up + 1 in top and below(dn + 1))
-                         or (dn + 1 in top and below(up + 1)))):
-                pairs.append(i)
+            # vanilla's staircase is a 2x2 block of wall - 0AF/0CF over two
+            # rows - with the terrace on one side and the ground on the other.
+            # A 2x1 cannot span a wall that is two cells tall.
+            if x + 1 < w and y + 2 < h:
+                blk = [i, i + 1, i + w, i + w + 1]
+                over, under = i - w, i + 2 * w
+                if (all(0 <= k < w * h and grid[k] == T.CLIFF and k in mass
+                        for k in blk)
+                        and ((over in top and below(under))
+                             or (under in top and below(over)))
+                        and ((over + 1 in top and below(under + 1))
+                             or (under + 1 in top and below(over + 1)))):
+                    pairs.append(i)
+                    continue
             elif any(k in top for k in (up, dn, i-1, i+1)) and any(
                     0 <= k < w * h and below(k) for k in (up, dn, i-1, i+1)):
                 singles.append(i)
@@ -800,9 +865,10 @@ def cut_stairs(grid, level, mass, w, h, want=2):
             picked.append(far)
         for i in picked:
             wide = i in pairs
-            for k in ((i, i + 1) if wide else (i,)):
-                grid[k] = T.GRASS
-                level[k] = 0
+            for k in ((i, i + 1, i + w, i + w + 1) if wide else (i,)):
+                if 0 <= k < w * h:
+                    grid[k] = T.GRASS
+                    level[k] = 0
             placed.append((i, wide))
     return placed
 
@@ -1020,9 +1086,10 @@ def stamp_ledges(blocks, ledges, w, h):
 def stamp_stairs(blocks, stairs, w, h):
     """Lay vanilla's staircase art over the cells cut_stairs opened."""
     for i, wide in stairs:
-        if wide and i % w + 1 < w:
-            blocks[i] = STAIR_L
-            blocks[i + 1] = STAIR_R
+        if wide and i % w + 1 < w and i + w + 1 < len(blocks):
+            for r in (0, w):
+                blocks[i + r] = STAIR_L
+                blocks[i + r + 1] = STAIR_R
         else:
             blocks[i] = STAIR_NOTCH
 
