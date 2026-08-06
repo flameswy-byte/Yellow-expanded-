@@ -384,6 +384,49 @@ The wall between terraces has to be exactly one cell. At two cells thick no
 single stair can touch both levels, and the upper terrace came out at 26%
 reachable — the lower band was fine, so the map looked right and was not.
 
+### Three more polish passes
+
+**Staircases, not notches.** Vanilla's connector is a horizontal pair —
+`0x0AF` left, `0x0CF` right — laid at elevation 0 with a different level above
+and below. Route 115 uses eight such pairs and nothing else. `cut_stairs()`
+now looks for a two-cell horizontal site and stamps the real art; the
+single-cell fallback it used before painted plain grass, which showed up as a
+green speck in the middle of a brown mountain. 30 of the 35 stairs are now
+proper staircases.
+
+**Nothing ships unreachable.** The prettiest stair site is not always a working
+one, and Route 144 came out with a terrace at 88% reachable. `ensure_reachable()`
+now floods the map the way the player would — respecting elevation — and opens a
+plain notch into anything still stranded. All 14 maps verify at 100%.
+
+**Terraces are not bare rock.** Route 115's plateaus are about half plain grass
+with patches of long grass on top. `vegetate_terraces()` runs after the terracing
+and puts grass on the summits, keeping each cell's elevation — a grass tile at
+elevation 5 is exactly what vanilla puts on a plateau, and dropping it to 3
+would sink the terrace into the map.
+
+### Furniture the map cannot honour
+
+The painter was emitting signposts, doors and secret-base cave mouths, because
+vanilla uses them in 3×3 neighbourhoods that also occur in a generated route. A
+sign with nothing to read is litter; a cave mouth with nothing behind it is
+worse, because the player will walk into it.
+
+Neither a rarity threshold nor the behaviour byte finds these. The signpost is
+used 112 times in vanilla, more than plenty of real terrain, and its behaviour
+is `MB_NORMAL`. What identifies it is that **101 of those 112 uses sit under a
+`bg_event`**. So a metatile counts as furniture if it appears under a `bg_event`
+or `warp_event` at least half the times it is used at all, which derives exactly
+18 of them:
+
+```
+003 01B 021 026 027 041 042 043 061 062 063 0A7 131 1A0 1A8 1B0 1CD 1DB
+   signpost      doors and their surrounds      secret-base cave mouths
+```
+
+The painter now refuses them and takes the next best metatile for the same
+neighbourhood. Count remaining across all fourteen maps: zero.
+
 ### Softening the old borders
 
 Every vanilla map ends in a hard line of trees or rock, because it used to end

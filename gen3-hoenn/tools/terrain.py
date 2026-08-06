@@ -184,17 +184,63 @@ def learn(maps_wanted=None, primary='gTileset_General'):
         used.append(k)
     return {'t3': {k: dict(v) for k, v in t3.items()},
             't4': {k: dict(v) for k, v in t4.items()},
-            't1': {k: dict(v) for k, v in t1.items()}, 'maps': used}
+            't1': {k: dict(v) for k, v in t1.items()}, 'maps': used,
+            'furniture': sorted(furniture(lay, maps, pos, skip))}
 
-def best(table, key):
+def best(table, key, avoid=()):
     d = table.get(key)
     if not d:
         return None
-    return max(d.items(), key=lambda kv: kv[1])[0]
+    ok = [kv for kv in d.items() if (kv[0] & 0x3FF) not in avoid]
+    if not ok:
+        return None
+    return max(ok, key=lambda kv: kv[1])[0]
+
+def furniture(lay, maps, pos, skip):
+    """Metatiles that promise an interaction the generated maps do not have.
+
+    Not guessed and not a rarity threshold - the signpost is used 112 times in
+    vanilla, more than plenty of real terrain. A tile is furniture if it sits
+    under a bg_event or a warp at least half the times it is used at all: 101
+    of the signpost's 112 uses have a sign script behind them, and all ten of
+    the blue secret-base cave mouth's do. Painting one into a new route puts a
+    sign with nothing to read or a cave mouth with nothing behind it.
+    """
+    import glob
+    hdr = {}
+    for f in glob.glob(f'{R.ROOT}/data/maps/*/map.json'):
+        j = json.load(open(f))
+        hdr[j['id']] = j
+    use, under = collections.Counter(), collections.Counter()
+    for k in pos:
+        if k in skip:
+            continue
+        L = lay[maps[k]['layout']]
+        if L['primary_tileset'] != 'gTileset_General':
+            continue
+        w, h = L['width'], L['height']
+        blk = open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+        for i in range(w * h):
+            m = (blk[i*2] | (blk[i*2+1] << 8)) & 0x3FF
+            if m < R.NUM_METATILES_IN_PRIMARY:
+                use[m] += 1
+        for key in ('bg_events', 'warp_events'):
+            for e in (hdr.get(k, {}).get(key) or []):
+                try:
+                    x, y = int(e['x']), int(e['y'])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if not (0 <= x < w and 0 <= y < h):
+                    continue
+                m = (blk[(y*w + x)*2] | (blk[(y*w + x)*2 + 1] << 8)) & 0x3FF
+                if m < R.NUM_METATILES_IN_PRIMARY:
+                    under[m] += 1
+    return {m for m in under if under[m] >= 0.5 * use[m]}
 
 class Painter:
     def __init__(self, model):
         self.m = model
+        self.avoid = set(model.get('furniture', ()))
 
     def paint(self, cls, w, h):
         """class grid (list, row-major) -> list of u16 blockdata entries."""
@@ -208,10 +254,11 @@ class Painter:
                 # for a path it picks the mountain-top tile, whose art expects
                 # a plateau edge, so a one-cell-wide path came out fringed
                 # with rock. The homogeneous tile is the one that tiles.
-                v = (best(self.m['t3'], m3)
-                     or best(self.m['t4'], mask4(m3))
-                     or best(self.m['t3'], (m3[4],) * 9)
-                     or best(self.m['t1'], m3[4]) or 1)
+                av = self.avoid
+                v = (best(self.m['t3'], m3, av)
+                     or best(self.m['t4'], mask4(m3), av)
+                     or best(self.m['t3'], (m3[4],) * 9, av)
+                     or best(self.m['t1'], m3[4], av) or 1)
                 out.append(v)
         return out
 

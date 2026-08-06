@@ -458,7 +458,7 @@ def terrace(grid, w, h):
             level[i] = 0
 
     seen = [False] * (w * h)
-    stairs = 0
+    stairs = []
     for start in range(w * h):
         if seen[start] or grid[start] != T.CLIFF:
             continue
@@ -501,33 +501,100 @@ def terrace(grid, w, h):
                 level[i] = 0
             tier = inner
         stairs += cut_stairs(grid, level, mass, w, h)
+    stairs += ensure_reachable(grid, level, w, h)
     return level, stairs
 
-def cut_stairs(grid, level, mass, w, h, want=2):
-    """Open a way up. A wall cell that touches the terrace on one side and the
-    ground on the other becomes an ordinary walkable tile at elevation 0, which
-    is compatible with both levels - exactly what vanilla's connectors are."""
-    tops = collections.defaultdict(set)
-    for i in mass:
-        if grid[i] == T.PLATEAU:
-            tops[level[i]].add(i)
-    cut = 0
-    for lv, top in sorted(tops.items()):
-        cand = []
-        for i in mass:
+def _elev_ok(a, b):
+    return a == b or 0 in (a, b) or 15 in (a, b)
+
+def ensure_reachable(grid, level, w, h):
+    """No terrace ships unreachable.
+
+    cut_stairs picks the prettiest site it can find, and on a terrace with no
+    two-cell horizontal wall it falls back to a single notch that does not
+    always connect. This checks the result the way the player would - flood the
+    ground, respecting elevation - and opens a plain notch into anything still
+    stranded."""
+    extra = []
+    for _ in range(6):                       # each pass can expose the next tier
+        seen = set()
+        q = collections.deque(i for i in range(w * h)
+                              if grid[i] in WALK_CLASSES and level[i] == GROUND_LEVEL)
+        seen |= set(q)
+        while q:
+            i = q.popleft()
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in seen
+                        and grid[j] in WALK_CLASSES and _elev_ok(level[i], level[j])):
+                    seen.add(j)
+                    q.append(j)
+        stranded = [i for i in range(w * h) if grid[i] == T.PLATEAU and i not in seen]
+        if not stranded:
+            break
+        want = set(stranded)
+        cut = None
+        for i in range(w * h):
             if grid[i] != T.CLIFF:
                 continue
             x, y = i % w, i // w
             nb = [(y+dy)*w + (x+dx) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
                   if 0 <= x+dx < w and 0 <= y+dy < h]
-            if any(j in top for j in nb) and any(
-                    grid[j] in WALK_CLASSES and level[j] < lv for j in nb):
-                cand.append(i)
+            if any(j in want for j in nb) and any(
+                    j in seen and grid[j] in WALK_CLASSES for j in nb):
+                cut = i
+                break
+        if cut is None:
+            break
+        grid[cut] = T.GRASS
+        level[cut] = 0
+        extra.append((cut, False))
+    return extra
+
+# Vanilla's staircase is a horizontal pair - 0x0AF on the left, 0x0CF on the
+# right - laid at elevation 0 with a different level above and below, so you
+# walk up or down through it. Route 115 uses eight of these pairs and nothing
+# else. A single cell painted as grass, which is what this used to cut, shows
+# up as a green speck in the middle of a brown mountain.
+STAIR_L, STAIR_R = 0x0AF, 0x0CF
+STAIR_NOTCH = 0x071           # mountain top, for a gap a staircase cannot fill
+
+def cut_stairs(grid, level, mass, w, h, want=2):
+    """Open a way up, and say where the staircases went."""
+    tops = collections.defaultdict(set)
+    for i in mass:
+        if grid[i] == T.PLATEAU:
+            tops[level[i]].add(i)
+    placed = []
+    for lv, top in sorted(tops.items()):
+        def below(i):
+            return grid[i] in WALK_CLASSES and level[i] < lv
+
+        pairs, singles = [], []
+        for i in mass:
+            if grid[i] != T.CLIFF:
+                continue
+            x, y = i % w, i // w
+            if not (0 < y < h - 1):
+                continue
+            up, dn = (y-1)*w + x, (y+1)*w + x
+            # a staircase needs two cells side by side, the terrace on one
+            # side of them and lower ground on the other
+            j = i + 1
+            if (x + 1 < w and grid[j] == T.CLIFF and j in mass
+                    and ((up in top and below(dn)) or (dn in top and below(up)))
+                    and ((up + 1 in top and below(dn + 1))
+                         or (dn + 1 in top and below(up + 1)))):
+                pairs.append(i)
+            elif any(k in top for k in (up, dn, i-1, i+1)) and any(
+                    0 <= k < w * h and below(k) for k in (up, dn, i-1, i+1)):
+                singles.append(i)
+
+        cand = pairs or singles
         if not cand:
             continue
-        # spread them out: take the two furthest apart, then any that are far
-        # from both, so a big terrace is not entered from one corner only
-        picked = [max(cand, key=lambda i: (i % w) + (i // w))]
+        picked = [cand[0]]
         while len(picked) < want and len(picked) < len(cand):
             far = max(cand, key=lambda i: min(
                 abs(i % w - p % w) + abs(i // w - p // w) for p in picked))
@@ -535,10 +602,40 @@ def cut_stairs(grid, level, mass, w, h, want=2):
                 break
             picked.append(far)
         for i in picked:
+            wide = i in pairs
+            for k in ((i, i + 1) if wide else (i,)):
+                grid[k] = T.GRASS
+                level[k] = 0
+            placed.append((i, wide))
+    return placed
+
+# Vanilla does not leave a terrace as bare rock. Route 115's plateaus at
+# elevation 5 are about half plain grass (0x001) and half rock, with patches of
+# long grass on top; the summit is somewhere you walk, not a slab. These run
+# lower than the ground-level targets because a mountain top is still rockier
+# than a field.
+TERRACE_GRASS = 0.45
+TERRACE_TALL = 0.07
+
+def vegetate_terraces(grid, level, w, h, seed):
+    """Put grass on the summits. Runs after terrace(), so it has to keep each
+    cell's elevation - a grass tile at elevation 5 is exactly what vanilla puts
+    on a plateau, and dropping it to 3 would sink the terrace into the map."""
+    tiers = collections.defaultdict(list)
+    for i, c in enumerate(grid):
+        if c == T.PLATEAU:
+            tiers[level[i]].append(i)
+    for lv, cells in tiers.items():
+        if len(cells) < 12:
+            continue
+        rank = sorted(cells, key=lambda i: -T.fbm(i % w, i // w, seed + 91 + lv,
+                                                  octaves=2, freq=0.07))
+        n_grass = int(TERRACE_GRASS * len(cells))
+        n_tall = int(TERRACE_TALL * len(cells))
+        for i in rank[:n_grass]:
             grid[i] = T.GRASS
-            level[i] = 0
-            cut += 1
-    return cut
+        for i in rank[:n_tall]:
+            grid[i] = T.TALL
 
 # --- vegetation, targeted at vanilla's own proportions --------------------
 # Measured by tools/study.py across the 21 vanilla land routes, as a share of
@@ -641,6 +738,15 @@ def vegetate(grid, dist, rim, w, h, seed):
 JUMP_MB = {0x38: 'v', 0x39: 'v', 0x3A: 'h', 0x3B: 'h',
            0x3C: 'c', 0x3D: 'c', 0x3E: 'c', 0x3F: 'c'}
 MIN_LEDGE = 3
+
+def stamp_stairs(blocks, stairs, w, h):
+    """Lay vanilla's staircase art over the cells cut_stairs opened."""
+    for i, wide in stairs:
+        if wide and i % w + 1 < w:
+            blocks[i] = STAIR_L
+            blocks[i + 1] = STAIR_R
+        else:
+            blocks[i] = STAIR_NOTCH
 
 def apply_levels(blocks, level, cls, w, h):
     """Stamp the terrace elevations onto the painted blockdata.
@@ -1194,8 +1300,11 @@ def main():
     for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
         level, stairs = terrace(cls, spec['w'], spec['h'])
+        vegetate_terraces(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
         blocks = painter.paint(cls, spec['w'], spec['h'])
+        stamp_stairs(blocks, stairs, spec['w'], spec['h'])
         apply_levels(blocks, level, cls, spec['w'], spec['h'])
+        wide = sum(1 for _, wd in stairs if wd)
         nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
         built[spec['const']] = blocks
         n = collections.Counter(cls)
@@ -1205,7 +1314,7 @@ def main():
               f'buffer {(spec["w"]+15)*(spec["h"]+14)}/10240   {mix}')
         if nl or ne or stairs:
             print(f'            tidied {nl} ledges, {ne} elevations; '
-                  f'{stairs} stairs cut')
+                  f'{len(stairs)} stairs cut ({wide} staircases)')
         write_map(spec, blocks, dry)
 
     # A declared connection with no crossable cell is worse than no
