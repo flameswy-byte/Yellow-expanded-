@@ -276,6 +276,55 @@ Ledges had been reading as cliff.
 63 maps instead of 49 — drifting a little further from Hoenn every time.
 `newmaps.py` now writes `generated_maps.txt` and `terrain.py` skips those.
 
+### Measuring vanilla, and matching it
+
+`tools/study.py` measures every vanilla land route — 21 of them, towns and sea
+routes excluded — and prints ours against the same yardstick. Composition is
+reported as a share of each map's **land**, not of the whole map: a route that
+is half sea is not short of grass, it just has less ground to put it on.
+
+The generator had been tuned by eye against single crops, which is exactly how
+you end up with a route that is 69% tall grass and looks fine in a screenshot.
+
+| | vanilla median | before | after |
+|---|---|---|---|
+| tall grass, share of land | 8.6% | 22.0% | **9.5%** |
+| trees, share of land | 31.7% | 17.7% | **31.2%** |
+| tall grass patches | 6.2/map, median 13 cells | 12.4/map, median 7, one of 2393 | **7.6/map, median 7** |
+| tree clumps | 30.2/map, median 2 | 37.6/map, median 2 | **31.1/map, median 4** |
+| tall grass touching walkable ground | 30.5% | 31.0% | 33.2% |
+
+So: two and a half times too much tall grass, half the trees, and a couple of
+sketch strokes turned into a slab no vanilla route comes near.
+
+Rather than tune the thresholds again, `vegetate()` now **targets the counts
+directly** — score every eligible cell, then take exactly as many as the
+target calls for. Density stops depending on how the noise happens to fall on
+that particular map. Trees mix a low-frequency field for the masses with a
+high-frequency one for the scattered singles, which reproduces vanilla's shape:
+about thirty clumps a map, median size 2, with a few very large ones.
+
+Getting the *structure* right took four goes, and each failure was a real bug:
+
+1. **Trees were placed before grass.** A third of them are scattered singles,
+   so they riddled every grass blob into two-cell fragments — 33 patches a map
+   where vanilla has 6. Choosing the grass first and keeping trees out of it is
+   what makes a patch a patch.
+2. **The old gradient pass was still running.** `vegetate()` replaced it but it
+   was left in, so it had already scattered trees through the ground the
+   patches were being chosen from.
+3. **Distance was measured only from the sketch's own paths.** The region fill
+   also spreads path inward from a rim seed where a vanilla neighbour meets the
+   map on a path, and grass grew right up against those.
+4. **Only the eligible tall grass was cleared before reselecting.** The cells
+   beside a path kept their class from the region pass — 273 of Route 139's
+   fragments on their own. That map went from 133 patches of median 1 to 18 of
+   median 12.
+
+The lesson is the one this project keeps relearning: a single crop cannot tell
+you a map is wrong. Route 135 was fine at every stage; Route 139 was two
+orders of magnitude off and looked much the same.
+
 ### Softening the old borders
 
 Every vanilla map ends in a hard line of trees or rock, because it used to end

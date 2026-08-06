@@ -395,52 +395,25 @@ def build_classes(spec, wcls):
                 if grid[p[1]*w + p[0]] in (T.TREE, T.CLIFF):
                     grid[p[1]*w + p[0]] = T.GRASS
 
-    # 4. vegetation gradient. Distance is measured from where the player
-    #    actually walks - the paths, and the walkable rim where a connection
-    #    lands - and open ground gives way to tall grass, then scattered
-    #    trees, then closed canopy as that distance grows. The clumping is
-    #    noise, not a radius, so none of the bands come out as rings.
+    # 4. vegetation. Distance is measured from where the player actually
+    #    walks - the paths, and the walkable rim where a connection lands -
+    #    and vegetate() lays grass and trees over the open ground at the
+    #    proportions vanilla uses. It replaced a threshold-per-cell gradient
+    #    that ran before it; leaving both in fragmented every grass patch,
+    #    because the gradient had already scattered trees through the ground
+    #    the patches were being chosen from.
     solid = [grid[i] in (T.WATER, T.CLIFF) for i in range(w * h)]
     walkable_rim = [(x, y) for (x, y), c in rim.items() if c in (T.GRASS, T.PATH, T.SAND)]
-    src = list(path) or walkable_rim
+    # every path cell, not just the ones stamped from the sketch: the region
+    # fill also spreads path inward from a rim seed where a vanilla neighbour
+    # meets this map on a path, and measuring distance only from the stamped
+    # ones let grass grow right up against those - which is where a third of
+    # the one-cell grass fragments were coming from
+    src = [(i % w, i // w) for i in range(w * h) if grid[i] == T.PATH] or walkable_rim
     if not src:
         src = [(w//2, h//2)]
     dist = bfs_dist(src, solid, w, h)
-    for y in range(h):
-        for x in range(w):
-            i = y*w + x
-            if grid[i] != T.GRASS or (x, y) in rim:
-                continue
-            d = dist[i]
-            if d is None or d <= 1:
-                continue                        # never right beside a path
-            t = min(1.0, max(0.0, (d - 2) / 22.0))
-            n = T.fbm(x, y, seed + 47, octaves=3, freq=0.07)
-            if n > 0.74 - 0.30 * t:
-                grid[i] = T.TREE
-            elif n > 0.60 - 0.34 * t:
-                grid[i] = T.TALL
-
-    # 5. scattered singles. The gradient above runs on one low-frequency field,
-    #    so its trees only ever appear as the dense core of a clump. A second,
-    #    much higher frequency field sprinkles lone trees out in the open,
-    #    which is what a Hoenn route actually looks like - and it thins the
-    #    tall grass, which was running to two thirds of some maps.
-    for y in range(h):
-        for x in range(w):
-            i = y*w + x
-            if grid[i] not in (T.GRASS, T.TALL) or (x, y) in rim:
-                continue
-            d = dist[i]
-            if d is None or d <= 2:
-                continue                        # keep the path's margins open
-            t = min(1.0, max(0.0, (d - 2) / 22.0))
-            # calibrated against the field's own distribution rather than
-            # guessed: p90 is 0.72 and p95 0.76, so this is roughly the top
-            # 7% of open ground near a path rising to the top 18% far from one
-            s = T.fbm(x, y, seed + 61, octaves=2, freq=0.34)
-            if s > 0.75 - 0.10 * t:
-                grid[i] = T.TREE
+    vegetate(grid, dist, rim, w, h, seed)
 
     # 6. connectivity. Scattering trees can wall a pocket off, and a stranded
     #    pocket is worse than a plain one. Everything walkable is flooded, and
@@ -448,6 +421,98 @@ def build_classes(spec, wcls):
     #    one-cell corridor cut back to it through whatever is in the way.
     repair_connectivity(grid, w, h)
     return grid
+
+# --- vegetation, targeted at vanilla's own proportions --------------------
+# Measured by tools/study.py across the 21 vanilla land routes, as a share of
+# each map's land rather than of the whole map - a route that is half sea is
+# not short of grass, it just has less ground to put it on:
+#
+#                     vanilla median   what we had
+#   tall grass              8.6%          22.0%
+#   trees                  31.7%          17.7%
+#   tall patches      6.2/map, median 13 cells    12.4/map, median 7, one of 2393
+#
+# So the old thresholds gave two and a half times too much tall grass, half
+# the trees, and turned a couple of sketch strokes into a slab of grass no
+# vanilla route comes close to. Rather than tune the thresholds again, the
+# counts are now targeted directly: score every eligible cell, then take
+# exactly as many as the target calls for. Density stops depending on how the
+# noise happens to be distributed on that map.
+TALL_TARGET = 0.09
+TREE_TARGET = 0.32
+VEG_KINDS = (T.GRASS, T.TALL, T.TREE, T.PATH, T.SAND)
+
+def vegetate(grid, dist, rim, w, h, seed):
+    land = [i for i in range(w * h) if grid[i] in VEG_KINDS]
+    if not land:
+        return
+    def t_of(i):
+        d = dist[i]
+        return 0.0 if d is None else min(1.0, max(0.0, (d - 2) / 22.0))
+
+    elig = [i for i in land
+            if grid[i] in (T.GRASS, T.TALL)
+            and (i % w, i // w) not in rim
+            and dist[i] is not None and dist[i] > 1]
+
+    # Tall grass first. Trees were being placed first, and because a third of
+    # them are scattered singles they riddled every tall blob into two-cell
+    # fragments - 33 patches a map where vanilla has 6. Choosing the grass
+    # first and then keeping the trees out of it is what makes a patch a patch.
+    #
+    # One octave at a low frequency, so the top slice of the field is a handful
+    # of broad blobs. Where the sketch asked for tall grass the score gets a
+    # nudge, which keeps the patches in the region that was drawn without
+    # letting it become solid. The nudge is deliberately small: at 0.30 it
+    # dominated the field, and since the drawn region is speckled after the
+    # domain warp, every blob came out cut to that speckle - 126 patches of a
+    # single cell where the field on its own gives 6 patches of about 96.
+    rest = [i for i in elig if dist[i] > 1]
+    want_tall = int(TALL_TARGET * len(land))
+    # every tall cell the region pass produced, not just the eligible ones:
+    # clearing only the eligible set left the cells beside a path still tall,
+    # and those were 273 of Route 139's fragments on their own
+    drawn = {i for i in range(w * h)
+             if grid[i] == T.TALL and (i % w, i // w) not in rim}
+    for i in drawn:
+        grid[i] = T.GRASS                            # rebuilt from scratch
+    # The drawn mask is speckled after the domain warp, and a speckled bias
+    # cuts every blob to its shape however small the bonus is. Two majority
+    # passes close it into a region before it is used.
+    for _ in range(2):
+        nxt = set()
+        for i in range(w * h):
+            x, y = i % w, i // w
+            n = sum(1 for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                    if 0 <= x+dx < w and 0 <= y+dy < h
+                    and (y+dy)*w + (x+dx) in drawn)
+            if n >= 5:
+                nxt.add(i)
+        drawn = nxt
+
+    tall_cells = set()
+    if want_tall and rest:
+        score = sorted(rest, key=lambda i: -(
+            T.fbm(i % w, i // w, seed + 73, octaves=1, freq=0.055)
+            + (0.10 if i in drawn else 0.0)))
+        for i in score[:want_tall]:
+            grid[i] = T.TALL
+            tall_cells.add(i)
+
+    # Trees: a low-frequency field gives the masses, a high-frequency one the
+    # scattered singles, and the mix reproduces vanilla's shape - about 30
+    # clumps a map with a median size of 2 but a few very large ones. Biased
+    # away from the paths so the corridors stay open, and out of the grass.
+    have_tree = sum(1 for i in land if grid[i] == T.TREE)
+    want_tree = max(0, int(TREE_TARGET * len(land)) - have_tree)
+    cand = [i for i in elig if dist[i] > 2 and i not in tall_cells]
+    if want_tree and cand:
+        score = sorted(cand, key=lambda i: -(
+            0.55 * T.fbm(i % w, i // w, seed + 47, octaves=3, freq=0.05)
+            + 0.45 * T.fbm(i % w, i // w, seed + 61, octaves=1, freq=0.45)
+            + 0.25 * t_of(i)))
+        for i in score[:want_tree]:
+            grid[i] = T.TREE
 
 # MB_JUMP_* - the ledges you hop down. Vanilla only ever draws them as long
 # runs; the learned painter will happily emit a single one wherever a height
