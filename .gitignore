@@ -14,3 +14,7 @@
 *.pcm
 build/
 gen3-hoenn/pokeemerald/tools/agbcc/
+
+# generated sketch tool output
+gen3-hoenn/_sketch_bg_*.png
+gen3-hoenn/hoenn_sketch.html
