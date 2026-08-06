@@ -11,9 +11,13 @@
 *.2bpp
 *.4bpp
 *.pic
-*.pcm
 build/
 gen3-hoenn/pokeemerald/tools/agbcc/
+
+# pokeemerald ships sound/programmable_wave_samples/*.pcm as source - there is
+# no .aif to regenerate them from - so *.pcm must not be ignored globally. It
+# came from the Gen 1 side, where .pcm is build output.
+gen1-kanto/**/*.pcm
 
 # generated sketch tool output
 gen3-hoenn/_sketch_bg_*.png

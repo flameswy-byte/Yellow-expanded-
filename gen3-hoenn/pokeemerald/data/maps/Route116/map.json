@@ -22,6 +22,21 @@
       "map": "MAP_RUSTBORO_CITY",
       "offset": 0,
       "direction": "left"
+    },
+    {
+      "map": "MAP_ROUTE141",
+      "offset": 0,
+      "direction": "down"
+    },
+    {
+      "map": "MAP_ROUTE145",
+      "offset": 0,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_ROUTE143",
+      "offset": 0,
+      "direction": "up"
     }
   ],
   "object_events": [

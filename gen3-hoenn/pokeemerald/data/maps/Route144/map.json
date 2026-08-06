@@ -1,0 +1,41 @@
+{
+  "id": "MAP_ROUTE144",
+  "name": "Route144",
+  "layout": "LAYOUT_ROUTE144",
+  "music": "MUS_ROUTE110",
+  "region_map_section": "MAPSEC_ROUTE_144",
+  "requires_flash": false,
+  "weather": "WEATHER_SUNNY",
+  "map_type": "MAP_TYPE_ROUTE",
+  "allow_cycling": true,
+  "allow_escaping": false,
+  "allow_running": true,
+  "show_map_name": true,
+  "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+  "connections": [
+    {
+      "map": "MAP_ROUTE143",
+      "offset": -40,
+      "direction": "down"
+    },
+    {
+      "map": "MAP_ROUTE114",
+      "offset": -18,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_FALLARBOR_TOWN",
+      "offset": 0,
+      "direction": "up"
+    },
+    {
+      "map": "MAP_ROUTE113",
+      "offset": 20,
+      "direction": "up"
+    }
+  ],
+  "object_events": [],
+  "warp_events": [],
+  "coord_events": [],
+  "bg_events": []
+}

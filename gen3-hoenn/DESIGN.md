@@ -4,8 +4,8 @@ An open-world Pokémon Emerald romhack. Vanilla Hoenn's connected overworld
 occupies **40.0%** of its own bounding box: 122,540 of 306,400 metatiles across
 49 maps you can walk between. Everything here is in service of the other 60%.
 
-Gap 1 is now built — four new maps, 15,360 metatiles — which takes it to
-**45.0%** across 53 maps. See §4.
+All five inland gaps are now built — **14 new maps, 51,460 metatiles** — which
+takes it to **56.8%** across 63 maps. See §4.
 
 Companion to `../gen1-kanto/DESIGN.md`, which is the same exercise on Yellow.
 Read that one for the working method; this one records what is different.
@@ -164,13 +164,18 @@ working around.
 
 ---
 
-## 4. Gap 1, built
+## 4. The gaps, built
 
-Gap 1 is filled. Hoenn now fills **45.0%** of its bounding box, up from 40.0%.
+Every inland gap is filled. Hoenn now fills **56.8%** of its bounding box, up
+from 40.0%, across 63 walkable maps instead of 49.
 
-The gap partitions exactly into four rectangles — 6,960 + 3,200 + 3,600 +
-1,600 = 15,360, the gap's whole cell count — so nothing is left over and every
-map fits the buffer with room to spare:
+Gap 1 happened to partition exactly into four rectangles — 6,960 + 3,200 +
+3,600 + 1,600 = 15,360, its whole cell count. The others do not, so
+`tools/plan_gaps.py` does it properly: take the largest buffer-legal rectangle
+that fits entirely inside the empty region, carve it out, repeat until what is
+left is too small to be worth a map header. Ten more maps, covering 96% of the
+remaining 37,420 cells; the leftover slivers stay empty rather than becoming
+300-cell maps.
 
 | Map | World | Size | Buffer | Faces |
 |---|---|---|---|---|
@@ -178,8 +183,18 @@ map fits the buffer with room to spare:
 | Route 136 | x40 y302 | 40×40 | 2,970 | Route 105, 106, the south-west corner |
 | Route 137 | x80 y302 | 120×58 | 9,720 | Route 106–109, the south bay |
 | Route 138 | x140 y242 | 60×60 | 5,550 | Route 103, 110, toward Slateport |
+| Route 139 | x40 y160 | 123×60 | 10,212 | Rustboro, Verdanturf, Route 103/104/117 |
+| Route 140 | x163 y160 | 37×60 | 3,848 | Route 103, 110, 117 |
+| Route 141 | x40 y142 | 80×18 | 3,040 | Rustboro, Verdanturf, Route 116 |
+| Route 142 | x70 y220 | 50×22 | 2,340 | Petalburg, Route 102, 103 |
+| Route 143 | x40 y82 | 160×40 | 9,450 | Route 111, 114, 115, 116 |
+| Route 144 | x80 y20 | 60×62 | 5,700 | Fallarbor, Route 113, 114 |
+| Route 145 | x140 y122 | 60×18 | 2,400 | Route 111, 116, 117 |
+| Route 146 | x320 y20 | 40×120 | 7,370 | Fortree, Route 119, 120, 123 |
+| Route 147 | x360 y100 | 60×40 | 4,050 | Route 120, 121, 122, 123 |
+| Route 148 | x240 y0 | 40×140 | 8,470 | Route 111, 118, 119 — the desert seam |
 
-`python3 tools/newmaps.py` builds all four and wires them in: blockdata,
+`python3 tools/newmaps.py` builds all fourteen and wires them in: blockdata,
 border, layout entry, map header, group registration, `MAPSEC`, an empty
 `scripts.inc`, and both halves of every connection. It is idempotent.
 
@@ -325,8 +340,36 @@ for the three vanilla pairs whose offsets disagree: a map's world position then
 depends on which way the solver reached it, and Route 116/Verdanturf came out
 blocked in one direction and open in the other from the same data.
 
-Still missing on these maps: **wild encounters**. The tall grass is real
-terrain but no `wild_encounters.json` entry exists, so nothing lives in it yet.
+### Wild encounters
+
+`python3 tools/encounters.py`. The tables come from the same place the terrain
+did — the maps next door. For each new map every neighbour's table is pooled,
+each entry weighted by how much edge the two maps share and by how likely that
+slot is to come up; species are then ranked by total weight and dealt into the
+slots highest first. Levels are a weighted mean of the donors', so a map
+bridging a level 5 route and a level 15 one lands in between.
+
+It runs in two passes. The first uses only vanilla neighbours, so each map's
+levels come from real routes. The second runs *only* for maps that got nothing
+— Routes 136 and 137, whose only land-bearing neighbours are also new — and
+only those see the first pass's output. Feeding new tables back in everywhere
+pulls every map toward the global mean: tried it, and Route 141 drifted from
+lv 6–7 to lv 3–13, losing exactly the local character the first pass got right.
+
+The result is a difficulty ladder nobody hand-tuned:
+
+```
+Route 135/136  lv  3-4     Route 143  lv  6-25
+Route 137      lv  3-13    Route 144  lv 15-16
+Route 138      lv  2-13    Route 145  lv  6-20
+Route 139/140  lv  3-13    Route 146  lv 25-28
+Route 141      lv  6-7     Route 147  lv 25-28
+Route 142      lv  2-4     Route 148  lv 20-26
+```
+
+Route 148 picks up Sandshrew, Trapinch and Baltoy from Route 111 — the desert
+species — which is the check that the weighting works: it is the desert seam,
+and it got the desert's Pokémon without being told to.
 
 ---
 

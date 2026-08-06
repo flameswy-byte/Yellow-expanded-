@@ -1,0 +1,46 @@
+{
+  "id": "MAP_ROUTE146",
+  "name": "Route146",
+  "layout": "LAYOUT_ROUTE146",
+  "music": "MUS_ROUTE119",
+  "region_map_section": "MAPSEC_ROUTE_146",
+  "requires_flash": false,
+  "weather": "WEATHER_SUNNY",
+  "map_type": "MAP_TYPE_ROUTE",
+  "allow_cycling": true,
+  "allow_escaping": false,
+  "allow_running": true,
+  "show_map_name": true,
+  "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+  "connections": [
+    {
+      "map": "MAP_ROUTE123",
+      "offset": 0,
+      "direction": "down"
+    },
+    {
+      "map": "MAP_ROUTE119",
+      "offset": -20,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_ROUTE120",
+      "offset": -20,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_ROUTE147",
+      "offset": 80,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_FORTREE_CITY",
+      "offset": 0,
+      "direction": "up"
+    }
+  ],
+  "object_events": [],
+  "warp_events": [],
+  "coord_events": [],
+  "bg_events": []
+}

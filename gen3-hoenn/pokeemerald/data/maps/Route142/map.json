@@ -1,0 +1,41 @@
+{
+  "id": "MAP_ROUTE142",
+  "name": "Route142",
+  "layout": "LAYOUT_ROUTE142",
+  "music": "MUS_ROUTE101",
+  "region_map_section": "MAPSEC_ROUTE_142",
+  "requires_flash": false,
+  "weather": "WEATHER_SUNNY",
+  "map_type": "MAP_TYPE_ROUTE",
+  "allow_cycling": true,
+  "allow_escaping": false,
+  "allow_running": true,
+  "show_map_name": true,
+  "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+  "connections": [
+    {
+      "map": "MAP_ROUTE102",
+      "offset": 0,
+      "direction": "down"
+    },
+    {
+      "map": "MAP_PETALBURG_CITY",
+      "offset": 12,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_ROUTE103",
+      "offset": 0,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_ROUTE139",
+      "offset": -30,
+      "direction": "up"
+    }
+  ],
+  "object_events": [],
+  "warp_events": [],
+  "coord_events": [],
+  "bg_events": []
+}

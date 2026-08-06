@@ -27,6 +27,21 @@
       "map": "MAP_ROUTE138",
       "offset": 20,
       "direction": "down"
+    },
+    {
+      "map": "MAP_ROUTE142",
+      "offset": 0,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_ROUTE139",
+      "offset": -80,
+      "direction": "up"
+    },
+    {
+      "map": "MAP_ROUTE140",
+      "offset": 43,
+      "direction": "up"
     }
   ],
   "object_events": [

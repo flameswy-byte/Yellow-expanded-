@@ -140,6 +140,79 @@ MARK_END = '@ --- end open hoenn gates ---'
 
 OPP = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
 
+# --- gaps 2-5 -------------------------------------------------------------
+# Rectangles from tools/plan_gaps.py, which takes the largest buffer-legal
+# rectangle out of each empty region until what is left is too small to be
+# worth a map header. 10 maps covering 96% of the 37,420 remaining cells;
+# the leftover slivers stay empty rather than becoming 300-cell maps.
+REST = [
+    ('Route139', 139, 40, 160, 123, 60, 'GAP 2', 'gTileset_Petalburg', 'MUS_ROUTE110'),
+    ('Route140', 140, 163, 160, 37, 60, 'GAP 2', 'gTileset_Petalburg', 'MUS_ROUTE110'),
+    ('Route141', 141, 40, 142, 80, 18, 'GAP 2', 'gTileset_Petalburg', 'MUS_ROUTE101'),
+    ('Route142', 142, 70, 220, 50, 22, 'GAP 2', 'gTileset_Petalburg', 'MUS_ROUTE101'),
+    ('Route143', 143, 40, 82, 160, 40, 'GAP 3', 'gTileset_Lavaridge', 'MUS_ROUTE110'),
+    ('Route144', 144, 80, 20, 60, 62, 'GAP 3', 'gTileset_Lavaridge', 'MUS_ROUTE110'),
+    ('Route145', 145, 140, 122, 60, 18, 'GAP 3', 'gTileset_Lavaridge', 'MUS_ROUTE113'),
+    ('Route146', 146, 320, 20, 40, 120, 'GAP 4', 'gTileset_Fortree', 'MUS_ROUTE119'),
+    ('Route147', 147, 360, 100, 60, 40, 'GAP 4', 'gTileset_Fortree', 'MUS_ROUTE119'),
+    ('Route148', 148, 240, 0, 40, 140, 'GAP 5', 'gTileset_Mauville', 'MUS_ROUTE110'),
+]
+for _n, _num, _x, _y, _w, _h, _gap, _sec, _mus in REST:
+    GAP1.append(dict(name=_n, const=f'MAP_{_n.upper()}', num=_num, x=_x, y=_y,
+                     w=_w, h=_h, mapsec=f'MAPSEC_ROUTE_{_num}',
+                     title=f'ROUTE {_num}', music=_mus, secondary=_sec,
+                     desc=_gap))
+NEWMAPS = GAP1
+
+def origins():
+    """world origin and size of every map, vanilla and new, in one frame."""
+    lay, maps, pos = R.solve()
+    minx = min(x for x, _ in pos.values()); miny = min(y for _, y in pos.values())
+    box = {}
+    for k, (x, y) in pos.items():
+        L = lay[maps[k]['layout']]
+        box[k] = (x - minx, y - miny, L['width'], L['height'])
+    for s in NEWMAPS:                      # a rebuild may predate their headers
+        box[s['const']] = (s['x'], s['y'], s['w'], s['h'])
+    return box
+
+def derive_connections():
+    """every seam, read off the world grid instead of written out by hand.
+
+    Offsets follow render_hoenn.solve(): along a vertical edge the offset is
+    the neighbour's y minus mine, along a horizontal one its x minus mine. A
+    neighbour is only accepted when it lines up exactly, which drops the few
+    vanilla maps whose recorded offsets put them half a map out of place.
+    """
+    box = origins()
+    owner = {}
+    for k, (x, y, w, h) in box.items():
+        for j in range(y, y + h):
+            for i in range(x, x + w):
+                owner[(i, j)] = k
+    conn = collections.defaultdict(list)
+    for s in NEWMAPS:
+        me = s['const']
+        x, y, w, h = box[me]
+        edges = (('up',    [(x + i, y - 1) for i in range(w)]),
+                 ('down',  [(x + i, y + h) for i in range(w)]),
+                 ('left',  [(x - 1, y + j) for j in range(h)]),
+                 ('right', [(x + w, y + j) for j in range(h)]))
+        for side, cells in edges:
+            for nb in dict.fromkeys(owner.get(c) for c in cells):
+                if nb is None or nb == me:
+                    continue
+                nx, ny, nw, nh = box[nb]
+                aligned = {'up': ny + nh == y, 'down': ny == y + h,
+                           'left': nx + nw == x, 'right': nx == x + w}[side]
+                if not aligned:
+                    continue
+                off = (nx - x) if side in ('up', 'down') else (ny - y)
+                conn[me].append((side, nb, off))
+                roff = (x - nx) if side in ('up', 'down') else (y - ny)
+                conn[nb].append((OPP[side], me, roff))
+    return conn
+
 def map_dir(const):
     """MAP_LITTLEROOT_TOWN -> LittlerootTown, the name of its data directory."""
     return const.replace('MAP_', '').title().replace('_', '')
@@ -350,6 +423,44 @@ SOFTEN = [('MAP_ROUTE102', 'down',  None),
           ('MAP_ROUTE101', 'right', None)]
 DEPTH = 4
 
+# Spans that must stay walled even though they now face new land.
+# Route 111's desert is gated on the Go-Goggles by triggers inside the map
+# (Route111_EventScript_ViciousSandstormTrigger). Opening its east cliff along
+# the desert rows would be a second way in that walks straight past them.
+NO_SOFTEN = {('MAP_ROUTE111', 'right'): (25, 70)}
+
+def derive_soften(conn):
+    """soften every vanilla edge that now faces new land, over the shared run.
+
+    Towns are included but soften() only erodes trees there, never the solid
+    cells: the classifier cannot tell a house wall from a cliff, and eroding
+    one would open the side of a Pokemon Center."""
+    box = origins()
+    new = {s['const'] for s in NEWMAPS}
+    out = []
+    for k, cs in conn.items():
+        if k in new:
+            continue
+        x, y, w, h = box[k]
+        for side, nb, off in cs:
+            if nb not in new:
+                continue
+            nx, ny, nw, nh = box[nb]
+            if side in ('up', 'down'):
+                lo, hi = max(0, nx - x), min(w, nx - x + nw) - 1
+            else:
+                lo, hi = max(0, ny - y), min(h, ny - y + nh) - 1
+            block = NO_SOFTEN.get((k, side))
+            if block:
+                # trim the run back to whichever side of the blocked span is
+                # longer, rather than dropping the seam entirely
+                a, b = block
+                left, right = (lo, min(hi, a - 1)), (max(lo, b + 1), hi)
+                lo, hi = left if (left[1] - left[0]) > (right[1] - right[0]) else right
+            if hi >= lo:
+                out.append((k, side, (lo, hi)))
+    return out
+
 BASELINE = os.path.join(HERE, '..', 'baseline')
 
 def pristine(name, L):
@@ -383,13 +494,24 @@ def event_cells(name):
     return out
 
 def soften(painter, dry):
+    """Feather every vanilla edge that now faces new land.
+
+    All of one map's edges are done in a single pass. Each pass starts from
+    the pristine baseline, so softening the same map twice - which happens as
+    soon as one edge faces two new maps - would otherwise have the second run
+    throw away the first one's work.
+    """
     lay, maps, _ = R.solve()
     rend = R.Renderer()
-    total = 0
+    by_map = collections.defaultdict(list)
     for const, side, span in SOFTEN:
+        by_map[const].append((side, span))
+    total = 0
+    for const, edges in sorted(by_map.items()):
         L = lay[maps[const]['layout']]
         w, h = L['width'], L['height']
         name = map_dir(const)
+        town = const.endswith('_TOWN') or const.endswith('_CITY')
         blk, path = pristine(name, L)
         C = T.Classifier(rend, L['primary_tileset'], L.get('secondary_tileset'))
         raw = [(blk[i*2] | (blk[i*2+1] << 8)) if i*2+1 < len(blk) else 0
@@ -399,25 +521,34 @@ def soften(painter, dry):
         skip = event_cells(name)
         seed = sum(ord(c) for c in const) * 31
 
-        def depth_of(x, y):
-            return {'up': y, 'down': h-1-y, 'left': x, 'right': w-1-x}[side]
-
-        def in_span(x, y):
-            if span is None:
-                return True
-            a = x if side in ('up', 'down') else y
-            return span[0] <= a <= span[1]
+        def depth_at(x, y):
+            """shallowest depth over the edges being softened, or None."""
+            best = None
+            for side, span in edges:
+                dep = {'up': y, 'down': h-1-y, 'left': x, 'right': w-1-x}[side]
+                if dep >= DEPTH:
+                    continue
+                if span is not None:
+                    a = x if side in ('up', 'down') else y
+                    if not (span[0] <= a <= span[1]):
+                        continue
+                best = dep if best is None else min(best, dep)
+            return best
 
         for y in range(h):
             for x in range(w):
-                dep = depth_of(x, y)
-                if dep >= DEPTH or (x, y) in skip or not in_span(x, y):
+                dep = depth_at(x, y)
+                if dep is None or (x, y) in skip:
                     continue
                 i = y*w + x
-                if (raw[i] & 0x3FF) >= R.NUM_METATILES_IN_PRIMARY:
+                if town and (raw[i] & 0x3FF) >= R.NUM_METATILES_IN_PRIMARY:
                     continue                    # town furniture, leave it
                 n = T.fbm(x, y, seed, octaves=3, freq=0.11)
-                if cls[i] in (T.TREE, T.CLIFF):
+                # In a town only trees come out. The classifier calls any solid
+                # non-green metatile a cliff, and in a town that is a building -
+                # eroding one would open the side of a Pokemon Center.
+                erodible = (T.TREE,) if town else (T.TREE, T.CLIFF)
+                if cls[i] in erodible:
                     # the outermost row survives only where the noise is high,
                     # the deepest row almost everywhere - which feathers the
                     # line instead of moving it inward by four cells
@@ -429,7 +560,7 @@ def soften(painter, dry):
                         if 0 <= x+dx < w and 0 <= y+dy < h
                         and before[(y+dy)*w + (x+dx)] not in (T.TREE, T.CLIFF, T.OTHER))
                     cls[i] = nb.most_common(1)[0][0] if nb else T.GRASS
-                elif cls[i] == T.GRASS and dep >= 2 and n > 0.80:
+                elif not town and cls[i] == T.GRASS and dep >= 2 and n > 0.80:
                     cls[i] = T.TREE             # rounded clumps, not a straight hem
 
         # repaint only where the 3x3 class neighbourhood actually moved, so
@@ -438,26 +569,80 @@ def soften(painter, dry):
         changed = 0
         for y in range(h):
             for x in range(w):
-                if depth_of(x, y) > DEPTH or (x, y) in skip:
+                if (x, y) in skip:
                     continue
-                if not (in_span(x, y) or in_span(x-1, y) or in_span(x+1, y)
-                        or in_span(x, y-1) or in_span(x, y+1)):
+                if depth_at(x, y) is None and not any(
+                        depth_at(x+dx, y+dy) is not None
+                        for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                        if 0 <= x+dx < w and 0 <= y+dy < h):
                     continue
                 if T.mask3(cls, x, y, w, h, T.GRASS) == T.mask3(before, x, y, w, h, T.GRASS):
                     continue
-                if (raw[y*w + x] & 0x3FF) >= R.NUM_METATILES_IN_PRIMARY:
+                if town and (raw[y*w + x] & 0x3FF) >= R.NUM_METATILES_IN_PRIMARY:
                     continue
-                v = (T.best(painter.m['t3'], T.mask3(cls, x, y, w, h, T.GRASS))
-                     or T.best(painter.m['t4'], T.mask4(T.mask3(cls, x, y, w, h, T.GRASS)))
+                m3 = T.mask3(cls, x, y, w, h, T.GRASS)
+                v = (T.best(painter.m['t3'], m3)
+                     or T.best(painter.m['t4'], T.mask4(m3))
                      or T.best(painter.m['t1'], cls[y*w + x]))
                 if v is not None and v != out[y*w + x]:
                     out[y*w + x] = v
                     changed += 1
-        print(f'  soften {name:9s} {side:5s}  {changed} metatiles')
+        sides = ', '.join(sorted({s for s, _ in edges}))
+        print(f'  soften {name:16s} {sides:22s} {changed} metatiles')
         total += changed
         if not dry:
             open(path, 'wb').write(u16(out))
-    print(f'  -> {total} vanilla metatiles rewritten')
+    print(f'  -> {total} vanilla metatiles rewritten across {len(by_map)} maps')
+
+def crossable(box, built):
+    """which derived connections the player can actually cross.
+
+    A connection with no crossable cell is a wall that looks like a door, and
+    nothing in the build catches it - so rather than ship one, the seam is
+    dropped. Run after the terrain is final, on the blockdata as written.
+    """
+    lay, maps, _ = R.solve()
+    rend = R.Renderer()
+    cache = {}
+
+    def cells(const):
+        if const in cache:
+            return cache[const]
+        L = lay[maps[const]['layout']]
+        w, h = L['width'], L['height']
+        if const in built:
+            raw = built[const]
+        else:
+            blk = open(f'{ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+            raw = [(blk[i*2] | (blk[i*2+1] << 8)) if i*2+1 < len(blk) else 0
+                   for i in range(w * h)]
+        C = T.Classifier(rend, L['primary_tileset'], L.get('secondary_tileset'))
+        cache[const] = (raw, w, h, C)
+        return cache[const]
+
+    def open_at(const, x, y):
+        raw, w, h, C = cells(const)
+        v = raw[y*w + x]
+        return ((v >> 10) & 3) == 0, (v >> 12) & 0xF
+
+    def ok(me, side, nb, off):
+        _, w, h, _ = cells(me)
+        _, nw, nh, _ = cells(nb)
+        if side in ('up', 'down'):
+            pairs = [((x, 0 if side == 'up' else h-1),
+                      (x - off, nh-1 if side == 'up' else 0))
+                     for x in range(max(0, off), min(w, off + nw))]
+        else:
+            pairs = [((0 if side == 'left' else w-1, y),
+                      (nw-1 if side == 'left' else 0, y - off))
+                     for y in range(max(0, off), min(h, off + nh))]
+        for (ax, ay), (bx, by) in pairs:
+            oa, ea = open_at(me, ax, ay)
+            ob, eb = open_at(nb, bx, by)
+            if oa and ob and (ea == eb or 0 in (ea, eb) or 15 in (ea, eb)):
+                return True
+        return False
+    return ok
 
 # --- gates on the town edges ----------------------------------------------
 def edge_cells(L, side):
@@ -556,6 +741,12 @@ def write_map(spec, blocks, dry):
     open(f'{ld}/map.bin', 'wb').write(u16(blocks))
     open(f'{ld}/border.bin', 'wb').write(u16(SEA_BORDER if water else TREE_BORDER))
     open(f'{md}/scripts.inc', 'w').write(f'{spec["name"]}_MapScripts::\n\t.byte 0\n')
+
+def write_header(spec, dry):
+    if dry:
+        return
+    md = f'{ROOT}/data/maps/{spec["name"]}'
+    os.makedirs(md, exist_ok=True)
     hdr = {
         'id': spec['const'], 'name': spec['name'],
         'layout': f'LAYOUT_{spec["name"].upper()}', 'music': spec['music'],
@@ -564,7 +755,7 @@ def write_map(spec, blocks, dry):
         'allow_cycling': True, 'allow_escaping': False, 'allow_running': True,
         'show_map_name': True, 'battle_scene': 'MAP_BATTLE_SCENE_NORMAL',
         'connections': [{'map': m, 'offset': o, 'direction': d}
-                        for d, m, o in CONN[spec['const']]],
+                        for d, m, o in sorted(set(CONN[spec['const']]))],
         'object_events': [], 'warp_events': [], 'coord_events': [], 'bg_events': [],
     }
     json.dump(hdr, open(f'{md}/map.json', 'w'), indent=2)
@@ -586,15 +777,22 @@ def main():
 
     # soften first: the new maps seed their rim from the neighbours, so the
     # neighbours have to be final before the rim is read
+    global CONN, SOFTEN
+    derived = derive_connections()
+    CONN = derived
+    SOFTEN = SOFTEN + derive_soften(derived)
+
     print('softening the old map borders...')
     soften(painter, dry)
 
     print('classifying vanilla terrain...')
     wcls, _ = world_classes()
 
-    for spec in GAP1:
+    built = {}
+    for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
         blocks = painter.paint(cls, spec['w'], spec['h'])
+        built[spec['const']] = blocks
         n = collections.Counter(cls)
         mix = ', '.join(f'{100*v//len(cls)}% {T.CLASS_NAME[k]}'
                         for k, v in n.most_common() if 100*v//len(cls))
@@ -602,10 +800,28 @@ def main():
               f'buffer {(spec["w"]+15)*(spec["h"]+14)}/10240   {mix}')
         write_map(spec, blocks, dry)
 
+    # A declared connection with no crossable cell is worse than no
+    # connection, so the seams are tested against the terrain as written and
+    # the dead ones dropped from both headers.
+    ok = crossable(origins(), built)
+    dropped = []
+    for k in list(CONN):
+        keep = []
+        for side, nb, off in sorted(set(CONN[k])):
+            if ok(k, side, nb, off):
+                keep.append((side, nb, off))
+            else:
+                dropped.append(f'{k[4:]} {side} -> {nb[4:]}')
+        CONN[k] = keep
+    if dropped:
+        print(f'  dropped {len(dropped)} impassable seams: ' + '; '.join(sorted(dropped)))
+    for spec in NEWMAPS:
+        write_header(spec, dry)
+
     # layouts
     def add_layouts(d):
         have = {l['id'] for l in d['layouts'] if l}
-        for s in GAP1:
+        for s in NEWMAPS:
             lid = f'LAYOUT_{s["name"].upper()}'
             if lid in have:
                 continue
@@ -613,7 +829,7 @@ def main():
                 'id': lid, 'name': f'{s["name"]}_Layout',
                 'width': s['w'], 'height': s['h'],
                 'primary_tileset': 'gTileset_General',
-                'secondary_tileset': 'gTileset_Petalburg',
+                'secondary_tileset': s.get('secondary', 'gTileset_Petalburg'),
                 'border_filepath': f'data/layouts/{s["name"]}/border.bin',
                 'blockdata_filepath': f'data/layouts/{s["name"]}/map.bin'})
     patch_json(f'{ROOT}/data/layouts/layouts.json', add_layouts, dry)
@@ -621,7 +837,7 @@ def main():
     # map group
     def add_group(d):
         g = d['gMapGroup_TownsAndRoutes']
-        for s in GAP1:
+        for s in NEWMAPS:
             if s['name'] not in g:
                 g.append(s['name'])
     patch_json(f'{ROOT}/data/maps/map_groups.json', add_group, dry)
@@ -629,7 +845,7 @@ def main():
     # region map sections, appended so MAPSEC_NONE stays past the end
     def add_mapsec(d):
         have = {m['id'] for m in d['map_sections']}
-        for s in GAP1:
+        for s in NEWMAPS:
             if s['mapsec'] not in have:
                 d['map_sections'].append({'id': s['mapsec'], 'name': s['title']})
     patch_json(f'{ROOT}/src/data/region_map/region_map_sections.json', add_mapsec, dry)
@@ -649,15 +865,17 @@ def main():
             open(p, 'w').write('\n'.join(lines))
 
     # the other half of every seam, vanilla routes and towns alike
-    for const, conns in list(RECIP.items()) + list(TOWN_CONN.items()):
+    new = {s['const'] for s in NEWMAPS}
+    vanilla = {k: sorted(set(v)) for k, v in derived.items() if k not in new}
+    for const, conns in vanilla.items():
         name = map_dir(const)
         p = f'{ROOT}/data/maps/{name}/map.json'
         d = json.load(open(p))
-        have = {(c['direction'], c['map']) for c in d.get('connections') or []}
-        d.setdefault('connections', d.get('connections') or [])
-        for dirn, m, off in conns:
-            if (dirn, m) not in have:
-                d['connections'].append({'map': m, 'offset': off, 'direction': dirn})
+        # drop every connection to a new map first, so a seam that was dropped
+        # for being impassable actually disappears instead of lingering
+        kept = [c for c in (d.get('connections') or []) if c.get('map') not in new]
+        d['connections'] = kept + [{'map': m, 'offset': off, 'direction': dirn}
+                                   for dirn, m, off in conns]
         print(f'  + {len(conns)} connections on {name}')
         if not dry:
             json.dump(d, open(p, 'w'), indent=2)

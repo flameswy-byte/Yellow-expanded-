@@ -4450,6 +4450,106 @@
       "secondary_tileset": "gTileset_Petalburg",
       "border_filepath": "data/layouts/Route138/border.bin",
       "blockdata_filepath": "data/layouts/Route138/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE139",
+      "name": "Route139_Layout",
+      "width": 123,
+      "height": 60,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Petalburg",
+      "border_filepath": "data/layouts/Route139/border.bin",
+      "blockdata_filepath": "data/layouts/Route139/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE140",
+      "name": "Route140_Layout",
+      "width": 37,
+      "height": 60,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Petalburg",
+      "border_filepath": "data/layouts/Route140/border.bin",
+      "blockdata_filepath": "data/layouts/Route140/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE141",
+      "name": "Route141_Layout",
+      "width": 80,
+      "height": 18,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Petalburg",
+      "border_filepath": "data/layouts/Route141/border.bin",
+      "blockdata_filepath": "data/layouts/Route141/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE142",
+      "name": "Route142_Layout",
+      "width": 50,
+      "height": 22,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Petalburg",
+      "border_filepath": "data/layouts/Route142/border.bin",
+      "blockdata_filepath": "data/layouts/Route142/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE143",
+      "name": "Route143_Layout",
+      "width": 160,
+      "height": 40,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Lavaridge",
+      "border_filepath": "data/layouts/Route143/border.bin",
+      "blockdata_filepath": "data/layouts/Route143/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE144",
+      "name": "Route144_Layout",
+      "width": 60,
+      "height": 62,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Lavaridge",
+      "border_filepath": "data/layouts/Route144/border.bin",
+      "blockdata_filepath": "data/layouts/Route144/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE145",
+      "name": "Route145_Layout",
+      "width": 60,
+      "height": 18,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Lavaridge",
+      "border_filepath": "data/layouts/Route145/border.bin",
+      "blockdata_filepath": "data/layouts/Route145/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE146",
+      "name": "Route146_Layout",
+      "width": 40,
+      "height": 120,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Fortree",
+      "border_filepath": "data/layouts/Route146/border.bin",
+      "blockdata_filepath": "data/layouts/Route146/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE147",
+      "name": "Route147_Layout",
+      "width": 60,
+      "height": 40,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Fortree",
+      "border_filepath": "data/layouts/Route147/border.bin",
+      "blockdata_filepath": "data/layouts/Route147/map.bin"
+    },
+    {
+      "id": "LAYOUT_ROUTE148",
+      "name": "Route148_Layout",
+      "width": 40,
+      "height": 140,
+      "primary_tileset": "gTileset_General",
+      "secondary_tileset": "gTileset_Mauville",
+      "border_filepath": "data/layouts/Route148/border.bin",
+      "blockdata_filepath": "data/layouts/Route148/map.bin"
     }
   ]
 }

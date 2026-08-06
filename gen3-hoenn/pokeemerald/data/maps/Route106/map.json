@@ -24,14 +24,14 @@
       "direction": "down"
     },
     {
-      "map": "MAP_ROUTE136",
-      "offset": 40,
-      "direction": "up"
-    },
-    {
       "map": "MAP_ROUTE137",
       "offset": -40,
       "direction": "right"
+    },
+    {
+      "map": "MAP_ROUTE136",
+      "offset": 40,
+      "direction": "up"
     }
   ],
   "object_events": [
