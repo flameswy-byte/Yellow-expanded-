@@ -31,15 +31,23 @@ import render_hoenn as R
 # walkable tiles also at elevation 0. Lumping the two together made every
 # generated mountain a solid wall - Route 143 was 3,719 impassable cells with
 # no top at all.
-WATER, SAND, GRASS, TALL, PATH, TREE, CLIFF, OTHER, PLATEAU = range(9)
+# SHALLOW is the wading fringe at a shoreline. It is not a shade of water: in
+# vanilla it is collision 0 at elevation 3 - ordinary walkable ground - sitting
+# about two cells from land, and there are 2,836 of them. Treating it as water
+# meant every one of our coasts went from land straight to surf.
+# POND is inland fresh water, which vanilla draws with its own tiles and its
+# own grass edges - painting one with the ocean's tiles puts the sea in a field.
+WATER, SAND, GRASS, TALL, PATH, TREE, CLIFF, OTHER, PLATEAU, SHALLOW, POND = range(11)
 CLASS_NAME = {WATER: 'water', SAND: 'sand', GRASS: 'grass', TALL: 'tall grass',
               PATH: 'path', TREE: 'trees', CLIFF: 'cliff', OTHER: 'other',
-              PLATEAU: 'plateau'}
+              PLATEAU: 'plateau', SHALLOW: 'shallow', POND: 'pond'}
 # what the sketch pens mean in terms of classes
 PEN_CLASS = {'water': WATER, 'grass': GRASS, 'tall grass': TALL, 'path': PATH,
              'trees': TREE, 'cliff': CLIFF, 'building': OTHER, 'cave': CLIFF}
 
-WATER_MB = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x17, 0x18, 0x1a, 0x22, 0x2a}
+WATER_MB = {0x11, 0x12, 0x13, 0x14, 0x15, 0x18, 0x1a, 0x22, 0x2a}
+POND_MB = {0x10}                      # MB_POND_WATER - inland fresh water
+SHALLOW_MB = {0x17}                   # MB_SHALLOW_WATER - walkable, not surf
 SAND_MB = {0x06, 0x21}
 TALL_MB = {0x02, 0x03, 0x09, 0x24}    # tall, long and ash grass
 MOUNTAIN_MB = {0x0c}                  # MB_MOUNTAIN_TOP. Checked against the
@@ -74,7 +82,11 @@ class Classifier:
         if key in self.memo:
             return self.memo[key]
         b = self.mb.get(mid, 0)
-        if b in WATER_MB:
+        if b in POND_MB:
+            c = POND
+        elif b in SHALLOW_MB:
+            c = SHALLOW
+        elif b in WATER_MB:
             c = WATER
         elif b in TALL_MB:
             c = TALL

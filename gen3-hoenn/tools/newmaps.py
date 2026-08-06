@@ -330,6 +330,7 @@ def bfs_dist(sources, blocked, w, h):
 def build_classes(spec, wcls):
     w, h, ox, oy = spec['w'], spec['h'], spec['x'], spec['y']
     seed = spec['num'] * 1013
+    spec_num = spec['num']
 
     # 1. seed the rim from whatever vanilla has on the other side of it, so a
     #    coastline arrives where the map abuts the sea and grass where it
@@ -413,6 +414,9 @@ def build_classes(spec, wcls):
     if not src:
         src = [(w//2, h//2)]
     dist = bfs_dist(src, solid, w, h)
+    place_ponds(grid, dist, rim, w, h, seed, spec_num)
+    rocky_coast(grid, rim, w, h, seed)
+    shoreline(grid, rim, w, h, seed)
     vegetate(grid, dist, rim, w, h, seed)
 
     # 6. connectivity. Scattering trees can wall a pocket off, and a stranded
@@ -421,6 +425,97 @@ def build_classes(spec, wcls):
     #    one-cell corridor cut back to it through whatever is in the way.
     repair_connectivity(grid, w, h)
     return grid
+
+# Eleven of vanilla's 34 land routes have a pond, 31 ponds between them, median
+# 4 cells and the largest 100. Six of ours had no inland water at all, including
+# Route 143 at 160x40 and Route 146 at 40x120.
+POND_MAP_CHANCE = 0.30      # vanilla puts one on about a fifth of its routes
+POND_MIN, POND_MAX = 8, 46
+
+def place_ponds(grid, dist, rim, w, h, seed, num):
+    """Drop one or two small ponds into a map that has no water of its own."""
+    if T.fbm(num, num, seed + 171, octaves=1, freq=0.7) > POND_MAP_CHANCE:
+        return 0
+    open_ = [i for i in range(w * h)
+             if grid[i] in (T.GRASS, T.TALL) and (i % w, i // w) not in rim
+             and dist[i] is not None and dist[i] > 3
+             and 3 < i % w < w - 4 and 3 < i // w < h - 4]
+    if len(open_) < 200:
+        return 0
+    made = 0
+    for n in range(2):
+        pool = [i for i in open_ if grid[i] in (T.GRASS, T.TALL)]
+        if not pool:
+            break
+        c = max(pool, key=lambda i: T.fbm(i % w, i // w, seed + 181 + n * 13,
+                                          octaves=1, freq=0.05))
+        want = POND_MIN + int((POND_MAX - POND_MIN)
+                              * T.fbm(c % w, c // w, seed + 191 + n, octaves=1,
+                                      freq=0.9) ** 2)
+        blob, front = {c}, [c]
+        while front and len(blob) < want:
+            i = front.pop(0)
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in blob
+                        and j in open_ and len(blob) < want):
+                    blob.add(j)
+                    front.append(j)
+        if len(blob) >= POND_MIN:
+            for i in blob:
+                grid[i] = T.POND
+            made += 1
+    return made
+
+# Hoenn's coast is rock. Vanilla's sea touches cliff 83% of the time, sand 3%,
+# grass 2% - you do not walk off a lawn into the ocean, you look down at it from
+# a sea wall and enter the water at a beach. Ours was grass 34%, trees 27%,
+# cliff 9%, which is why the coastlines read soft.
+#
+# Not pushed all the way to 83%: a fully walled coast is one where the player
+# can never launch a surf, and check_seams has to keep reaching 62 of 63 maps.
+COAST_ROCK = 0.62
+
+def rocky_coast(grid, rim, w, h, seed):
+    """Wall most of the waterline with rock, leaving beaches to get in by."""
+    n = 0
+    for i, c in enumerate(grid):
+        if c not in (T.GRASS, T.TALL, T.PATH) or (i % w, i // w) in rim:
+            continue
+        x, y = i % w, i // w
+        if not any(0 <= x+dx < w and 0 <= y+dy < h
+                   and grid[(y+dy)*w + (x+dx)] == T.WATER
+                   for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            continue
+        if T.fbm(x, y, seed + 211, octaves=2, freq=0.10) < COAST_ROCK:
+            grid[i] = T.CLIFF
+            n += 1
+    return n
+
+# Vanilla's shoreline is not a hard edge. About 7% of its water is shallow -
+# walkable, elevation 3 - and it sits a cell or two out from the land, so a
+# beach wades into the sea rather than dropping into it.
+SHORE_CHANCE = 0.55
+
+def shoreline(grid, rim, w, h, seed):
+    """Turn some of the water that touches land into a wading fringe.
+
+    Noise-modulated rather than a uniform ring: vanilla's shallows come and go
+    along a coast, and a one-cell band all the way round would read as a border.
+    """
+    edge = []
+    for i, c in enumerate(grid):
+        if c != T.WATER or (i % w, i // w) in rim:
+            continue
+        x, y = i % w, i // w
+        if any(0 <= x+dx < w and 0 <= y+dy < h
+               and grid[(y+dy)*w + (x+dx)] in (T.CLIFF, T.SAND)
+               for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            edge.append(i)
+    for i in edge:
+        if T.fbm(i % w, i // w, seed + 151, octaves=2, freq=0.12) < SHORE_CHANCE:
+            grid[i] = T.SHALLOW
 
 # --- mountains as terraces -------------------------------------------------
 # Vanilla does not draw a mountain as a flat impassable blob. Route 115 has
@@ -437,7 +532,7 @@ GROUND_LEVEL = 3
 TIER_LEVELS = (5, 7)          # first and second terrace, as vanilla uses
 MIN_MASS = 80                 # a cliff smaller than this stays a plain rock
 MIN_TOP = 24                  # and a terrace smaller than this is not worth it
-WALK_CLASSES = (T.GRASS, T.TALL, T.PATH, T.SAND, T.PLATEAU)
+WALK_CLASSES = (T.GRASS, T.TALL, T.PATH, T.SAND, T.PLATEAU, T.SHALLOW)
 
 def _erode(cells, w, h):
     """cells whose whole 8-neighbourhood is also in the set."""
@@ -452,10 +547,12 @@ def terrace(grid, w, h):
     of every cell. Also reports how many stairs were cut."""
     level = [GROUND_LEVEL] * (w * h)
     for i, c in enumerate(grid):
-        if c == T.WATER:
+        if c in (T.WATER, T.POND):
             level[i] = 1
         elif c in (T.TREE, T.CLIFF):
             level[i] = 0
+        # shallow water is walked through, not surfed: vanilla puts it at
+        # elevation 3 with the ground, and 2,405 of its 2,836 cells are c0e3
 
     seen = [False] * (w * h)
     stairs = []
@@ -986,7 +1083,7 @@ def tidy(blocks, w, h, spec):
                 fixed_e += 1
     return fixed_l, fixed_e
 
-WALKABLE = (T.GRASS, T.TALL, T.PATH, T.SAND, T.OTHER)
+WALKABLE = (T.GRASS, T.TALL, T.PATH, T.SAND, T.OTHER, T.SHALLOW)
 
 def repair_connectivity(grid, w, h, min_pocket=12):
     def walk(i):

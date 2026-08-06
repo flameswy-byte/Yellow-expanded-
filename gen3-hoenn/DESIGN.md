@@ -405,6 +405,43 @@ and puts grass on the summits, keeping each cell's elevation — a grass tile at
 elevation 5 is exactly what vanilla puts on a plateau, and dropping it to 3
 would sink the terrace into the map.
 
+### What the tile vocabulary said was missing
+
+Diffing which metatiles vanilla's routes lean on against which ours ever emit
+turned out to be the most productive single measurement in the project. Vanilla
+uses 350 distinct primary metatiles across its land routes; we used 147. The
+gap was almost entirely **water**.
+
+`WATER_MB` had lumped every water behaviour into one class, so every drop of
+water on every new map came out as the same ocean tile. Splitting it gave two
+findings that were not aesthetic at all:
+
+**Shallow water is walkable.** `MB_SHALLOW_WATER` is collision 0 at **elevation
+3** — ordinary ground — and 2,405 of its 2,836 vanilla cells are encoded that
+way. It is the fringe you wade through, sitting a cell or two out from land.
+Treating it as water meant every one of our coasts went from land straight to
+surf. Ours is now 4.8% of water against vanilla's 5.8%.
+
+**Ponds are their own thing.** `MB_POND_WATER` has its own tiles and its own
+grass edges; painting one with the ocean's tiles puts the sea in a field. Six
+of our maps had no inland water at all, including Route 143 at 160×40 and
+Route 146 at 40×120. Vanilla puts a pond on about a fifth of its land routes.
+
+### The coast is rock
+
+The measurement that reframed the coastlines: **vanilla's sea touches cliff 83%
+of the time** — sand 3%, grass 2%. Hoenn's coast is a rock wall you look down
+from, with beaches to get into the water by. Ours was grass 34%, trees 27%,
+cliff 9%, which is why every coastline read soft.
+
+`rocky_coast()` walls the waterline, and `shoreline()` now places its shallows
+against rock and sand rather than grass, which is where vanilla puts them
+(cliff 71%, sand 24%, grass 2%).
+
+It is deliberately not pushed to 83%. A fully walled coast is one the player can
+never launch a surf from, and `check_seams` has to keep reaching 62 of 63 maps —
+it still does. Ours sits at 53%.
+
 ### Ledges
 
 Vanilla's ledge is `0x087`, `MB_JUMP_SOUTH`, collision 1 — you hop south over
