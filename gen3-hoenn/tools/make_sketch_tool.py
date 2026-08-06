@@ -80,6 +80,7 @@ footer{background:var(--panel);border-top:1px solid var(--line);padding:8px 12px
     <button id="undo">Undo</button>
     <button id="clr">Clear</button>
     <button id="copy" title="metatile coordinates, pasteable into chat">Copy sketch</button>
+    <button id="json" title="download instead of pasting — no length limit">Save .json</button>
     <button id="png">Save PNG</button>
   </header>
 
@@ -216,7 +217,7 @@ function sizeHint(){
   const n = sketchText().length;
   $('hint').textContent = n > 7000
     ? `sketch is ${(n/1000).toFixed(1)}k characters — long pastes can get truncated, `
-      + 'consider copying one gap at a time'
+      + 'use Save .json and attach the file instead'
     : `sketch is ${(n/1000).toFixed(1)}k characters`;
 }
 function copyText(t){
@@ -268,6 +269,14 @@ function boot(){
   $('undo').onclick = () => { strokes.pop(); repaint(); };
   $('clr').onclick = () => { if (confirm('Clear the whole sketch?')){ strokes = []; repaint(); } };
   $('copy').onclick = () => { copyText(sketchText()); sizeHint(); };
+  // pasting is capped by whatever sits between the clipboard and the chat box;
+  // downloading the file sidesteps that entirely
+  $('json').onclick = () => {
+    const b = new Blob([sketchText()], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'hoenn_sketch.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
   $('png').onclick = () => {
     const c = document.createElement('canvas');
     c.width = IW; c.height = IH;
