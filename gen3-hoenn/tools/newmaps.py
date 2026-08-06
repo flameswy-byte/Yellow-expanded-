@@ -470,52 +470,152 @@ def place_ponds(grid, dist, rim, w, h, seed, num):
 
 # Hoenn's coast is rock. Vanilla's sea touches cliff 83% of the time, sand 3%,
 # grass 2% - you do not walk off a lawn into the ocean, you look down at it from
-# a sea wall and enter the water at a beach. Ours was grass 34%, trees 27%,
-# cliff 9%, which is why the coastlines read soft.
+# a sea wall and enter the water at a beach.
 #
-# Not pushed all the way to 83%: a fully walled coast is one where the player
-# can never launch a surf, and check_seams has to keep reaching 62 of 63 maps.
-COAST_ROCK = 0.62
+# The composition was easy to match and did not help, because a coastline is
+# one-dimensional and the noise was being sampled in two. Deciding rock or beach
+# per cell from a 2D field gives a shore that alternates every cell or two;
+# vanilla's runs for twenty cells of rock and then opens into a beach. So the
+# chain of shore cells is traced first and the noise is read along its arc
+# length, which is the only axis it varies on.
+COAST_ROCK = 0.46
+COAST_FREQ = 0.055        # about 18 cells of shore per run
+BEACH_DEPTH = 2
+
+def coast_chains(shore, w, h):
+    """Order the shore cells into chains, so noise can run along the coast."""
+    left = set(shore)
+    chains = []
+    while left:
+        # start at an end of the chain if there is one, so the walk does not
+        # begin in the middle and produce two half-runs
+        start = next((i for i in left if sum(
+            1 for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+            if (dx or dy) and (i // w + dy) * w + (i % w + dx) in left) == 1), None)
+        if start is None:
+            start = next(iter(left))
+        chain, cur = [], start
+        while cur is not None:
+            chain.append(cur)
+            left.discard(cur)
+            x, y = cur % w, cur // w
+            nxt = None
+            for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1),
+                           (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                j = (y + dy) * w + (x + dx)
+                if 0 <= x + dx < w and 0 <= y + dy < h and j in left:
+                    nxt = j
+                    break
+            cur = nxt
+        chains.append(chain)
+    return chains
 
 def rocky_coast(grid, rim, w, h, seed):
-    """Wall most of the waterline with rock, leaving beaches to get in by."""
-    n = 0
-    for i, c in enumerate(grid):
-        if c not in (T.GRASS, T.TALL, T.PATH) or (i % w, i // w) in rim:
-            continue
-        x, y = i % w, i // w
-        if not any(0 <= x+dx < w and 0 <= y+dy < h
-                   and grid[(y+dy)*w + (x+dx)] == T.WATER
-                   for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-            continue
-        if T.fbm(x, y, seed + 211, octaves=2, freq=0.10) < COAST_ROCK:
-            grid[i] = T.CLIFF
-            n += 1
-    return n
+    """Wall most of the waterline with rock, and open beaches in between."""
+    shore = [i for i, c in enumerate(grid)
+             if c in (T.GRASS, T.TALL, T.PATH, T.SAND)
+             and (i % w, i // w) not in rim
+             and any(0 <= i % w + dx < w and 0 <= i // w + dy < h
+                     and grid[(i // w + dy) * w + (i % w + dx)] == T.WATER
+                     for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    if not shore:
+        return 0, 0
+    rock = sand = 0
+    beach_cells = []
+    for chain in coast_chains(set(shore), w, h):
+        for t, i in enumerate(chain):
+            if T.fbm(t, 0, seed + 211, octaves=2, freq=COAST_FREQ) > COAST_ROCK:
+                grid[i] = T.CLIFF
+                rock += 1
+            else:
+                grid[i] = T.SAND
+                beach_cells.append(i)
+                sand += 1
+    # neither a beach nor a sea wall is one cell wide. A single-cell rock hem
+    # was the other big source of patterns vanilla never draws - 53% of cliff
+    # cells were falling past the 3x3 lookup.
+    front = [i for i in shore if grid[i] == T.CLIFF]
+    for _ in range(1):
+        nxt = []
+        for i in front:
+            x, y = i % w, i // w
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                j = (y + dy) * w + (x + dx)
+                if (0 <= x + dx < w and 0 <= y + dy < h
+                        and grid[j] in (T.GRASS, T.TALL)
+                        and (x + dx, y + dy) not in rim):
+                    grid[j] = T.CLIFF
+                    nxt.append(j)
+                    rock += 1
+        front = nxt
+    front = list(beach_cells)
+    for _ in range(BEACH_DEPTH - 1):
+        nxt = []
+        for i in front:
+            x, y = i % w, i // w
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                j = (y + dy) * w + (x + dx)
+                if (0 <= x + dx < w and 0 <= y + dy < h
+                        and grid[j] in (T.GRASS, T.TALL)
+                        and (x + dx, y + dy) not in rim):
+                    grid[j] = T.SAND
+                    nxt.append(j)
+                    sand += 1
+        front = nxt
+    return rock, sand
 
-# Vanilla's shoreline is not a hard edge. About 7% of its water is shallow -
-# walkable, elevation 3 - and it sits a cell or two out from the land, so a
-# beach wades into the sea rather than dropping into it.
-SHORE_CHANCE = 0.55
+# Vanilla's shallows are not a fringe, they are bays: 84 blobs across the game
+# with a median of 12 cells and horizontal runs from one cell to nine. Ours were
+# a one-cell hem - 215 blobs of median 2, runs almost always width 1 - and the
+# painter had never seen that shape, so 71% of shallow cells fell past the 3x3
+# lookup onto a bare fill tile. A grey stripe with no edges is what that looks
+# like on screen.
+SHORE_BLOBS = 0.055        # share of a map's water to turn into shallows
+SHALLOW_MIN, SHALLOW_MAX = 6, 40
 
 def shoreline(grid, rim, w, h, seed):
-    """Turn some of the water that touches land into a wading fringe.
-
-    Noise-modulated rather than a uniform ring: vanilla's shallows come and go
-    along a coast, and a one-cell band all the way round would read as a border.
-    """
-    edge = []
-    for i, c in enumerate(grid):
-        if c != T.WATER or (i % w, i // w) in rim:
+    """Grow shallow bays off the beaches, rather than hemming the whole coast."""
+    sea = [i for i, c in enumerate(grid) if c == T.WATER]
+    if not sea:
+        return 0
+    budget = int(SHORE_BLOBS * len(sea))
+    # seed only where vanilla puts them: against sand and rock, not grass
+    seeds = [i for i in sea
+             if (i % w, i // w) not in rim
+             and any(0 <= i % w + dx < w and 0 <= i // w + dy < h
+                     and grid[(i // w + dy) * w + (i % w + dx)] in (T.SAND, T.CLIFF)
+                     for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    if not seeds:
+        return 0
+    seeds.sort(key=lambda i: -T.fbm(i % w, i // w, seed + 151, octaves=1, freq=0.06))
+    made = 0
+    used = set()
+    for start in seeds:
+        if made >= budget:
+            break
+        if start in used:
             continue
-        x, y = i % w, i // w
-        if any(0 <= x+dx < w and 0 <= y+dy < h
-               and grid[(y+dy)*w + (x+dx)] in (T.CLIFF, T.SAND)
-               for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-            edge.append(i)
-    for i in edge:
-        if T.fbm(i % w, i // w, seed + 151, octaves=2, freq=0.12) < SHORE_CHANCE:
+        want = SHALLOW_MIN + int((SHALLOW_MAX - SHALLOW_MIN)
+                                 * T.fbm(start % w, start // w, seed + 161,
+                                         octaves=1, freq=0.8) ** 2)
+        blob, front = {start}, [start]
+        while front and len(blob) < want:
+            i = front.pop(0)
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in blob
+                        and grid[j] == T.WATER and (nx, ny) not in rim
+                        and len(blob) < want):
+                    blob.add(j)
+                    front.append(j)
+        if len(blob) < SHALLOW_MIN:
+            continue
+        for i in blob:
             grid[i] = T.SHALLOW
+        used |= blob
+        made += len(blob)
+    return made
 
 # --- mountains as terraces -------------------------------------------------
 # Vanilla does not draw a mountain as a flat impassable blob. Route 115 has

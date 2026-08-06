@@ -427,6 +427,44 @@ grass edges; painting one with the ocean's tiles puts the sea in a field. Six
 of our maps had no inland water at all, including Route 143 at 160×40 and
 Route 146 at 40×120. Vanilla puts a pond on about a fifth of its land routes.
 
+### The shoreline, and what a fallback rate tells you
+
+Composition was matched and the coasts still looked wrong, so the question
+became *why* — and the answer came from instrumenting the painter rather than
+looking at it. For every cell, does the 3×3 class neighbourhood exist in the
+learned table, or does it fall back?
+
+```
+grass    8.0% fell back      cliff    53.3%
+water    2.9%                sand     26.9%
+trees    9.7%                shallow  70.9%
+```
+
+**A high fallback rate means the shape is not one vanilla draws.** Seventy-one
+percent of shallow cells were landing on a bare fill tile with no edge
+treatment, which on screen is a grey stripe with hard sides. The composition was
+right and the geometry was not.
+
+Measuring vanilla's shallows said the same thing from the other direction: 84
+blobs, median 12 cells, horizontal runs from one cell to nine. Ours were a
+one-cell hem — 215 blobs of median 2, runs almost always a single cell wide.
+Vanilla's shallows are *bays*, not a fringe.
+
+`shoreline()` now grows them as blobs off the beaches and rock, sized to that
+distribution. Shallow fallback went 70.9% → **16.9%**, and 18 blobs of median 34.
+The sea wall got the same treatment, since a one-cell rock hem was the other
+shape vanilla never draws.
+
+One thing checked and left alone: our shallows render grey rather than blue, and
+that is correct — Route 127, which has more shallow water than any map in the
+game, is the same grey-blue against the darker sea.
+
+A coastline is also one-dimensional, and the rock-or-beach decision was being
+made from a 2D noise field, which alternates every cell or two. `coast_chains()`
+traces the shore into ordered chains and reads the noise along arc length
+instead, so a stretch of rock runs for about eighteen cells and then opens into
+a beach — and beaches are two cells deep, because vanilla's are.
+
 ### The coast is rock
 
 The measurement that reframed the coastlines: **vanilla's sea touches cliff 83%
