@@ -27,6 +27,26 @@
       "map": "MAP_ROUTE110",
       "offset": -82,
       "direction": "right"
+    },
+    {
+      "map": "MAP_LITTLEROOT_TOWN",
+      "offset": 40,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_OLDALE_TOWN",
+      "offset": 0,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_ROUTE101",
+      "offset": 20,
+      "direction": "left"
+    },
+    {
+      "map": "MAP_SLATEPORT_CITY",
+      "offset": 18,
+      "direction": "right"
     }
   ],
   "object_events": [],

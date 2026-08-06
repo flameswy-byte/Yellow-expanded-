@@ -50,23 +50,27 @@ GAP1 = [
          desc='east of Oldale, toward Slateport'),
 ]
 
-# Connections are deliberately routes-only. Littleroot, Oldale, Petalburg and
-# Slateport all border these maps, but opening a town edge changes which
-# coordinates the player can reach during that town's scripted sequences -
-# the mistake that cost the most in the Kanto project. Route 101 is skipped
-# for the same reason: VAR_ROUTE101_STATE confines the player during the
-# Birch rescue and only guards the exits vanilla knows about.
+# Every seam the new maps take part in, including the ones into Littleroot,
+# Oldale, Petalburg, Slateport and Route 101. Opening a town edge changes
+# which coordinates the player can reach during that town's scripted
+# sequences - the mistake that cost the most in the Kanto project - so each
+# of those is re-guarded; see GUARDS below.
 CONN = {
  'MAP_ROUTE135': [('left','MAP_ROUTE105',0), ('up','MAP_ROUTE102',30),
-                  ('down','MAP_ROUTE136',0), ('down','MAP_ROUTE137',40)],
+                  ('down','MAP_ROUTE136',0), ('down','MAP_ROUTE137',40),
+                  ('right','MAP_LITTLEROOT_TOWN',20), ('right','MAP_ROUTE101',0),
+                  ('up','MAP_PETALBURG_CITY',0)],
  'MAP_ROUTE136': [('up','MAP_ROUTE135',0), ('right','MAP_ROUTE137',0),
                   ('left','MAP_ROUTE105',-40), ('down','MAP_ROUTE106',-40)],
  'MAP_ROUTE137': [('up','MAP_ROUTE135',-40), ('up','MAP_ROUTE138',60),
                   ('left','MAP_ROUTE136',0), ('left','MAP_ROUTE106',40),
                   ('down','MAP_ROUTE107',0), ('down','MAP_ROUTE108',60),
-                  ('right','MAP_ROUTE109',18)],
+                  ('right','MAP_ROUTE109',18),
+                  ('up','MAP_LITTLEROOT_TOWN',40), ('right','MAP_SLATEPORT_CITY',-42)],
  'MAP_ROUTE138': [('up','MAP_ROUTE103',-20), ('down','MAP_ROUTE137',-60),
-                  ('right','MAP_ROUTE110',-82)],
+                  ('right','MAP_ROUTE110',-82),
+                  ('left','MAP_LITTLEROOT_TOWN',40), ('left','MAP_OLDALE_TOWN',0),
+                  ('left','MAP_ROUTE101',20), ('right','MAP_SLATEPORT_CITY',18)],
 }
 # the other half of each seam, added to the vanilla map's own header
 RECIP = {
@@ -80,7 +84,66 @@ RECIP = {
  'MAP_ROUTE110': [('left','MAP_ROUTE138',82)],
 }
 
+# --- the towns ------------------------------------------------------------
+# Littleroot, Oldale, Petalburg and Slateport all border the new land, and
+# opening a town edge changes which coordinates the player can reach during
+# that town's scripted sequences. Every vanilla confinement was found first and
+# is re-implemented at the new exits below; none of them needed terrain work,
+# because Hoenn's town maps already draw walkable grass right up to their
+# borders and were only closed by the absence of a connection.
+TOWN_CONN = {
+ 'MAP_LITTLEROOT_TOWN': [('left', 'MAP_ROUTE135', -20), ('right', 'MAP_ROUTE138', -40),
+                         ('down', 'MAP_ROUTE137', -40)],
+ 'MAP_OLDALE_TOWN':     [('right', 'MAP_ROUTE138', 0)],
+ 'MAP_ROUTE101':        [('left', 'MAP_ROUTE135', 0), ('right', 'MAP_ROUTE138', -20)],
+ 'MAP_PETALBURG_CITY':  [('down', 'MAP_ROUTE135', 0)],
+ 'MAP_SLATEPORT_CITY':  [('left', 'MAP_ROUTE138', -18), ('left', 'MAP_ROUTE137', 42)],
+}
+
+# What each newly opened exit has to keep the player from doing.
+#
+#   Littleroot  vanilla blocks the only exit (north) while
+#               VAR_LITTLEROOT_TOWN_STATE is 0, by having a twin walk over and
+#               warn you. The real hazard is leaving with an empty party and
+#               stepping into tall grass, and that outlasts state 0 - at state
+#               1 you have been told to go save Birch and still have nothing.
+#               So the new exits test FLAG_SYS_POKEMON_GET instead of a state,
+#               which is the condition that actually matters.
+#   Oldale      the footprints man blocks the west exit while
+#               VAR_OLDALE_TOWN_STATE is 0. The east exit gets the same gate on
+#               the same var, so it opens at the same moment.
+#   Route 101   during the Birch rescue (VAR_ROUTE101_STATE == 2) vanilla pens
+#               the player into a box south of the bag, guarded on all four
+#               sides. Its west wall is a trigger at x=6 covering rows 15-18
+#               only - row 14 is walkable west all the way to x=0 and was a
+#               dead end until now. Guarding the outermost column closes that.
+#
+# Petalburg and Slateport need nothing: reaching either already requires a
+# party, and Slateport's west edge is open ocean, so that seam is a surf.
+GUARD_NONE, GUARD_PARTY, GUARD_VAR = 'none', 'party', 'var'
+GUARDS = {
+ 'MAP_LITTLEROOT_TOWN': dict(kind=GUARD_PARTY, sides=('left', 'right', 'down'),
+                             text='I shouldn’t go wandering off without\\n'
+                                  'a POKéMON of my own…'),
+ 'MAP_OLDALE_TOWN':     dict(kind=GUARD_VAR, sides=('right',),
+                             var='VAR_OLDALE_TOWN_STATE', value='0',
+                             text='The path east is roped off while the\\n'
+                                  'footprint survey is going on.'),
+ 'MAP_ROUTE101':        dict(kind=GUARD_VAR, sides=('left', 'right'),
+                             var='VAR_ROUTE101_STATE', value='2',
+                             text=None),      # reuses Route101_Text_DontLeaveMe
+}
+STEP_BACK = {'left': 'walk_right', 'right': 'walk_left',
+             'up': 'walk_down', 'down': 'walk_up'}
+MARK = '@ --- open hoenn: gates generated by tools/newmaps.py ---'
+MARK_END = '@ --- end open hoenn gates ---'
+
 OPP = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
+
+def map_dir(const):
+    """MAP_LITTLEROOT_TOWN -> LittlerootTown, the name of its data directory."""
+    return const.replace('MAP_', '').title().replace('_', '')
+
 TREE_BORDER = [0x1D4, 0x1D5, 0x1DC, 0x1DD]      # what every land route uses
 SEA_BORDER = [0x170] * 4
 
@@ -282,7 +345,9 @@ SOFTEN = [('MAP_ROUTE102', 'down',  None),
           ('MAP_ROUTE107', 'up',    None),
           ('MAP_ROUTE108', 'up',    None),
           ('MAP_ROUTE109', 'left',  (0, 39)),    # y360+ faces Route 108
-          ('MAP_ROUTE110', 'left',  (82, 99))]   # only the bottom of a long map
+          ('MAP_ROUTE110', 'left',  (82, 99)),   # only the bottom of a long map
+          ('MAP_ROUTE101', 'left',  None),
+          ('MAP_ROUTE101', 'right', None)]
 DEPTH = 4
 
 BASELINE = os.path.join(HERE, '..', 'baseline')
@@ -324,7 +389,7 @@ def soften(painter, dry):
     for const, side, span in SOFTEN:
         L = lay[maps[const]['layout']]
         w, h = L['width'], L['height']
-        name = const.replace('MAP_', '').title()
+        name = map_dir(const)
         blk, path = pristine(name, L)
         C = T.Classifier(rend, L['primary_tileset'], L.get('secondary_tileset'))
         raw = [(blk[i*2] | (blk[i*2+1] << 8)) if i*2+1 < len(blk) else 0
@@ -393,6 +458,86 @@ def soften(painter, dry):
         if not dry:
             open(path, 'wb').write(u16(out))
     print(f'  -> {total} vanilla metatiles rewritten')
+
+# --- gates on the town edges ----------------------------------------------
+def edge_cells(L, side):
+    """the outermost cells of one edge that the player can stand on."""
+    w, h = L['width'], L['height']
+    blk = open(f'{ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+    out = []
+    span = range(w) if side in ('up', 'down') else range(h)
+    for a in span:
+        x, y = ((a, 0) if side == 'up' else (a, h-1) if side == 'down' else
+                (0, a) if side == 'left' else (w-1, a))
+        o = (y * w + x) * 2
+        if o + 1 < len(blk) and ((blk[o] | (blk[o+1] << 8)) >> 10) & 3 == 0:
+            out.append((x, y))
+    return out
+
+def guard_script(name, g, side):
+    """the block appended to a map's scripts.inc for one gated edge."""
+    S, cap = [], side.capitalize()
+    lbl = f'{name}_EventScript_OpenHoennGate{cap}'
+    txt = (f'{name}_Text_OpenHoennGate' if g['text'] is not None
+           else 'Route101_Text_DontLeaveMe')
+    S.append(f'{lbl}::')
+    if g['kind'] == GUARD_PARTY:
+        # the coord event fires on every step onto the tile, so the real test
+        # lives here and falls straight through once the player has a party
+        S.append(f'\tgoto_if_set FLAG_SYS_POKEMON_GET, {name}_EventScript_OpenHoennGateOpen')
+    S += ['\tlockall',
+          f'\tmsgbox {txt}, MSGBOX_DEFAULT',
+          '\tclosemessage',
+          f'\tapplymovement LOCALID_PLAYER, {name}_Movement_OpenHoennBack{cap}',
+          '\twaitmovement 0',
+          '\treleaseall',
+          '\tend',
+          '',
+          f'{name}_Movement_OpenHoennBack{cap}:',
+          f'\t{STEP_BACK[side]}',
+          '\tstep_end',
+          '']
+    return S
+
+def gates(dry):
+    lay, maps, _ = R.solve()
+    for const, g in GUARDS.items():
+        name = map_dir(const)
+        L = lay[maps[const]['layout']]
+        sp = f'{ROOT}/data/maps/{name}/scripts.inc'
+        mp = f'{ROOT}/data/maps/{name}/map.json'
+
+        body = []
+        if g['kind'] == GUARD_PARTY:
+            body += [f'{name}_EventScript_OpenHoennGateOpen::', '\tend', '']
+        events = []
+        for side in g['sides']:
+            body += guard_script(name, g, side)
+            for x, y in edge_cells(L, side):
+                events.append({
+                    'type': 'trigger', 'x': x, 'y': y, 'elevation': 0,
+                    'var': 'VAR_TEMP_2' if g['kind'] == GUARD_PARTY else g['var'],
+                    'var_value': '0' if g['kind'] == GUARD_PARTY else g['value'],
+                    'script': f'{name}_EventScript_OpenHoennGate{side.capitalize()}'})
+        if g['text'] is not None:
+            body += [f'{name}_Text_OpenHoennGate:',
+                     f'\t.string "{g["text"]}$"', '']
+
+        # rewrite the generated block in place rather than appending again
+        src = open(sp).read()
+        if MARK in src:
+            src = src[:src.index(MARK)] + src[src.index(MARK_END) + len(MARK_END):]
+        src = src.rstrip('\n') + '\n\n' + MARK + '\n' + '\n'.join(body) + MARK_END + '\n'
+
+        d = json.load(open(mp))
+        keep = [e for e in (d.get('coord_events') or [])
+                if 'OpenHoennGate' not in str(e.get('script'))]
+        d['coord_events'] = keep + events
+        print(f'  gate {name:16s} {len(events)} triggers on {", ".join(g["sides"])}'
+              f'   ({g["kind"]})')
+        if not dry:
+            open(sp, 'w').write(src)
+            json.dump(d, open(mp, 'w'), indent=2)
 
 # --- writing --------------------------------------------------------------
 def u16(vals):
@@ -503,9 +648,9 @@ def main():
         if not dry:
             open(p, 'w').write('\n'.join(lines))
 
-    # the other half of every seam
-    for const, conns in RECIP.items():
-        name = const.replace('MAP_', '').title().replace('Route', 'Route')
+    # the other half of every seam, vanilla routes and towns alike
+    for const, conns in list(RECIP.items()) + list(TOWN_CONN.items()):
+        name = map_dir(const)
         p = f'{ROOT}/data/maps/{name}/map.json'
         d = json.load(open(p))
         have = {(c['direction'], c['map']) for c in d.get('connections') or []}
@@ -516,6 +661,9 @@ def main():
         print(f'  + {len(conns)} connections on {name}')
         if not dry:
             json.dump(d, open(p, 'w'), indent=2)
+
+    print('gating the town exits...')
+    gates(dry)
 
     print('dry run, nothing written' if dry else 'written')
 

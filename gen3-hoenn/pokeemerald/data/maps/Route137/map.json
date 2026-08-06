@@ -47,6 +47,16 @@
       "map": "MAP_ROUTE109",
       "offset": 18,
       "direction": "right"
+    },
+    {
+      "map": "MAP_LITTLEROOT_TOWN",
+      "offset": 40,
+      "direction": "up"
+    },
+    {
+      "map": "MAP_SLATEPORT_CITY",
+      "offset": -42,
+      "direction": "right"
     }
   ],
   "object_events": [],

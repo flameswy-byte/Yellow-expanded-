@@ -240,28 +240,76 @@ The pristine blockdata lives in `baseline/`, outside the vendored tree, and
 the pass always reads from there — otherwise running it twice would erode the
 border a little further each time.
 
-### What is deliberately not connected
+### The towns, and the scripts that had to move with them
 
-Littleroot, Oldale, Petalburg and Slateport all border these maps and none of
-them is connected. Opening a town edge changes which coordinates the player
-can reach during that town's scripted sequences, which is the mistake that
-cost the most in the Kanto project (`../gen1-kanto/DESIGN.md` §5). Route 101
-is skipped for the same reason: `VAR_ROUTE101_STATE` confines the player
-during the Birch rescue and only guards the exits vanilla knows about.
+Littleroot, Oldale, Petalburg, Slateport and Route 101 are all connected.
+Opening a town edge changes which coordinates the player can reach during that
+town's scripted sequences — the mistake that cost the most in the Kanto
+project (`../gen1-kanto/DESIGN.md` §5) — so every vanilla confinement was found
+first and re-implemented at the new exits.
 
-The new land is still walkable from a new game — via Route 102 — so nothing is
-lost by waiting.
+**No terrain work was needed.** Hoenn's town maps already draw walkable grass
+right to their borders; those edges were closed only by the absence of a
+connection. Every one of the nine new town seams had crossable cells the
+moment the connection existed.
+
+| Town | New exits | What vanilla blocks, and where |
+|---|---|---|
+| Littleroot | west, east, south | a twin warns you off the north exit while `VAR_LITTLEROOT_TOWN_STATE` is 0 |
+| Oldale | east | the footprints man blocks the west exit while `VAR_OLDALE_TOWN_STATE` is 0 |
+| Route 101 | west, east | `VAR_ROUTE101_STATE == 2` pens you into a box during the Birch rescue |
+| Petalburg | south | nothing — reaching Petalburg already needs a party |
+| Slateport | west ×2 | nothing — its west edge is open ocean, so that seam is a surf |
+
+Three findings shaped the guards:
+
+**Littleroot's real condition is not a state, it is an empty party.** Vanilla
+gates the north exit on `VAR_LITTLEROOT_TOWN_STATE == 0`, but at state 1 you
+have been told to go save Birch and still own nothing. In vanilla that is safe
+because north is the only way out and Route 101's trigger fires the moment you
+step on it. With three more exits it is not safe — you would walk into tall
+grass with no party. The new gates test **`FLAG_SYS_POKEMON_GET`** instead,
+which is the condition that actually matters and outlasts both states.
+
+**The vanilla blockers cannot be reused.** Littleroot's is a twin who walks
+over to you and Oldale's is the footprints man stepping aside; both are tied
+by `LOCALID` to their own tile. Firing either from across the map would look
+broken. Each new exit gets a self-contained guard instead — message, one step
+back, release — modelled on Route 101's own `PreventExit` scripts.
+
+**Route 101's rescue box had a hole.** Vanilla guards its west wall with
+triggers at x=6 covering rows 15–18. Row 14 is walkable west all the way to
+x=0, and was a dead end until this connection existed. Guarding the whole
+outermost column closes it.
+
+The guards are generated, not hand-written: 40 triggers on Littleroot, 4 on
+Oldale, 19 on Route 101, placed on every cell of each new edge the player can
+stand on, with the scripts written into each map's `scripts.inc` between
+markers so re-running rewrites them in place.
+
+The party guard fires on `VAR_TEMP_2 == 0`, which is vanilla's always-fires
+idiom (`AquaHideout_B2F` uses it), and the script tests the flag and falls
+through to a bare `end` once you have a Pokémon — no lock, no message.
+
+**Left open on purpose:** the Oldale gate is now bypassable. A player can go
+Route 101 → west into Route 135 → north to Route 102 and reach Petalburg
+without ever triggering the Route 103 rival battle. Nothing softlocks — the
+Pokédex comes from Birch's lab, which is always open — but it is the
+level-curve question arriving early, and it is a design decision rather than a
+bug to fix.
 
 ### Verification
 
 ```
 make                         -> builds; sha1 differs from vanilla, as it must
 tools/check_seams.py         -> 0 blocked connections among the new maps
-                                6 remain, all vanilla: Route 112/113, 114/115,
-                                and Route 116/Verdanturf, which link by tunnel
-                                walk       reaches 26/53 outdoor maps
+                                10 remain, every one vanilla: Route 112/113,
+                                114/115 and Route 116/Verdanturf, which link by
+                                tunnel, and the four Underwater route seams
+                                walk       reaches 27/53 outdoor maps
                                 walk+surf  reaches 52/53
-                                all four new maps walkable from the start
+                                all four new maps, and all five newly
+                                connected vanilla maps, walkable from the start
 ```
 
 `check_seams.py` is the tool that matters. A connection in a map header only
@@ -270,6 +318,12 @@ blockdata, and a connection with no crossable cell is a wall that looks like a
 door. Nothing in the build catches that. It caught one: Route 138 → Route 110
 was declared and impassable, because Route 110's west edge is a solid tree
 column. Softening opened it.
+
+It works in each map's *local* coordinates, from the connection's own offset.
+An earlier version laid the world flat and checked seams there, which is wrong
+for the three vanilla pairs whose offsets disagree: a map's world position then
+depends on which way the solver reached it, and Route 116/Verdanturf came out
+blocked in one direction and open in the other from the same data.
 
 Still missing on these maps: **wild encounters**. The tall grass is real
 terrain but no `wild_encounters.json` entry exists, so nothing lives in it yet.

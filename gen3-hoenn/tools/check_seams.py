@@ -72,44 +72,47 @@ def main():
             return 'solid'
         return 'water' if beh[k](mid, col) == T.WATER else 'land'
 
+    grid, warp_at, warp_dst = local_world(set(beh))
+
     # --- per-connection crossability -------------------------------------
+    # Worked out from the connection's own offset in each map's local
+    # coordinates, not from a world layout. Three vanilla connection pairs
+    # disagree about their offsets (DESIGN.md sec 2), so a map's world
+    # position depends on which way the solver reached it - and a seam check
+    # built on that answers a different question in each direction.
     print('connections with no crossable position:')
     bad = 0
-    for k in sorted(pos):
-        L = lay[maps[k]['layout']]
-        mx, my = pos[k]
-        for c in maps[k]['conn']:
+    for k in sorted(grid):
+        g = grid[k]
+        w, h = g['w'], g['h']
+        for c in g['conn']:
             nb, d, off = c.get('map'), c.get('direction'), c.get('offset', 0)
-            if nb not in pos or d not in ('up', 'down', 'left', 'right'):
+            if nb not in grid or d not in ('up', 'down', 'left', 'right'):
                 continue
-            N = lay[maps[nb]['layout']]
+            n = grid[nb]
+            at = lambda m, x, y: grid[m]['cells'][y * grid[m]['w'] + x]
+            def sort(m, x, y):
+                mid, col, _ = at(m, x, y)
+                return 'solid' if col else ('water' if beh[m](mid, col) == T.WATER
+                                            else 'land')
             walk = surf = span = 0
             if d in ('up', 'down'):
-                y0 = my - miny + (0 if d == 'up' else L['height'] - 1)
-                y1 = y0 + (-1 if d == 'up' else 1)
-                lo = max(mx, pos[nb][0]); hi = min(mx + L['width'], pos[nb][0] + N['width'])
-                for x in range(lo - minx, hi - minx):
-                    span += 1
-                    if (x, y0) in cell and (x, y1) in cell:
-                        ka, kb = kind((x, y0)), kind((x, y1))
-                        if ka != 'solid' and kb != 'solid' and elev_ok(cell[(x, y0)][2], cell[(x, y1)][2]):
-                            if ka == 'land' and kb == 'land':
-                                walk += 1
-                            else:
-                                surf += 1
+                pairs = [((x, 0 if d == 'up' else h-1), (x - off, n['h']-1 if d == 'up' else 0))
+                         for x in range(max(0, off), min(w, off + n['w']))]
             else:
-                x0 = mx - minx + (0 if d == 'left' else L['width'] - 1)
-                x1 = x0 + (-1 if d == 'left' else 1)
-                lo = max(my, pos[nb][1]); hi = min(my + L['height'], pos[nb][1] + N['height'])
-                for y in range(lo - miny, hi - miny):
-                    span += 1
-                    if (x0, y) in cell and (x1, y) in cell:
-                        ka, kb = kind((x0, y)), kind((x1, y))
-                        if ka != 'solid' and kb != 'solid' and elev_ok(cell[(x0, y)][2], cell[(x1, y)][2]):
-                            if ka == 'land' and kb == 'land':
-                                walk += 1
-                            else:
-                                surf += 1
+                pairs = [((0 if d == 'left' else w-1, y), (n['w']-1 if d == 'left' else 0, y - off))
+                         for y in range(max(0, off), min(h, off + n['h']))]
+            for (ax, ay), (bx, by) in pairs:
+                span += 1
+                ka, kb = sort(k, ax, ay), sort(nb, bx, by)
+                if ka == 'solid' or kb == 'solid':
+                    continue
+                if not elev_ok(at(k, ax, ay)[2], at(nb, bx, by)[2]):
+                    continue
+                if ka == 'land' and kb == 'land':
+                    walk += 1
+                else:
+                    surf += 1
             tag = f'{k[4:]:18s} {d:5s} -> {nb[4:]:18s}'
             if walk == 0 and surf == 0:
                 print(f'  BLOCKED  {tag}  ({span} cells of shared edge)')
@@ -125,7 +128,6 @@ def main():
     # in each map's own local coordinates, the way the engine does, and
     # follows warps too - otherwise every tunnel and cave reads as a dead end.
     print()
-    grid, warp_at, warp_dst = local_world(set(beh))
     # only the outdoor maps are reported. Interiors hang off warps, and a warp
     # is reached by stepping onto its exact tile, which this does not always
     # manage - so an unreached interior says more about the model than the map.

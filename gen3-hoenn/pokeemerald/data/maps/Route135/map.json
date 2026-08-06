@@ -32,6 +32,21 @@
       "map": "MAP_ROUTE137",
       "offset": 40,
       "direction": "down"
+    },
+    {
+      "map": "MAP_LITTLEROOT_TOWN",
+      "offset": 20,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_ROUTE101",
+      "offset": 0,
+      "direction": "right"
+    },
+    {
+      "map": "MAP_PETALBURG_CITY",
+      "offset": 0,
+      "direction": "up"
     }
   ],
   "object_events": [],
