@@ -750,12 +750,20 @@ def ensure_reachable(grid, level, w, h):
     bug the first version had, and it came back the moment the walls got their
     proper height.
     """
+    # Seed from the map's rim, not from every ground-level cell. Seeding from
+    # all ground meant a terrace could be judged connected to ground that was
+    # itself walled off from the map's edges - Route 144 shipped 741 cells the
+    # player could never stand on, and the check said it was fine.
+    rim = [i for i in range(w * h)
+           if grid[i] in WALK_CLASSES
+           and (i % w in (0, w-1) or i // w in (0, h-1))]
+    if not rim:
+        rim = [i for i in range(w * h)
+               if grid[i] in WALK_CLASSES and level[i] == GROUND_LEVEL]
     extra = []
-    for _ in range(8):
-        seen = set()
-        q = collections.deque(i for i in range(w * h)
-                              if grid[i] in WALK_CLASSES and level[i] == GROUND_LEVEL)
-        seen |= set(q)
+    for _ in range(12):
+        seen = set(rim)
+        q = collections.deque(rim)
         while q:
             i = q.popleft()
             x, y = i % w, i // w
@@ -765,7 +773,9 @@ def ensure_reachable(grid, level, w, h):
                         and grid[j] in WALK_CLASSES and _elev_ok(level[i], level[j])):
                     seen.add(j)
                     q.append(j)
-        stranded = [i for i in range(w * h) if grid[i] == T.PLATEAU and i not in seen]
+        # anything walkable the rim cannot reach, not just terraces
+        stranded = [i for i in range(w * h)
+                    if grid[i] in WALK_CLASSES and i not in seen]
         if not stranded:
             break
         # 0-1 BFS out of the stranded region: free across walkable cells,
@@ -1120,9 +1130,13 @@ def final_check(blocks, w, h, beh_cache=[]):
     C = lambda i: (blocks[i] >> 10) & 3
     walk = lambda i: C(i) == 0
     fixed = 0
-    for _ in range(4):
-        q = collections.deque(i for i in range(w * h) if walk(i) and E(i) == GROUND_LEVEL)
-        seen = set(q)
+    rim = [i for i in range(w * h)
+           if walk(i) and (i % w in (0, w-1) or i // w in (0, h-1))]
+    if not rim:
+        rim = [i for i in range(w * h) if walk(i) and E(i) == GROUND_LEVEL]
+    for _ in range(8):
+        q = collections.deque(rim)
+        seen = set(rim)
         while q:
             i = q.popleft()
             x, y = i % w, i // w
@@ -1132,8 +1146,7 @@ def final_check(blocks, w, h, beh_cache=[]):
                         and _elev_ok(E(i), E(j))):
                     seen.add(j)
                     q.append(j)
-        lost = [i for i in range(w * h)
-                if walk(i) and E(i) in TIER_LEVELS and i not in seen]
+        lost = [i for i in range(w * h) if walk(i) and i not in seen]
         if not lost:
             break
         # group them, then deal with each pocket on its size

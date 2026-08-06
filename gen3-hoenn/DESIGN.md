@@ -521,6 +521,38 @@ Cliff fallback: **50.3% → 13.3%**, with every terrace still reachable.
 | pond | 42.3% | 182 cells |
 | path | 66.3% | expected — vanilla never draws a one-cell-wide path |
 
+### Checking inside a map, not just between them
+
+`check_seams.py` answers "can the player get from one map to the next".
+`tools/check_maps.py` answers "once inside, is anything wrong with it", on the
+shipped bytes. It found the worst bug in the project.
+
+**Route 144 shipped 741 walkable cells the player could never stand on**, in 9
+pockets, and every reachability check up to that point had said the map was
+fine. The cause was in the checks themselves: `ensure_reachable()` and
+`final_check()` both seeded their flood from *every ground-level cell*. A
+terrace walled off from the map's edges was therefore judged connected — to
+ground that was itself unreachable. Both now seed from the **rim**, where a
+connection actually lands, and repair anything walkable the rim cannot get to.
+
+```
+before   11 of 14 maps, 1,000+ stranded cells   (Route 144 alone: 741)
+after     2 of 14 maps,        11 stranded cells
+```
+
+For scale, vanilla's own routes carry 33, 15 and 12 such cells; ours are now
+cleaner than the game's.
+
+Two things that measurement needed to get right, or it says nothing:
+
+**Surfing counts.** A walk-only test flags every islet as broken. Route 134
+alone has 293 cells you can only reach across water. The question is whether
+the player can stand there *by any means*.
+
+**Ledges are one-way.** A flood fill will happily walk back up one. The trap
+check replays reachability with the hop allowed in one direction only and asks
+whether every cell can still get back out. No traps found.
+
 ### Ledges
 
 Vanilla's ledge is `0x087`, `MB_JUMP_SOUTH`, collision 1 — you hop south over
