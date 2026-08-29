@@ -17,19 +17,33 @@ Route135_Text_AdriaDefeat:
 Route135_Text_AdriaPostBattle:
 	.string "Keep heading on. It opens out.$"
 
+Route135_EventScript_Amara::
+	trainerbattle_single TRAINER_AMARA, Route135_Text_AmaraIntro, Route135_Text_AmaraDefeat
+	msgbox Route135_Text_AmaraPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route135_Text_AmaraIntro:
+	.string "A challenger! At last.$"
+
+Route135_Text_AmaraDefeat:
+	.string "The ROUTE is yours.$"
+
+Route135_Text_AmaraPostBattle:
+	.string "There's more of us further along.$"
+
 Route135_EventScript_Alden::
 	trainerbattle_single TRAINER_ALDEN, Route135_Text_AldenIntro, Route135_Text_AldenDefeat
 	msgbox Route135_Text_AldenPostBattle, MSGBOX_AUTOCLOSE
 	end
 
 Route135_Text_AldenIntro:
-	.string "A challenger! At last.$"
+	.string "I've been waiting for someone like\nyou.$"
 
 Route135_Text_AldenDefeat:
-	.string "The ROUTE is yours.$"
+	.string "Beaten.$"
 
 Route135_Text_AldenPostBattle:
-	.string "There's more of us further along.$"
+	.string "Rest before the next stretch.$"
 
 Route135_EventScript_Alvin::
 	trainerbattle_single TRAINER_ALVIN, Route135_Text_AlvinIntro, Route135_Text_AlvinDefeat
@@ -37,26 +51,12 @@ Route135_EventScript_Alvin::
 	end
 
 Route135_Text_AlvinIntro:
-	.string "I've been waiting for someone like\nyou.$"
+	.string "Stop there. This ROUTE is mine to\ndefend.$"
 
 Route135_Text_AlvinDefeat:
-	.string "Beaten.$"
+	.string "Well fought.$"
 
 Route135_Text_AlvinPostBattle:
-	.string "Rest before the next stretch.$"
-
-Route135_EventScript_Amara::
-	trainerbattle_single TRAINER_AMARA, Route135_Text_AmaraIntro, Route135_Text_AmaraDefeat
-	msgbox Route135_Text_AmaraPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route135_Text_AmaraIntro:
-	.string "The weather held. Let's use it.$"
-
-Route135_Text_AmaraDefeat:
-	.string "How nice. And how losing.$"
-
-Route135_Text_AmaraPostBattle:
 	.string "Good luck out there.$"
 
 Route135_EventScript_Anita::
@@ -79,10 +79,10 @@ Route135_EventScript_Ansel::
 	end
 
 Route135_Text_AnselIntro:
-	.string "Begin!$"
+	.string "Battle me and I'll let you pass.$"
 
 Route135_Text_AnselDefeat:
-	.string "Strength recognised.$"
+	.string "That settles it.$"
 
 Route135_Text_AnselPostBattle:
 	.string "Safe travels.$"
@@ -101,45 +101,45 @@ Route135_Text_ArdenDefeat:
 Route135_Text_ArdenPostBattle:
 	.string "Keep heading on. It opens out.$"
 
-Route135_EventScript_Arlo::
-	trainerbattle_single TRAINER_ARLO, Route135_Text_ArloIntro, Route135_Text_ArloDefeat
-	msgbox Route135_Text_ArloPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route135_Text_ArloIntro:
-	.string "A challenger! At last.$"
-
-Route135_Text_ArloDefeat:
-	.string "The ROUTE is yours.$"
-
-Route135_Text_ArloPostBattle:
-	.string "There's more of us further along.$"
-
 Route135_EventScript_Arwen::
 	trainerbattle_single TRAINER_ARWEN, Route135_Text_ArwenIntro, Route135_Text_ArwenDefeat
 	msgbox Route135_Text_ArwenPostBattle, MSGBOX_AUTOCLOSE
 	end
 
 Route135_Text_ArwenIntro:
-	.string "I've been waiting for someone like\nyou.$"
+	.string "A challenger! At last.$"
 
 Route135_Text_ArwenDefeat:
-	.string "Beaten.$"
+	.string "The ROUTE is yours.$"
 
 Route135_Text_ArwenPostBattle:
-	.string "Rest before the next stretch.$"
+	.string "There's more of us further along.$"
 
-Route135_EventScript_Asher::
-	trainerbattle_single TRAINER_ASHER, Route135_Text_AsherIntro, Route135_Text_AsherDefeat
-	msgbox Route135_Text_AsherPostBattle, MSGBOX_AUTOCLOSE
+Route135_EventScript_Aubrey::
+	trainerbattle_single TRAINER_AUBREY, Route135_Text_AubreyIntro, Route135_Text_AubreyDefeat
+	msgbox Route135_Text_AubreyPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route135_Text_AsherIntro:
-	.string "u$"
+Route135_Text_AubreyIntro:
+	.string "I've been waiting for someone like\nyou.$"
 
-Route135_Text_AsherDefeat:
-	.string "t$"
+Route135_Text_AubreyDefeat:
+	.string "Beaten.$"
 
-Route135_Text_AsherPostBattle:
-	.string "$"
+Route135_Text_AubreyPostBattle:
+	.string "Rest before the next stretch.$"
+
+Route135_EventScript_Becca::
+	trainerbattle_single TRAINER_BECCA, Route135_Text_BeccaIntro, Route135_Text_BeccaDefeat
+	msgbox Route135_Text_BeccaPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route135_Text_BeccaIntro:
+	.string "Stop there. This ROUTE is mine to\ndefend.$"
+
+Route135_Text_BeccaDefeat:
+	.string "Well fought.$"
+
+Route135_Text_BeccaPostBattle:
+	.string "Good luck out there.$"
 

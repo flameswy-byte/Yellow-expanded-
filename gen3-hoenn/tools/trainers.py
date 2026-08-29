@@ -51,25 +51,26 @@ PARTIES = 'src/data/trainer_parties.h'
 MARK = '// Open Hoenn - tools/trainers.py'
 
 # One name per trainer, none of them vanilla's, so a Pokenav list stays
-# readable. 176 is more than the routes can hold.
-NAMES = """ADRIA ALDEN ALVIN AMARA ANITA ANSEL ARDEN ARLO ARWEN ASHER AUBREY AVERY
-BARNEY BASIL BECCA BENNO BERTIE BRANWEN BRAMWELL BONNIE BORIS BRIAR
-BRUNO BRYCE CAIRO CARLOTTA CARMEN CASPER CASIMIR CLEMMIE CRISPIN CLEO
-CLIVE CONRAD COLBY CORAL CORWIN CRAIG CURTIS DAHLIA DERWENT DARBY DELIA
-DENNIS DESMOND DEXTER DRISCOLL DORA DUSTIN EARL EDITH EFFIE ELDON ELIAS
-ELOISE EMMET ENZO ESME EVANS FENELLA FENWICK FERRIS FINLAY FIONA FLETCH
-FLORA FORREST FRANKIE GABE GARLAND GAVIN GWENDOLEN GILDA GLENN GRISELDA
-GRIFFIN GUSTAV HADLEY HARRIET HAMISH HARLOW HAZEL HOLLIS HORACE HUGO
-IDRIS IMOGEN INGRID IRIS ISOLDE IVOR JAMIE JASPER JEMMA JETHRO JULIAN
-JOSIE JUDE JUNO KEATON KENDRA KESTREL KIERAN KIRBY LACEY LAMONT LANDON
-LEONA LESLIE LEWIS LILAH LOGAN LORCAN LUCIA LUDO MABEL MAGNUS MALLORY
-MARLOW MAUDE MERLE MILO MIRA MORGAN MURPHY NADIA NEELY NEVIN NIAMH NORA
-OAKLEY OLIVE ORSON OSCAR OTTO PAIGE PERCY PETRONELLA PIPER PORTER QUINN
-RAFE RAMONA REEVES REGGIE RENATA RHYS ROSALIND ROSCOE ROWAN RUBY RUFUS
-SABLE SORREL SEAMUS SELMA SETH SIGRID SIMONE SLOANE SOREN STELLA SULLY
-SYBIL TALLIS TAMSIN TEDDY THEA THORNE TOBIAS TRUDY TYSON URSULA VANCE
-VERITY VESPER VIOLA WALDO WENDELL WESLEY WILLA WILHELMINA WREN YOLANDA
-ZELDA ZEPHYR""".split()
+# readable, and split the way vanilla splits them: a class the game
+# marks F_TRAINER_FEMALE gets a name from the first list. There are more
+# of each than the routes can hold.
+NAMES_F = """ADRIA AMARA ANITA ARWEN AUBREY BECCA BONNIE BRIAR BRANWEN CARLOTTA CARMEN
+CLEMMIE CLEO CORAL DAHLIA DELIA DORA EDITH EFFIE ELOISE ESME FENELLA FIONA
+FLORA GWENDOLEN GILDA GRISELDA HARRIET HAZEL IMOGEN INGRID IRIS ISOLDE JEMMA
+JOSIE JUNO KENDRA LACEY LEONA LILAH LUCIA MABEL MALLORY MAUDE MIRA NADIA
+NIAMH NORA OLIVE PAIGE PETRONELLA PIPER RAMONA RENATA ROSALIND RUBY SABLE
+SORREL SELMA SIGRID SIMONE SLOANE STELLA SYBIL TAMSIN THEA TRUDY URSULA
+VERITY VIOLA WILLA WILHELMINA WREN YOLANDA ZELDA""".split()
+NAMES_M = """ALDEN ALVIN ANSEL ARDEN ARLO ASHER AVERY BARNEY BASIL BENNO BERTIE
+BRAMWELL BORIS BRUNO BRYCE CAIRO CASPER CASIMIR CRISPIN CLIVE CONRAD COLBY
+CORWIN CRAIG CURTIS DERWENT DARBY DENNIS DESMOND DEXTER DRISCOLL DUSTIN EARL
+ELDON ELIAS EMMET ENZO EVANS FENWICK FERRIS FINLAY FLETCH FORREST FRANKIE
+GABE GARLAND GAVIN GLENN GRIFFIN GUSTAV HADLEY HAMISH HARLOW HOLLIS HORACE
+HUGO IDRIS IVOR JAMIE JASPER JETHRO JULIAN JUDE KEATON KESTREL KIERAN KIRBY
+LAMONT LANDON LESLIE LEWIS LOGAN LORCAN LUDO MAGNUS MARLOW MERLE MILO MORGAN
+MURPHY NEELY NEVIN OAKLEY ORSON OSCAR OTTO PERCY PORTER QUINN RAFE REEVES
+REGGIE RHYS ROSCOE ROWAN RUFUS SEAMUS SETH SOREN SULLY TALLIS TEDDY THORNE
+TOBIAS TYSON VANCE VESPER WALDO WENDELL WESLEY ZEPHYR""".split()
 
 # What a trainer says, by the kind of trainer they are. A class falls back to
 # the plain set when it has none of its own.
@@ -307,7 +308,51 @@ def archetypes(lay, maps, pos, new, hdrs):
             t = script.get(o.get('script'))
             if t and t in info and all(info[t]):
                 out[(o['graphics_id'],) + info[t]] += 1
-    return [a for a, _ in out.most_common()]
+    # each archetype repeated as often as vanilla uses it, so indexing into
+    # the list reproduces the mix. Sampling the 60 distinct ones uniformly
+    # instead put Rich Boy at 7.7% of our trainers against vanilla's 0.7%,
+    # and left Black Belt and Expert at none at all.
+    return [a for a, n in out.most_common() for _ in range(n)]
+
+CLASS_SHARE = 0.30              # a class "means" a type at this share or more
+
+def class_types():
+    """what each trainer class's Pokemon are, as vanilla assigns them.
+
+    A Fisherman's party is 59% Water, a Hiker's 44% Ground and 37% Rock, a
+    Psychic's 71% Psychic, a Bird Keeper's 50% Flying. Handing every class the
+    same slice of the route's wild table ignores all of that and puts a
+    Poochyena on a Swimmer.
+    """
+    types = {}
+    base = open(f'{R.ROOT}/src/data/pokemon/species_info.h').read()
+    for m in re.finditer(r'\[(SPECIES_\w+)\] =\s*\{(.*?)\n    \},', base, re.S):
+        t = re.search(r'\.types\s*=\s*\{\s*(TYPE_\w+),\s*(TYPE_\w+)\s*\}', m.group(2))
+        if t:
+            types[m.group(1)] = {t.group(1), t.group(2)}
+    src = open(f'{R.ROOT}/{TRAINERS}').read()
+    src = src[:src.find(MARK)] if MARK in src else src
+    pp = open(f'{R.ROOT}/{PARTIES}').read()
+    pp = pp[:pp.find(MARK)] if MARK in pp else pp
+    sp = {}
+    for m in re.finditer(r'static const struct \w+ (sParty_\w+)\[\] = \{(.*?)\n\};',
+                         pp, re.S):
+        sp[m.group(1)] = re.findall(r'\.species = (SPECIES_\w+)', m.group(2))
+    tally = collections.defaultdict(collections.Counter)
+    for m in re.finditer(r'\[(TRAINER_\w+)\] =\s*\{(.*?)\n    \},', src, re.S):
+        c = re.search(r'\.trainerClass = (TRAINER_CLASS_\w+)', m.group(2))
+        p = re.search(r'\(s(Party_\w+)\)', m.group(2))
+        if not (c and p):
+            continue
+        for s in sp.get('s' + p.group(1), []):
+            for t in types.get(s, ()):
+                tally[c.group(1)][t] += 1
+    want = {}
+    for c, d in tally.items():
+        n = sum(d.values())
+        if n >= 20:
+            want[c] = {t for t, v in d.items() if v >= CLASS_SHARE * n}
+    return types, want
 
 def spots(spec, lay, maps, rend, taken):
     L = lay[maps[spec['const']]['layout']]
@@ -407,11 +452,14 @@ def main():
     arch = archetypes(lay, maps, pos, new, hdrs)
     wet = [a for a in arch if 'SWIM' in a[1] or 'TUBER' in a[1]]
     dry = [a for a in arch if a not in wet]
-    print(f'{len(arch)} vanilla trainer archetypes, {len(dry)} on land')
+    types, class_of = class_types()
+    print(f'{len(arch)} vanilla trainer archetypes, {len(dry)} on land; '
+          f'{len(class_of)} classes with a type of their own')
 
     opp = cut(open(f'{R.ROOT}/{OPPONENTS}').read(), MARK)
     base = max(int(m) for m in re.findall(r'#define TRAINER_\w+\s+(\d+)', opp)) + 1
     plan, defines, entries, parties, byname = [], [], [], [], {}
+    named = collections.Counter()
     used = set(re.findall(r'#define (TRAINER_\w+)', opp))
     nid = 0
     for spec in N.NEWMAPS:
@@ -419,6 +467,11 @@ def main():
         # populate.py has already put the items down and does not know about
         # this pass, so the cells it used are read back off the header rather
         # than assumed free. Route 138 had a trainer standing on an item ball.
+        ok = lambda a: (not class_of.get(a[1])
+                        or any(class_of[a[1]] & types.get(s, set())
+                               for s in species))
+        fit = ([a for a in dry if ok(a)] or dry,
+               [a for a in wet if ok(a)] or wet)
         h0 = hdrs.get(spec['const'], {})
         # its own trainers from a previous run are not obstacles - counting
         # them would move everybody one square further along every time
@@ -429,16 +482,31 @@ def main():
         here = spots(spec, lay, maps, rend, taken)
         objs = []
         for k, (x, y, e, wade, face) in enumerate(here):
-            src = wet if (wade and wet) else dry
+            # only archetypes whose class means a type this route actually
+            # has - a Fisherman on a route with no Water Pokemon is a
+            # Fisherman with somebody else's team. Filtering the weighted list
+            # and indexing into what is left keeps the mix; walking forward to
+            # the first that fits does not, because the classes with no type of
+            # their own always fit and absorb everyone else's walk. Cooltrainer
+            # went to 22% of our trainers that way, against vanilla's 5.5%.
+            src = fit[1] if (wade and fit[1]) else fit[0]
             gfx, cls, pic, mus = src[(spec['num'] * 7 + k * 3) % len(src)]
-            name = NAMES[nid % len(NAMES)]
+            pool_n = NAMES_F if 'F_TRAINER_FEMALE' in mus else NAMES_M
+            name = pool_n[named[len(pool_n)] % len(pool_n)]
+            named[len(pool_n)] += 1
             const = f'TRAINER_{name}'
             while const in used:
                 const += '_H'
             used.add(const)
             size = SIZES[(spec['num'] + k * 5) % len(SIZES)]
-            mons = [(species[(spec['num'] * 3 + k * 7 + m) % len(species)],
-                     top + LEVEL_OVER - m)
+            # and its Pokemon come from the part of the route's table that
+            # matches, when there is one
+            want = class_of.get(cls) or set()
+            pool = [s for s in species if want & types.get(s, set())] or species
+            # consecutive entries, so a party of three is three different
+            # Pokemon wherever the route has three to give
+            b = (spec['num'] * 3 + k * 7) % len(pool)
+            mons = [(pool[(b + m) % len(pool)], top + LEVEL_OVER - m)
                     for m in range(size)]
             party = f'sParty_{camel(name)}{spec["num"]}'
             parties.append(

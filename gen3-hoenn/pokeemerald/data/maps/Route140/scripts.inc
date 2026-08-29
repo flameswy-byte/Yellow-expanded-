@@ -3,101 +3,101 @@ Route140_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
-Route140_EventScript_Garland::
-	trainerbattle_single TRAINER_GARLAND, Route140_Text_GarlandIntro, Route140_Text_GarlandDefeat
-	msgbox Route140_Text_GarlandPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Jemma::
+	trainerbattle_single TRAINER_JEMMA, Route140_Text_JemmaIntro, Route140_Text_JemmaDefeat
+	msgbox Route140_Text_JemmaPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GarlandIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
+Route140_Text_JemmaIntro:
+	.string "The weather held. Let's use it.$"
 
-Route140_Text_GarlandDefeat:
-	.string "Well fought.$"
+Route140_Text_JemmaDefeat:
+	.string "How nice. And how losing.$"
 
-Route140_Text_GarlandPostBattle:
+Route140_Text_JemmaPostBattle:
 	.string "Good luck out there.$"
 
-Route140_EventScript_Gavin::
-	trainerbattle_single TRAINER_GAVIN, Route140_Text_GavinIntro, Route140_Text_GavinDefeat
-	msgbox Route140_Text_GavinPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Enzo::
+	trainerbattle_single TRAINER_ENZO, Route140_Text_EnzoIntro, Route140_Text_EnzoDefeat
+	msgbox Route140_Text_EnzoPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GavinIntro:
-	.string "You've come a long way. Let's see\nwhy.$"
+Route140_Text_EnzoIntro:
+	.string "You look tough. I'm tougher.$"
 
-Route140_Text_GavinDefeat:
-	.string "I underestimated you.$"
+Route140_Text_EnzoDefeat:
+	.string "I'll train more.$"
 
-Route140_Text_GavinPostBattle:
-	.string "I'll be training when you come\nback.$"
+Route140_Text_EnzoPostBattle:
+	.string "I'll remember you!$"
 
-Route140_EventScript_Gwendolen::
-	trainerbattle_single TRAINER_GWENDOLEN, Route140_Text_GwendolenIntro, Route140_Text_GwendolenDefeat
-	msgbox Route140_Text_GwendolenPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Evans::
+	trainerbattle_single TRAINER_EVANS, Route140_Text_EvansIntro, Route140_Text_EvansDefeat
+	msgbox Route140_Text_EvansPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GwendolenIntro:
-	.string "u$"
+Route140_Text_EvansIntro:
+	.string "One battle! Just one!$"
 
-Route140_Text_GwendolenDefeat:
-	.string "e$"
+Route140_Text_EvansDefeat:
+	.string "Next time! Next time!$"
 
-Route140_Text_GwendolenPostBattle:
-	.string "T$"
+Route140_Text_EvansPostBattle:
+	.string "Come back when I'm stronger!$"
 
-Route140_EventScript_Gilda::
-	trainerbattle_single TRAINER_GILDA, Route140_Text_GildaIntro, Route140_Text_GildaDefeat
-	msgbox Route140_Text_GildaPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Josie::
+	trainerbattle_single TRAINER_JOSIE, Route140_Text_JosieIntro, Route140_Text_JosieDefeat
+	msgbox Route140_Text_JosiePostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GildaIntro:
+Route140_Text_JosieIntro:
 	.string "The water's fine! Come in and\nbattle.$"
 
-Route140_Text_GildaDefeat:
+Route140_Text_JosieDefeat:
 	.string "Out of my depth.$"
 
-Route140_Text_GildaPostBattle:
+Route140_Text_JosiePostBattle:
 	.string "Careful past the point. It's\ndeeper.$"
 
-Route140_EventScript_Glenn::
-	trainerbattle_single TRAINER_GLENN, Route140_Text_GlennIntro, Route140_Text_GlennDefeat
-	msgbox Route140_Text_GlennPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Juno::
+	trainerbattle_single TRAINER_JUNO, Route140_Text_JunoIntro, Route140_Text_JunoDefeat
+	msgbox Route140_Text_JunoPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GlennIntro:
-	.string "A challenger! At last.$"
+Route140_Text_JunoIntro:
+	.string "Don't hold back. I won't.$"
 
-Route140_Text_GlennDefeat:
-	.string "The ROUTE is yours.$"
+Route140_Text_JunoDefeat:
+	.string "You didn't waste my time.$"
 
-Route140_Text_GlennPostBattle:
+Route140_Text_JunoPostBattle:
 	.string "There's more of us further along.$"
 
-Route140_EventScript_Griselda::
-	trainerbattle_single TRAINER_GRISELDA, Route140_Text_GriseldaIntro, Route140_Text_GriseldaDefeat
-	msgbox Route140_Text_GriseldaPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Kendra::
+	trainerbattle_single TRAINER_KENDRA, Route140_Text_KendraIntro, Route140_Text_KendraDefeat
+	msgbox Route140_Text_KendraPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GriseldaIntro:
-	.string "I've been waiting for someone like\nyou.$"
+Route140_Text_KendraIntro:
+	.string "I came out here for a real match.$"
 
-Route140_Text_GriseldaDefeat:
-	.string "Beaten.$"
+Route140_Text_KendraDefeat:
+	.string "Strong. Genuinely strong.$"
 
-Route140_Text_GriseldaPostBattle:
+Route140_Text_KendraPostBattle:
 	.string "Rest before the next stretch.$"
 
-Route140_EventScript_Griffin::
-	trainerbattle_single TRAINER_GRIFFIN, Route140_Text_GriffinIntro, Route140_Text_GriffinDefeat
-	msgbox Route140_Text_GriffinPostBattle, MSGBOX_AUTOCLOSE
+Route140_EventScript_Lacey::
+	trainerbattle_single TRAINER_LACEY, Route140_Text_LaceyIntro, Route140_Text_LaceyDefeat
+	msgbox Route140_Text_LaceyPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route140_Text_GriffinIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
+Route140_Text_LaceyIntro:
+	.string "Let's not waste each other's time.$"
 
-Route140_Text_GriffinDefeat:
-	.string "Well fought.$"
+Route140_Text_LaceyDefeat:
+	.string "I'll take that loss.$"
 
-Route140_Text_GriffinPostBattle:
+Route140_Text_LaceyPostBattle:
 	.string "Good luck out there.$"
 

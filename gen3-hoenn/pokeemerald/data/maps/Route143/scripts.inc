@@ -3,19 +3,257 @@ Route143_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
+Route143_EventScript_Gabe::
+	trainerbattle_single TRAINER_GABE, Route143_Text_GabeIntro, Route143_Text_GabeDefeat
+	msgbox Route143_Text_GabePostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GabeIntro:
+	.string "Cast off! Let's battle.$"
+
+Route143_Text_GabeDefeat:
+	.string "Hah! Hooked myself.$"
+
+Route143_Text_GabePostBattle:
+	.string "Tight lines, TRAINER.$"
+
+Route143_EventScript_Garland::
+	trainerbattle_single TRAINER_GARLAND, Route143_Text_GarlandIntro, Route143_Text_GarlandDefeat
+	msgbox Route143_Text_GarlandPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GarlandIntro:
+	.string "Quiet! ...Ah, you've scared them\noff.\pYou owe me a battle.$"
+
+Route143_Text_GarlandDefeat:
+	.string "Reeled in and thrown back.$"
+
+Route143_Text_GarlandPostBattle:
+	.string "Best water's round the bend. Try\nit.$"
+
+Route143_EventScript_Gavin::
+	trainerbattle_single TRAINER_GAVIN, Route143_Text_GavinIntro, Route143_Text_GavinDefeat
+	msgbox Route143_Text_GavinPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GavinIntro:
+	.string "Been here since dawn. Nothing\nbiting.\pYou'll do.$"
+
+Route143_Text_GavinDefeat:
+	.string "You're the one that got away.$"
+
+Route143_Text_GavinPostBattle:
+	.string "Bring a ROD next time and I'll show\nyou a spot.$"
+
+Route143_EventScript_Glenn::
+	trainerbattle_single TRAINER_GLENN, Route143_Text_GlennIntro, Route143_Text_GlennDefeat
+	msgbox Route143_Text_GlennPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GlennIntro:
+	.string "My birds saw you before I did.$"
+
+Route143_Text_GlennDefeat:
+	.string "Down we come.$"
+
+Route143_Text_GlennPostBattle:
+	.string "Rest before the next stretch.$"
+
+Route143_EventScript_Griffin::
+	trainerbattle_single TRAINER_GRIFFIN, Route143_Text_GriffinIntro, Route143_Text_GriffinDefeat
+	msgbox Route143_Text_GriffinPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GriffinIntro:
+	.string "The sky's clear. Perfect for it.$"
+
+Route143_Text_GriffinDefeat:
+	.string "The sky's yours today.$"
+
+Route143_Text_GriffinPostBattle:
+	.string "Good luck out there.$"
+
+Route143_EventScript_Gustav::
+	trainerbattle_single TRAINER_GUSTAV, Route143_Text_GustavIntro, Route143_Text_GustavDefeat
+	msgbox Route143_Text_GustavPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_GustavIntro:
+	.string "Wings beat legs. Prove me wrong.$"
+
+Route143_Text_GustavDefeat:
+	.string "Well flown.$"
+
+Route143_Text_GustavPostBattle:
+	.string "I'll be training when you come\nback.$"
+
+Route143_EventScript_Hadley::
+	trainerbattle_single TRAINER_HADLEY, Route143_Text_HadleyIntro, Route143_Text_HadleyDefeat
+	msgbox Route143_Text_HadleyPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_HadleyIntro:
+	.string "Fly at me, then.$"
+
+Route143_Text_HadleyDefeat:
+	.string "Back to the nest.$"
+
+Route143_Text_HadleyPostBattle:
+	.string "Safe travels.$"
+
+Route143_EventScript_Lilah::
+	trainerbattle_single TRAINER_LILAH, Route143_Text_LilahIntro, Route143_Text_LilahDefeat
+	msgbox Route143_Text_LilahPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_LilahIntro:
+	.string "Lovely spot for lunch.\pAnd a battle.$"
+
+Route143_Text_LilahDefeat:
+	.string "Well, that's the afternoon gone.$"
+
+Route143_Text_LilahPostBattle:
+	.string "Keep heading on. It opens out.$"
+
+Route143_EventScript_Lucia::
+	trainerbattle_single TRAINER_LUCIA, Route143_Text_LuciaIntro, Route143_Text_LuciaDefeat
+	msgbox Route143_Text_LuciaPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_LuciaIntro:
+	.string "I packed for two. Battle first?$"
+
+Route143_Text_LuciaDefeat:
+	.string "You've earned lunch.$"
+
+Route143_Text_LuciaPostBattle:
+	.string "There's more of us further along.$"
+
+Route143_EventScript_Mabel::
+	trainerbattle_single TRAINER_MABEL, Route143_Text_MabelIntro, Route143_Text_MabelDefeat
+	msgbox Route143_Text_MabelPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_MabelIntro:
+	.string "You've walked a long way. Sit!\n...After.$"
+
+Route143_Text_MabelDefeat:
+	.string "Beaten before dessert.$"
+
+Route143_Text_MabelPostBattle:
+	.string "Rest before the next stretch.$"
+
+Route143_EventScript_Mallory::
+	trainerbattle_single TRAINER_MALLORY, Route143_Text_MalloryIntro, Route143_Text_MalloryDefeat
+	msgbox Route143_Text_MalloryPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_MalloryIntro:
+	.string "The weather held. Let's use it.$"
+
+Route143_Text_MalloryDefeat:
+	.string "How nice. And how losing.$"
+
+Route143_Text_MalloryPostBattle:
+	.string "Good luck out there.$"
+
+Route143_EventScript_Hamish::
+	trainerbattle_single TRAINER_HAMISH, Route143_Text_HamishIntro, Route143_Text_HamishDefeat
+	msgbox Route143_Text_HamishPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_HamishIntro:
+	.string "You look tough. I'm tougher.$"
+
+Route143_Text_HamishDefeat:
+	.string "I'll train more.$"
+
+Route143_Text_HamishPostBattle:
+	.string "I'll remember you!$"
+
+Route143_EventScript_Harlow::
+	trainerbattle_single TRAINER_HARLOW, Route143_Text_HarlowIntro, Route143_Text_HarlowDefeat
+	msgbox Route143_Text_HarlowPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_HarlowIntro:
+	.string "One battle! Just one!$"
+
+Route143_Text_HarlowDefeat:
+	.string "Next time! Next time!$"
+
+Route143_Text_HarlowPostBattle:
+	.string "Come back when I'm stronger!$"
+
+Route143_EventScript_Hollis::
+	trainerbattle_single TRAINER_HOLLIS, Route143_Text_HollisIntro, Route143_Text_HollisDefeat
+	msgbox Route143_Text_HollisPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_HollisIntro:
+	.string "I'm not lost! I'm training!\pBattle me and I'll prove it.$"
+
+Route143_Text_HollisDefeat:
+	.string "I'm still not lost.$"
+
+Route143_Text_HollisPostBattle:
+	.string "I'm going to battle everyone on\nthis ROUTE.$"
+
+Route143_EventScript_Maude::
+	trainerbattle_single TRAINER_MAUDE, Route143_Text_MaudeIntro, Route143_Text_MaudeDefeat
+	msgbox Route143_Text_MaudePostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_MaudeIntro:
+	.string "Don't hold back. I won't.$"
+
+Route143_Text_MaudeDefeat:
+	.string "You didn't waste my time.$"
+
+Route143_Text_MaudePostBattle:
+	.string "There's more of us further along.$"
+
+Route143_EventScript_Mira::
+	trainerbattle_single TRAINER_MIRA, Route143_Text_MiraIntro, Route143_Text_MiraDefeat
+	msgbox Route143_Text_MiraPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_MiraIntro:
+	.string "I came out here for a real match.$"
+
+Route143_Text_MiraDefeat:
+	.string "Strong. Genuinely strong.$"
+
+Route143_Text_MiraPostBattle:
+	.string "Rest before the next stretch.$"
+
+Route143_EventScript_Nadia::
+	trainerbattle_single TRAINER_NADIA, Route143_Text_NadiaIntro, Route143_Text_NadiaDefeat
+	msgbox Route143_Text_NadiaPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route143_Text_NadiaIntro:
+	.string "Let's not waste each other's time.$"
+
+Route143_Text_NadiaDefeat:
+	.string "I'll take that loss.$"
+
+Route143_Text_NadiaPostBattle:
+	.string "Good luck out there.$"
+
 Route143_EventScript_Horace::
 	trainerbattle_single TRAINER_HORACE, Route143_Text_HoraceIntro, Route143_Text_HoraceDefeat
 	msgbox Route143_Text_HoracePostBattle, MSGBOX_AUTOCLOSE
 	end
 
 Route143_Text_HoraceIntro:
-	.string "Battle me and I'll let you pass.$"
+	.string "You travel light. So do I.$"
 
 Route143_Text_HoraceDefeat:
-	.string "That settles it.$"
+	.string "I'll break camp early.$"
 
 Route143_Text_HoracePostBattle:
-	.string "Safe travels.$"
+	.string "I'll be training when you come\nback.$"
 
 Route143_EventScript_Hugo::
 	trainerbattle_single TRAINER_HUGO, Route143_Text_HugoIntro, Route143_Text_HugoDefeat
@@ -23,249 +261,11 @@ Route143_EventScript_Hugo::
 	end
 
 Route143_Text_HugoIntro:
-	.string "Not many come this far. Battle me.$"
+	.string "One battle, then I'm moving on.$"
 
 Route143_Text_HugoDefeat:
-	.string "You've come a long way indeed.$"
+	.string "That's me humbled.$"
 
 Route143_Text_HugoPostBattle:
-	.string "Keep heading on. It opens out.$"
-
-Route143_EventScript_Idris::
-	trainerbattle_single TRAINER_IDRIS, Route143_Text_IdrisIntro, Route143_Text_IdrisDefeat
-	msgbox Route143_Text_IdrisPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_IdrisIntro:
-	.string "A challenger! At last.$"
-
-Route143_Text_IdrisDefeat:
-	.string "The ROUTE is yours.$"
-
-Route143_Text_IdrisPostBattle:
-	.string "There's more of us further along.$"
-
-Route143_EventScript_Imogen::
-	trainerbattle_single TRAINER_IMOGEN, Route143_Text_ImogenIntro, Route143_Text_ImogenDefeat
-	msgbox Route143_Text_ImogenPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_ImogenIntro:
-	.string "You've walked a long way. Sit!\n...After.$"
-
-Route143_Text_ImogenDefeat:
-	.string "Beaten before dessert.$"
-
-Route143_Text_ImogenPostBattle:
-	.string "Rest before the next stretch.$"
-
-Route143_EventScript_Ingrid::
-	trainerbattle_single TRAINER_INGRID, Route143_Text_IngridIntro, Route143_Text_IngridDefeat
-	msgbox Route143_Text_IngridPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_IngridIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
-
-Route143_Text_IngridDefeat:
-	.string "Well fought.$"
-
-Route143_Text_IngridPostBattle:
-	.string "Good luck out there.$"
-
-Route143_EventScript_Iris::
-	trainerbattle_single TRAINER_IRIS, Route143_Text_IrisIntro, Route143_Text_IrisDefeat
-	msgbox Route143_Text_IrisPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_IrisIntro:
-	.string "Your stance is wrong. Your team may\nnot be.$"
-
-Route143_Text_IrisDefeat:
-	.string "A worthy match.$"
-
-Route143_Text_IrisPostBattle:
-	.string "I'll be training when you come\nback.$"
-
-Route143_EventScript_Isolde::
-	trainerbattle_single TRAINER_ISOLDE, Route143_Text_IsoldeIntro, Route143_Text_IsoldeDefeat
-	msgbox Route143_Text_IsoldePostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_IsoldeIntro:
-	.string "Battle me and I'll let you pass.$"
-
-Route143_Text_IsoldeDefeat:
-	.string "That settles it.$"
-
-Route143_Text_IsoldePostBattle:
-	.string "Safe travels.$"
-
-Route143_EventScript_Ivor::
-	trainerbattle_single TRAINER_IVOR, Route143_Text_IvorIntro, Route143_Text_IvorDefeat
-	msgbox Route143_Text_IvorPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_IvorIntro:
-	.string "Not many come this far. Battle me.$"
-
-Route143_Text_IvorDefeat:
-	.string "You've come a long way indeed.$"
-
-Route143_Text_IvorPostBattle:
-	.string "Keep heading on. It opens out.$"
-
-Route143_EventScript_Jamie::
-	trainerbattle_single TRAINER_JAMIE, Route143_Text_JamieIntro, Route143_Text_JamieDefeat
-	msgbox Route143_Text_JamiePostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JamieIntro:
-	.string "A challenger! At last.$"
-
-Route143_Text_JamieDefeat:
-	.string "The ROUTE is yours.$"
-
-Route143_Text_JamiePostBattle:
-	.string "There's more of us further along.$"
-
-Route143_EventScript_Jasper::
-	trainerbattle_single TRAINER_JASPER, Route143_Text_JasperIntro, Route143_Text_JasperDefeat
-	msgbox Route143_Text_JasperPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JasperIntro:
-	.string ".$"
-
-Route143_Text_JasperDefeat:
-	.string "$"
-
-Route143_Text_JasperPostBattle:
-	.string "e$"
-
-Route143_EventScript_Jemma::
-	trainerbattle_single TRAINER_JEMMA, Route143_Text_JemmaIntro, Route143_Text_JemmaDefeat
-	msgbox Route143_Text_JemmaPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JemmaIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
-
-Route143_Text_JemmaDefeat:
-	.string "Well fought.$"
-
-Route143_Text_JemmaPostBattle:
-	.string "Good luck out there.$"
-
-Route143_EventScript_Jethro::
-	trainerbattle_single TRAINER_JETHRO, Route143_Text_JethroIntro, Route143_Text_JethroDefeat
-	msgbox Route143_Text_JethroPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JethroIntro:
-	.string "You've come a long way. Let's see\nwhy.$"
-
-Route143_Text_JethroDefeat:
-	.string "I underestimated you.$"
-
-Route143_Text_JethroPostBattle:
-	.string "I'll be training when you come\nback.$"
-
-Route143_EventScript_Julian::
-	trainerbattle_single TRAINER_JULIAN, Route143_Text_JulianIntro, Route143_Text_JulianDefeat
-	msgbox Route143_Text_JulianPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JulianIntro:
-	.string "Battle me and I'll let you pass.$"
-
-Route143_Text_JulianDefeat:
-	.string "That settles it.$"
-
-Route143_Text_JulianPostBattle:
-	.string "Safe travels.$"
-
-Route143_EventScript_Josie::
-	trainerbattle_single TRAINER_JOSIE, Route143_Text_JosieIntro, Route143_Text_JosieDefeat
-	msgbox Route143_Text_JosiePostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JosieIntro:
-	.string "Not many come this far. Battle me.$"
-
-Route143_Text_JosieDefeat:
-	.string "You've come a long way indeed.$"
-
-Route143_Text_JosiePostBattle:
-	.string "Keep heading on. It opens out.$"
-
-Route143_EventScript_Jude::
-	trainerbattle_single TRAINER_JUDE, Route143_Text_JudeIntro, Route143_Text_JudeDefeat
-	msgbox Route143_Text_JudePostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JudeIntro:
-	.string "A challenger! At last.$"
-
-Route143_Text_JudeDefeat:
-	.string "The ROUTE is yours.$"
-
-Route143_Text_JudePostBattle:
-	.string "There's more of us further along.$"
-
-Route143_EventScript_Juno::
-	trainerbattle_single TRAINER_JUNO, Route143_Text_JunoIntro, Route143_Text_JunoDefeat
-	msgbox Route143_Text_JunoPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_JunoIntro:
-	.string "I've been waiting for someone like\nyou.$"
-
-Route143_Text_JunoDefeat:
-	.string "Beaten.$"
-
-Route143_Text_JunoPostBattle:
-	.string "Rest before the next stretch.$"
-
-Route143_EventScript_Keaton::
-	trainerbattle_single TRAINER_KEATON, Route143_Text_KeatonIntro, Route143_Text_KeatonDefeat
-	msgbox Route143_Text_KeatonPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_KeatonIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
-
-Route143_Text_KeatonDefeat:
-	.string "Well fought.$"
-
-Route143_Text_KeatonPostBattle:
-	.string "Good luck out there.$"
-
-Route143_EventScript_Kendra::
-	trainerbattle_single TRAINER_KENDRA, Route143_Text_KendraIntro, Route143_Text_KendraDefeat
-	msgbox Route143_Text_KendraPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_KendraIntro:
-	.string "You've come a long way. Let's see\nwhy.$"
-
-Route143_Text_KendraDefeat:
-	.string "I underestimated you.$"
-
-Route143_Text_KendraPostBattle:
-	.string "I'll be training when you come\nback.$"
-
-Route143_EventScript_Kestrel::
-	trainerbattle_single TRAINER_KESTREL, Route143_Text_KestrelIntro, Route143_Text_KestrelDefeat
-	msgbox Route143_Text_KestrelPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route143_Text_KestrelIntro:
-	.string "Battle me and I'll let you pass.$"
-
-Route143_Text_KestrelDefeat:
-	.string "That settles it.$"
-
-Route143_Text_KestrelPostBattle:
 	.string "Safe travels.$"
 

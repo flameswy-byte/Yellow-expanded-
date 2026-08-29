@@ -832,8 +832,25 @@ is fine. Hidden items are exempt: a bg_event has no sprite and blocks nothing.
 Trainers are harvested, not invented. The 60 combinations of overworld sprite,
 trainer class, battle portrait and encounter fanfare are read out of vanilla's
 own route trainers, so every generated trainer is a pairing the game already
-ships. Party species come from that map's own wild table. Party size follows
-vanilla's distribution — 90 twos, 63 ones, 19 threes. The top level sits one
+ships — and each is repeated in the list as often as vanilla uses it, because
+sampling the 60 uniformly put Rich Boy at 7.7% of our trainers against
+vanilla's 0.7% and left Black Belt at none.
+
+A class means a type. A Fisherman's party is 59% Water in vanilla, a Hiker's
+44% Ground and 37% Rock, a Psychic's 71% Psychic, a Bird Keeper's 50% Flying.
+So a route only draws archetypes whose class means a type that route's wild
+table actually has — a Fisherman on a route with no Water Pokémon is a
+Fisherman with somebody else's team — and the party is then drawn from the
+matching part of that table. Filtering the list and indexing into what is left
+keeps the mix; walking forward to the first that fits does not, because the
+classes with no type of their own always fit and absorb everyone else's walk.
+
+Party size follows vanilla's distribution — 90 twos, 63 ones, 19 threes — and
+the species are consecutive entries in the pool, so a party of three is three
+different Pokémon wherever the route has three to give. Vanilla repeats a
+species in 19% of its multi-mon parties, and ours do too where the pool is
+small. Names come from one of two lists depending on whether the game marks the
+class F_TRAINER_FEMALE. The top level sits one
 above the highest level the route's wild Pokémon reach, which is the tighter of
 the two relationships available: against the median wild level vanilla's
 trainers scatter over +0 to +4, against the highest they sit at +1, between −1

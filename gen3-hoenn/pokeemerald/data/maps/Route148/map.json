@@ -83,7 +83,7 @@
       "flag": "FLAG_ITEM_ROUTE_148_STAR_PIECE"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_CYCLING_TRIATHLETE_M",
+      "graphics_id": "OBJ_EVENT_GFX_PICNICKER",
       "x": 32,
       "y": 50,
       "elevation": 0,
@@ -92,11 +92,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "3",
-      "script": "Route148_EventScript_Piper",
+      "script": "Route148_EventScript_Selma",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_RUNNING_TRIATHLETE_F",
+      "graphics_id": "OBJ_EVENT_GFX_YOUNGSTER",
       "x": 32,
       "y": 85,
       "elevation": 3,
@@ -105,11 +105,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "3",
-      "script": "Route148_EventScript_Porter",
+      "script": "Route148_EventScript_Neely",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_PSYCHIC_M",
+      "graphics_id": "OBJ_EVENT_GFX_YOUNGSTER",
       "x": 25,
       "y": 76,
       "elevation": 3,
@@ -118,11 +118,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "4",
-      "script": "Route148_EventScript_Quinn",
+      "script": "Route148_EventScript_Nevin",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_WOMAN_2",
+      "graphics_id": "OBJ_EVENT_GFX_YOUNGSTER",
       "x": 17,
       "y": 100,
       "elevation": 5,
@@ -131,11 +131,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "4",
-      "script": "Route148_EventScript_Rafe",
+      "script": "Route148_EventScript_Oakley",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_PICNICKER",
+      "graphics_id": "OBJ_EVENT_GFX_WOMAN_5",
       "x": 31,
       "y": 92,
       "elevation": 3,
@@ -144,11 +144,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "5",
-      "script": "Route148_EventScript_Ramona",
+      "script": "Route148_EventScript_Sigrid",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_EXPERT_F",
+      "graphics_id": "OBJ_EVENT_GFX_WOMAN_5",
       "x": 31,
       "y": 43,
       "elevation": 3,
@@ -157,11 +157,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "1",
-      "script": "Route148_EventScript_Reeves",
+      "script": "Route148_EventScript_Simone",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_MAN_4",
+      "graphics_id": "OBJ_EVENT_GFX_WOMAN_5",
       "x": 7,
       "y": 116,
       "elevation": 5,
@@ -170,11 +170,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "2",
-      "script": "Route148_EventScript_Reggie",
+      "script": "Route148_EventScript_Sloane",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_BOY_2",
+      "graphics_id": "OBJ_EVENT_GFX_TWIN",
       "x": 17,
       "y": 24,
       "elevation": 5,
@@ -183,11 +183,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "2",
-      "script": "Route148_EventScript_Renata",
+      "script": "Route148_EventScript_Orson",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_BEAUTY",
+      "graphics_id": "OBJ_EVENT_GFX_TWIN",
       "x": 29,
       "y": 80,
       "elevation": 3,
@@ -196,11 +196,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "3",
-      "script": "Route148_EventScript_Rhys",
+      "script": "Route148_EventScript_Oscar",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_MAN_3",
+      "graphics_id": "OBJ_EVENT_GFX_CAMPER",
       "x": 7,
       "y": 67,
       "elevation": 3,
@@ -209,11 +209,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "3",
-      "script": "Route148_EventScript_Rosalind",
+      "script": "Route148_EventScript_Otto",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_PICNICKER",
+      "graphics_id": "OBJ_EVENT_GFX_CAMPER",
       "x": 27,
       "y": 88,
       "elevation": 3,
@@ -222,11 +222,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "3",
-      "script": "Route148_EventScript_Roscoe",
+      "script": "Route148_EventScript_Percy",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_TWIN",
+      "graphics_id": "OBJ_EVENT_GFX_CAMPER",
       "x": 13,
       "y": 96,
       "elevation": 5,
@@ -235,11 +235,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "4",
-      "script": "Route148_EventScript_Rowan",
+      "script": "Route148_EventScript_Porter",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_BLACK_BELT",
+      "graphics_id": "OBJ_EVENT_GFX_LASS",
       "x": 33,
       "y": 37,
       "elevation": 3,
@@ -248,11 +248,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "4",
-      "script": "Route148_EventScript_Ruby",
+      "script": "Route148_EventScript_Quinn",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_SAILOR",
+      "graphics_id": "OBJ_EVENT_GFX_LASS",
       "x": 27,
       "y": 34,
       "elevation": 3,
@@ -261,11 +261,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "5",
-      "script": "Route148_EventScript_Rufus",
+      "script": "Route148_EventScript_Rafe",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_SWIMMER_F",
+      "graphics_id": "OBJ_EVENT_GFX_LASS",
       "x": 24,
       "y": 83,
       "elevation": 3,
@@ -274,11 +274,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "1",
-      "script": "Route148_EventScript_Sable",
+      "script": "Route148_EventScript_Reeves",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_MAN_5",
+      "graphics_id": "OBJ_EVENT_GFX_MAN_3",
       "x": 20,
       "y": 92,
       "elevation": 3,
@@ -287,11 +287,11 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "2",
-      "script": "Route148_EventScript_Sorrel",
+      "script": "Route148_EventScript_Reggie",
       "flag": "0"
     },
     {
-      "graphics_id": "OBJ_EVENT_GFX_LASS",
+      "graphics_id": "OBJ_EVENT_GFX_MAN_3",
       "x": 10,
       "y": 101,
       "elevation": 7,
@@ -300,7 +300,7 @@
       "movement_range_y": 0,
       "trainer_type": "TRAINER_TYPE_NORMAL",
       "trainer_sight_or_berry_tree_id": "2",
-      "script": "Route148_EventScript_Seamus",
+      "script": "Route148_EventScript_Rhys",
       "flag": "0"
     }
   ],

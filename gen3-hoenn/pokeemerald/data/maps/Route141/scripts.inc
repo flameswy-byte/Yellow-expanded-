@@ -3,59 +3,59 @@ Route141_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
-Route141_EventScript_Gustav::
-	trainerbattle_single TRAINER_GUSTAV, Route141_Text_GustavIntro, Route141_Text_GustavDefeat
-	msgbox Route141_Text_GustavPostBattle, MSGBOX_AUTOCLOSE
+Route141_EventScript_Leona::
+	trainerbattle_single TRAINER_LEONA, Route141_Text_LeonaIntro, Route141_Text_LeonaDefeat
+	msgbox Route141_Text_LeonaPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route141_Text_GustavIntro:
+Route141_Text_LeonaIntro:
 	.string "You've come a long way. Let's see\nwhy.$"
 
-Route141_Text_GustavDefeat:
+Route141_Text_LeonaDefeat:
 	.string "I underestimated you.$"
 
-Route141_Text_GustavPostBattle:
+Route141_Text_LeonaPostBattle:
 	.string "I'll be training when you come\nback.$"
 
-Route141_EventScript_Hadley::
-	trainerbattle_single TRAINER_HADLEY, Route141_Text_HadleyIntro, Route141_Text_HadleyDefeat
-	msgbox Route141_Text_HadleyPostBattle, MSGBOX_AUTOCLOSE
+Route141_EventScript_Fenwick::
+	trainerbattle_single TRAINER_FENWICK, Route141_Text_FenwickIntro, Route141_Text_FenwickDefeat
+	msgbox Route141_Text_FenwickPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route141_Text_HadleyIntro:
-	.string "Battle me and I'll let you pass.$"
+Route141_Text_FenwickIntro:
+	.string "Cast off! Let's battle.$"
 
-Route141_Text_HadleyDefeat:
-	.string "That settles it.$"
+Route141_Text_FenwickDefeat:
+	.string "Hah! Hooked myself.$"
 
-Route141_Text_HadleyPostBattle:
-	.string "Safe travels.$"
+Route141_Text_FenwickPostBattle:
+	.string "Tight lines, TRAINER.$"
 
-Route141_EventScript_Harriet::
-	trainerbattle_single TRAINER_HARRIET, Route141_Text_HarrietIntro, Route141_Text_HarrietDefeat
-	msgbox Route141_Text_HarrietPostBattle, MSGBOX_AUTOCLOSE
+Route141_EventScript_Ferris::
+	trainerbattle_single TRAINER_FERRIS, Route141_Text_FerrisIntro, Route141_Text_FerrisDefeat
+	msgbox Route141_Text_FerrisPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route141_Text_HarrietIntro:
-	.string "Not many come this far. Battle me.$"
+Route141_Text_FerrisIntro:
+	.string "Quiet! ...Ah, you've scared them\noff.\pYou owe me a battle.$"
 
-Route141_Text_HarrietDefeat:
-	.string "You've come a long way indeed.$"
+Route141_Text_FerrisDefeat:
+	.string "Reeled in and thrown back.$"
 
-Route141_Text_HarrietPostBattle:
-	.string "Keep heading on. It opens out.$"
+Route141_Text_FerrisPostBattle:
+	.string "Best water's round the bend. Try\nit.$"
 
-Route141_EventScript_Hamish::
-	trainerbattle_single TRAINER_HAMISH, Route141_Text_HamishIntro, Route141_Text_HamishDefeat
-	msgbox Route141_Text_HamishPostBattle, MSGBOX_AUTOCLOSE
+Route141_EventScript_Finlay::
+	trainerbattle_single TRAINER_FINLAY, Route141_Text_FinlayIntro, Route141_Text_FinlayDefeat
+	msgbox Route141_Text_FinlayPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route141_Text_HamishIntro:
-	.string "A challenger! At last.$"
+Route141_Text_FinlayIntro:
+	.string "Been here since dawn. Nothing\nbiting.\pYou'll do.$"
 
-Route141_Text_HamishDefeat:
-	.string "The ROUTE is yours.$"
+Route141_Text_FinlayDefeat:
+	.string "You're the one that got away.$"
 
-Route141_Text_HamishPostBattle:
-	.string "There's more of us further along.$"
+Route141_Text_FinlayPostBattle:
+	.string "Bring a ROD next time and I'll show\nyou a spot.$"
 

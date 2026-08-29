@@ -3,45 +3,45 @@ Route145_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
-Route145_EventScript_Lucia::
-	trainerbattle_single TRAINER_LUCIA, Route145_Text_LuciaIntro, Route145_Text_LuciaDefeat
-	msgbox Route145_Text_LuciaPostBattle, MSGBOX_AUTOCLOSE
+Route145_EventScript_Kirby::
+	trainerbattle_single TRAINER_KIRBY, Route145_Text_KirbyIntro, Route145_Text_KirbyDefeat
+	msgbox Route145_Text_KirbyPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route145_Text_LuciaIntro:
-	.string "Battle me and I'll let you pass.$"
+Route145_Text_KirbyIntro:
+	.string "Fly at me, then.$"
 
-Route145_Text_LuciaDefeat:
-	.string "That settles it.$"
+Route145_Text_KirbyDefeat:
+	.string "Back to the nest.$"
 
-Route145_Text_LuciaPostBattle:
+Route145_Text_KirbyPostBattle:
 	.string "Safe travels.$"
 
-Route145_EventScript_Ludo::
-	trainerbattle_single TRAINER_LUDO, Route145_Text_LudoIntro, Route145_Text_LudoDefeat
-	msgbox Route145_Text_LudoPostBattle, MSGBOX_AUTOCLOSE
+Route145_EventScript_Lamont::
+	trainerbattle_single TRAINER_LAMONT, Route145_Text_LamontIntro, Route145_Text_LamontDefeat
+	msgbox Route145_Text_LamontPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route145_Text_LudoIntro:
-	.string "Not many come this far. Battle me.$"
+Route145_Text_LamontIntro:
+	.string "Look up. That's mine.\pNow look here - battle me.$"
 
-Route145_Text_LudoDefeat:
-	.string "You've come a long way indeed.$"
+Route145_Text_LamontDefeat:
+	.string "Grounded.$"
 
-Route145_Text_LudoPostBattle:
+Route145_Text_LamontPostBattle:
 	.string "Keep heading on. It opens out.$"
 
-Route145_EventScript_Mabel::
-	trainerbattle_single TRAINER_MABEL, Route145_Text_MabelIntro, Route145_Text_MabelDefeat
-	msgbox Route145_Text_MabelPostBattle, MSGBOX_AUTOCLOSE
+Route145_EventScript_Landon::
+	trainerbattle_single TRAINER_LANDON, Route145_Text_LandonIntro, Route145_Text_LandonDefeat
+	msgbox Route145_Text_LandonPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route145_Text_MabelIntro:
-	.string "A challenger! At last.$"
+Route145_Text_LandonIntro:
+	.string "They circle when a battle's coming.$"
 
-Route145_Text_MabelDefeat:
-	.string "The ROUTE is yours.$"
+Route145_Text_LandonDefeat:
+	.string "You clipped us.$"
 
-Route145_Text_MabelPostBattle:
+Route145_Text_LandonPostBattle:
 	.string "There's more of us further along.$"
 

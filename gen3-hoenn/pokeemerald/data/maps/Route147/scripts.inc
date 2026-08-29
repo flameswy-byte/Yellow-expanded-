@@ -3,101 +3,101 @@ Route147_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
-Route147_EventScript_Olive::
-	trainerbattle_single TRAINER_OLIVE, Route147_Text_OliveIntro, Route147_Text_OliveDefeat
-	msgbox Route147_Text_OlivePostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Rosalind::
+	trainerbattle_single TRAINER_ROSALIND, Route147_Text_RosalindIntro, Route147_Text_RosalindDefeat
+	msgbox Route147_Text_RosalindPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_OliveIntro:
-	.string "Battle me and I'll let you pass.$"
+Route147_Text_RosalindIntro:
+	.string "Sandwich? No? Battle, then.$"
 
-Route147_Text_OliveDefeat:
-	.string "That settles it.$"
+Route147_Text_RosalindDefeat:
+	.string "I'll pack up, then.$"
 
-Route147_Text_OlivePostBattle:
+Route147_Text_RosalindPostBattle:
 	.string "Safe travels.$"
 
-Route147_EventScript_Orson::
-	trainerbattle_single TRAINER_ORSON, Route147_Text_OrsonIntro, Route147_Text_OrsonDefeat
-	msgbox Route147_Text_OrsonPostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Milo::
+	trainerbattle_single TRAINER_MILO, Route147_Text_MiloIntro, Route147_Text_MiloDefeat
+	msgbox Route147_Text_MiloPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_OrsonIntro:
+Route147_Text_MiloIntro:
 	.string "The water's fine! Come in and\nbattle.$"
 
-Route147_Text_OrsonDefeat:
+Route147_Text_MiloDefeat:
 	.string "Out of my depth.$"
 
-Route147_Text_OrsonPostBattle:
+Route147_Text_MiloPostBattle:
 	.string "Careful past the point. It's\ndeeper.$"
 
-Route147_EventScript_Oscar::
-	trainerbattle_single TRAINER_OSCAR, Route147_Text_OscarIntro, Route147_Text_OscarDefeat
-	msgbox Route147_Text_OscarPostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Morgan::
+	trainerbattle_single TRAINER_MORGAN, Route147_Text_MorganIntro, Route147_Text_MorganDefeat
+	msgbox Route147_Text_MorganPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_OscarIntro:
-	.string "A challenger! At last.$"
+Route147_Text_MorganIntro:
+	.string "My POKéMON is stronger than\nyesterday!$"
 
-Route147_Text_OscarDefeat:
-	.string "The ROUTE is yours.$"
+Route147_Text_MorganDefeat:
+	.string "Yesterday me would have lost worse.$"
 
-Route147_Text_OscarPostBattle:
-	.string "There's more of us further along.$"
+Route147_Text_MorganPostBattle:
+	.string "There's tall grass back that way.\nGood grass.$"
 
-Route147_EventScript_Otto::
-	trainerbattle_single TRAINER_OTTO, Route147_Text_OttoIntro, Route147_Text_OttoDefeat
-	msgbox Route147_Text_OttoPostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Murphy::
+	trainerbattle_single TRAINER_MURPHY, Route147_Text_MurphyIntro, Route147_Text_MurphyDefeat
+	msgbox Route147_Text_MurphyPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_OttoIntro:
-	.string "I've been waiting for someone like\nyou.$"
+Route147_Text_MurphyIntro:
+	.string "Hey! Nobody comes down here!\pBattle me!$"
 
-Route147_Text_OttoDefeat:
-	.string "Beaten.$"
+Route147_Text_MurphyDefeat:
+	.string "Aww.$"
 
-Route147_Text_OttoPostBattle:
-	.string "Rest before the next stretch.$"
+Route147_Text_MurphyPostBattle:
+	.string "When I'm big I'll have six POKéMON.$"
 
-Route147_EventScript_Paige::
-	trainerbattle_single TRAINER_PAIGE, Route147_Text_PaigeIntro, Route147_Text_PaigeDefeat
-	msgbox Route147_Text_PaigePostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Ruby::
+	trainerbattle_single TRAINER_RUBY, Route147_Text_RubyIntro, Route147_Text_RubyDefeat
+	msgbox Route147_Text_RubyPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_PaigeIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
+Route147_Text_RubyIntro:
+	.string "Let's not waste each other's time.$"
 
-Route147_Text_PaigeDefeat:
-	.string "Well fought.$"
+Route147_Text_RubyDefeat:
+	.string "I'll take that loss.$"
 
-Route147_Text_PaigePostBattle:
+Route147_Text_RubyPostBattle:
 	.string "Good luck out there.$"
 
-Route147_EventScript_Percy::
-	trainerbattle_single TRAINER_PERCY, Route147_Text_PercyIntro, Route147_Text_PercyDefeat
-	msgbox Route147_Text_PercyPostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Sable::
+	trainerbattle_single TRAINER_SABLE, Route147_Text_SableIntro, Route147_Text_SableDefeat
+	msgbox Route147_Text_SablePostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_PercyIntro:
-	.string "You've come a long way. Let's see\nwhy.$"
+Route147_Text_SableIntro:
+	.string "Show me the team that got you this\nfar.$"
 
-Route147_Text_PercyDefeat:
-	.string "I underestimated you.$"
+Route147_Text_SableDefeat:
+	.string "Good. Very good.$"
 
-Route147_Text_PercyPostBattle:
+Route147_Text_SablePostBattle:
 	.string "I'll be training when you come\nback.$"
 
-Route147_EventScript_Petronella::
-	trainerbattle_single TRAINER_PETRONELLA, Route147_Text_PetronellaIntro, Route147_Text_PetronellaDefeat
-	msgbox Route147_Text_PetronellaPostBattle, MSGBOX_AUTOCLOSE
+Route147_EventScript_Sorrel::
+	trainerbattle_single TRAINER_SORREL, Route147_Text_SorrelIntro, Route147_Text_SorrelDefeat
+	msgbox Route147_Text_SorrelPostBattle, MSGBOX_AUTOCLOSE
 	end
 
-Route147_Text_PetronellaIntro:
-	.string "Battle me and I'll let you pass.$"
+Route147_Text_SorrelIntro:
+	.string "Ready when you are.$"
 
-Route147_Text_PetronellaDefeat:
-	.string "That settles it.$"
+Route147_Text_SorrelDefeat:
+	.string "You've earned the ROUTE.$"
 
-Route147_Text_PetronellaPostBattle:
+Route147_Text_SorrelPostBattle:
 	.string "Safe travels.$"
 
