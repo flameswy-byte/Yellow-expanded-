@@ -16,7 +16,7 @@ bytes in the ROM, not on any intermediate the generator held in memory.
     python3 tools/check_maps.py
     python3 tools/check_maps.py --all      # vanilla maps too, as a control
 """
-import argparse, collections, json, os, sys
+import argparse, collections, glob, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -38,7 +38,7 @@ def load(const, lay, maps, rend):
     beh = T.behaviors(L['primary_tileset'])
     return w, h, cell, C, beh
 
-def check(const, lay, maps, rend, wild):
+def check(const, lay, maps, rend, wild, hdrs):
     w, h, cell, C, beh = load(const, lay, maps, rend)
     mid = lambda i: cell[i] & 0x3FF
     col = lambda i: (cell[i] >> 10) & 3
@@ -119,7 +119,32 @@ def check(const, lay, maps, rend, wild):
     if trapped:
         out.append(f'{len(trapped)} cells reachable but with no way back to an edge')
 
-    # 3. encounters
+    # 3. items. An item ball you cannot reach is worse than no item ball: it
+    #    is visible from across a cliff and there is no way round. Surfing
+    #    counts, as it does above. --all reports 55 of these against vanilla,
+    #    which are not bugs: this does not model the HMs, so vanilla's items
+    #    behind a Cut tree or a Rock Smash boulder read as walled in.
+    hdr = hdrs.get(const, {})
+    for e in (hdr.get('object_events') or []) + (hdr.get('bg_events') or []):
+        if ('ITEM_BALL' not in str(e.get('graphics_id', ''))
+                and 'hidden' not in str(e.get('type', ''))):
+            continue
+        try:
+            x, y = int(e['x']), int(e['y'])
+        except (KeyError, TypeError, ValueError):
+            continue
+        i = y*w + x
+        if not (0 <= x < w and 0 <= y < h):
+            out.append(f'item at {x},{y} is off the map')
+        elif not walk[i]:
+            out.append(f'item at {x},{y} is inside a wall')
+        elif i not in wet:
+            out.append(f'item at {x},{y} cannot be reached')
+        elif int(e.get('elevation', -1)) not in (ele(i), 0):
+            out.append(f'item at {x},{y} is at elevation '
+                       f'{e.get("elevation")} on ground at {ele(i)}')
+
+    # 4. encounters
     tall = sum(1 for i in range(w * h) if cls[i] == T.TALL)
     has = const in wild
     if tall > 20 and not has:
@@ -153,6 +178,10 @@ def main():
     lay, maps, pos = R.solve()
     rend = R.Renderer()
     new = T.generated()
+    hdrs = {}
+    for f in glob.glob(f'{R.ROOT}/data/maps/*/map.json'):
+        j = json.load(open(f))
+        hdrs[j['id']] = j
     wild = {}
     d = json.load(open(f'{R.ROOT}/src/data/wild_encounters.json'))
     for g in d['wild_encounter_groups']:
@@ -163,7 +192,7 @@ def main():
     bad = 0
     for k in keys:
         try:
-            probs = check(k, lay, maps, rend, wild)
+            probs = check(k, lay, maps, rend, wild, hdrs)
         except SystemExit:
             continue
         if probs:

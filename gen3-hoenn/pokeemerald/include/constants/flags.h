@@ -43,40 +43,40 @@
 #define TEMP_FLAGS_END   FLAG_TEMP_1F
 #define NUM_TEMP_FLAGS   (TEMP_FLAGS_END - TEMP_FLAGS_START + 1)
 
-#define FLAG_UNUSED_0x020    0x20 // Unused Flag
-#define FLAG_UNUSED_0x021    0x21 // Unused Flag
-#define FLAG_UNUSED_0x022    0x22 // Unused Flag
-#define FLAG_UNUSED_0x023    0x23 // Unused Flag
-#define FLAG_UNUSED_0x024    0x24 // Unused Flag
-#define FLAG_UNUSED_0x025    0x25 // Unused Flag
-#define FLAG_UNUSED_0x026    0x26 // Unused Flag
-#define FLAG_UNUSED_0x027    0x27 // Unused Flag
-#define FLAG_UNUSED_0x028    0x28 // Unused Flag
-#define FLAG_UNUSED_0x029    0x29 // Unused Flag
-#define FLAG_UNUSED_0x02A    0x2A // Unused Flag
-#define FLAG_UNUSED_0x02B    0x2B // Unused Flag
-#define FLAG_UNUSED_0x02C    0x2C // Unused Flag
-#define FLAG_UNUSED_0x02D    0x2D // Unused Flag
-#define FLAG_UNUSED_0x02E    0x2E // Unused Flag
-#define FLAG_UNUSED_0x02F    0x2F // Unused Flag
-#define FLAG_UNUSED_0x030    0x30 // Unused Flag
-#define FLAG_UNUSED_0x031    0x31 // Unused Flag
-#define FLAG_UNUSED_0x032    0x32 // Unused Flag
-#define FLAG_UNUSED_0x033    0x33 // Unused Flag
-#define FLAG_UNUSED_0x034    0x34 // Unused Flag
-#define FLAG_UNUSED_0x035    0x35 // Unused Flag
-#define FLAG_UNUSED_0x036    0x36 // Unused Flag
-#define FLAG_UNUSED_0x037    0x37 // Unused Flag
-#define FLAG_UNUSED_0x038    0x38 // Unused Flag
-#define FLAG_UNUSED_0x039    0x39 // Unused Flag
-#define FLAG_UNUSED_0x03A    0x3A // Unused Flag
-#define FLAG_UNUSED_0x03B    0x3B // Unused Flag
-#define FLAG_UNUSED_0x03C    0x3C // Unused Flag
-#define FLAG_UNUSED_0x03D    0x3D // Unused Flag
-#define FLAG_UNUSED_0x03E    0x3E // Unused Flag
-#define FLAG_UNUSED_0x03F    0x3F // Unused Flag
-#define FLAG_UNUSED_0x040    0x40 // Unused Flag
-#define FLAG_UNUSED_0x041    0x41 // Unused Flag
+#define FLAG_ITEM_ROUTE_135_HYPER_POTION                            0x20 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x020)
+#define FLAG_ITEM_ROUTE_135_NUGGET                                  0x21 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x021)
+#define FLAG_ITEM_ROUTE_136_ZINC                                    0x22 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x022)
+#define FLAG_ITEM_ROUTE_137_GREAT_BALL                              0x23 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x023)
+#define FLAG_ITEM_ROUTE_137_MAX_ETHER                               0x24 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x024)
+#define FLAG_ITEM_ROUTE_137_DIRE_HIT                                0x25 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x025)
+#define FLAG_ITEM_ROUTE_137_ETHER                                   0x26 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x026)
+#define FLAG_ITEM_ROUTE_137_PP_UP                                   0x27 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x027)
+#define FLAG_ITEM_ROUTE_138_X_ACCURACY                              0x28 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x028)
+#define FLAG_ITEM_ROUTE_138_MAX_REVIVE                              0x29 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x029)
+#define FLAG_ITEM_ROUTE_139_ENERGY_ROOT                             0x2A // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02A)
+#define FLAG_ITEM_ROUTE_139_ELIXIR                                  0x2B // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02B)
+#define FLAG_ITEM_ROUTE_139_STAR_PIECE                              0x2C // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02C)
+#define FLAG_ITEM_ROUTE_139_ZINC                                    0x2D // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02D)
+#define FLAG_ITEM_ROUTE_139_HP_UP                                   0x2E // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02E)
+#define FLAG_ITEM_ROUTE_140_PROTEIN                                 0x2F // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x02F)
+#define FLAG_ITEM_ROUTE_141_CARBOS                                  0x30 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x030)
+#define FLAG_ITEM_ROUTE_142_BIG_PEARL                               0x31 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x031)
+#define FLAG_ITEM_ROUTE_143_DIRE_HIT                                0x32 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x032)
+#define FLAG_ITEM_ROUTE_143_ETHER                                   0x33 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x033)
+#define FLAG_ITEM_ROUTE_143_PP_UP                                   0x34 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x034)
+#define FLAG_ITEM_ROUTE_143_PROTEIN                                 0x35 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x035)
+#define FLAG_ITEM_ROUTE_144_RARE_CANDY                              0x36 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x036)
+#define FLAG_ITEM_ROUTE_144_HYPER_POTION                            0x37 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x037)
+#define FLAG_ITEM_ROUTE_145_STAR_PIECE                              0x38 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x038)
+#define FLAG_ITEM_ROUTE_146_IRON                                    0x39 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x039)
+#define FLAG_ITEM_ROUTE_146_GREAT_BALL                              0x3A // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03A)
+#define FLAG_ITEM_ROUTE_146_MAX_ETHER                               0x3B // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03B)
+#define FLAG_ITEM_ROUTE_147_CALCIUM                                 0x3C // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03C)
+#define FLAG_ITEM_ROUTE_147_X_ACCURACY                              0x3D // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03D)
+#define FLAG_ITEM_ROUTE_148_ULTRA_BALL                              0x3E // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03E)
+#define FLAG_ITEM_ROUTE_148_ENERGY_ROOT                             0x3F // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x03F)
+#define FLAG_ITEM_ROUTE_148_ELIXIR                                  0x40 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x040)
+#define FLAG_ITEM_ROUTE_148_STAR_PIECE                              0x41 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x041)
 #define FLAG_UNUSED_0x042    0x42 // Unused Flag
 #define FLAG_UNUSED_0x043    0x43 // Unused Flag
 #define FLAG_UNUSED_0x044    0x44 // Unused Flag
@@ -656,30 +656,30 @@
 #define FLAG_HIDDEN_ITEM_ROUTE_123_RARE_CANDY                (FLAG_HIDDEN_ITEMS_START + 0x6E)
 #define FLAG_HIDDEN_ITEM_ROUTE_105_BIG_PEARL                 (FLAG_HIDDEN_ITEMS_START + 0x6F)
 
-#define FLAG_UNUSED_0x264  0x264 // Unused Flag
-#define FLAG_UNUSED_0x265  0x265 // Unused Flag
-#define FLAG_UNUSED_0x266  0x266 // Unused Flag
-#define FLAG_UNUSED_0x267  0x267 // Unused Flag
-#define FLAG_UNUSED_0x268  0x268 // Unused Flag
-#define FLAG_UNUSED_0x269  0x269 // Unused Flag
-#define FLAG_UNUSED_0x26A  0x26A // Unused Flag
-#define FLAG_UNUSED_0x26B  0x26B // Unused Flag
-#define FLAG_UNUSED_0x26C  0x26C // Unused Flag
-#define FLAG_UNUSED_0x26D  0x26D // Unused Flag
-#define FLAG_UNUSED_0x26E  0x26E // Unused Flag
-#define FLAG_UNUSED_0x26F  0x26F // Unused Flag
-#define FLAG_UNUSED_0x270  0x270 // Unused Flag
-#define FLAG_UNUSED_0x271  0x271 // Unused Flag
-#define FLAG_UNUSED_0x272  0x272 // Unused Flag
-#define FLAG_UNUSED_0x273  0x273 // Unused Flag
-#define FLAG_UNUSED_0x274  0x274 // Unused Flag
-#define FLAG_UNUSED_0x275  0x275 // Unused Flag
-#define FLAG_UNUSED_0x276  0x276 // Unused Flag
-#define FLAG_UNUSED_0x277  0x277 // Unused Flag
-#define FLAG_UNUSED_0x278  0x278 // Unused Flag
-#define FLAG_UNUSED_0x279  0x279 // Unused Flag
-#define FLAG_UNUSED_0x27A  0x27A // Unused Flag
-#define FLAG_UNUSED_0x27B  0x27B // Unused Flag
+#define FLAG_HIDDEN_ITEM_ROUTE_135_ULTRA_BALL                       0x264 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x264)
+#define FLAG_HIDDEN_ITEM_ROUTE_136_REVIVE                           0x265 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x265)
+#define FLAG_HIDDEN_ITEM_ROUTE_137_GREAT_BALL                       0x266 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x266)
+#define FLAG_HIDDEN_ITEM_ROUTE_137_CARBOS                           0x267 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x267)
+#define FLAG_HIDDEN_ITEM_ROUTE_137_RARE_CANDY                       0x268 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x268)
+#define FLAG_HIDDEN_ITEM_ROUTE_138_BIG_PEARL                        0x269 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x269)
+#define FLAG_HIDDEN_ITEM_ROUTE_138_ULTRA_BALL                       0x26A // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26A)
+#define FLAG_HIDDEN_ITEM_ROUTE_139_IRON                             0x26B // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26B)
+#define FLAG_HIDDEN_ITEM_ROUTE_139_REVIVE                           0x26C // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26C)
+#define FLAG_HIDDEN_ITEM_ROUTE_139_NUGGET                           0x26D // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26D)
+#define FLAG_HIDDEN_ITEM_ROUTE_140_HEART_SCALE                      0x26E // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26E)
+#define FLAG_HIDDEN_ITEM_ROUTE_141_FULL_HEAL                        0x26F // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x26F)
+#define FLAG_HIDDEN_ITEM_ROUTE_142_ETHER                            0x270 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x270)
+#define FLAG_HIDDEN_ITEM_ROUTE_143_SUPER_POTION                     0x271 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x271)
+#define FLAG_HIDDEN_ITEM_ROUTE_143_HEART_SCALE                      0x272 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x272)
+#define FLAG_HIDDEN_ITEM_ROUTE_143_GREAT_BALL                       0x273 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x273)
+#define FLAG_HIDDEN_ITEM_ROUTE_144_CALCIUM                          0x274 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x274)
+#define FLAG_HIDDEN_ITEM_ROUTE_144_FULL_HEAL                        0x275 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x275)
+#define FLAG_HIDDEN_ITEM_ROUTE_145_RARE_CANDY                       0x276 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x276)
+#define FLAG_HIDDEN_ITEM_ROUTE_146_STARDUST                         0x277 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x277)
+#define FLAG_HIDDEN_ITEM_ROUTE_146_SUPER_POTION                     0x278 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x278)
+#define FLAG_HIDDEN_ITEM_ROUTE_147_NUGGET                           0x279 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x279)
+#define FLAG_HIDDEN_ITEM_ROUTE_148_CARBOS                           0x27A // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x27A)
+#define FLAG_HIDDEN_ITEM_ROUTE_148_RARE_CANDY                       0x27B // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x27B)
 #define FLAG_UNUSED_0x27C  0x27C // Unused Flag
 #define FLAG_UNUSED_0x27D  0x27D // Unused Flag
 #define FLAG_UNUSED_0x27E  0x27E // Unused Flag

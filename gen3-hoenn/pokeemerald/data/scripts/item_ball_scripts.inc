@@ -657,3 +657,141 @@ MagmaHideout_4F_EventScript_ItemMaxRevive::
 MagmaHideout_3F_3R_EventScript_ItemEscapeRope::
 	finditem ITEM_ESCAPE_ROPE
 	end
+// Open Hoenn - tools/populate.py
+
+Route135_EventScript_ItemHyperPotion::
+	finditem ITEM_HYPER_POTION
+	end
+
+Route135_EventScript_ItemNugget::
+	finditem ITEM_NUGGET
+	end
+
+Route136_EventScript_ItemZinc::
+	finditem ITEM_ZINC
+	end
+
+Route137_EventScript_ItemGreatBall::
+	finditem ITEM_GREAT_BALL
+	end
+
+Route137_EventScript_ItemMaxEther::
+	finditem ITEM_MAX_ETHER
+	end
+
+Route137_EventScript_ItemDireHit::
+	finditem ITEM_DIRE_HIT
+	end
+
+Route137_EventScript_ItemEther::
+	finditem ITEM_ETHER
+	end
+
+Route137_EventScript_ItemPpUp::
+	finditem ITEM_PP_UP
+	end
+
+Route138_EventScript_ItemXAccuracy::
+	finditem ITEM_X_ACCURACY
+	end
+
+Route138_EventScript_ItemMaxRevive::
+	finditem ITEM_MAX_REVIVE
+	end
+
+Route139_EventScript_ItemEnergyRoot::
+	finditem ITEM_ENERGY_ROOT
+	end
+
+Route139_EventScript_ItemElixir::
+	finditem ITEM_ELIXIR
+	end
+
+Route139_EventScript_ItemStarPiece::
+	finditem ITEM_STAR_PIECE
+	end
+
+Route139_EventScript_ItemZinc::
+	finditem ITEM_ZINC
+	end
+
+Route139_EventScript_ItemHpUp::
+	finditem ITEM_HP_UP
+	end
+
+Route140_EventScript_ItemProtein::
+	finditem ITEM_PROTEIN
+	end
+
+Route141_EventScript_ItemCarbos::
+	finditem ITEM_CARBOS
+	end
+
+Route142_EventScript_ItemBigPearl::
+	finditem ITEM_BIG_PEARL
+	end
+
+Route143_EventScript_ItemDireHit::
+	finditem ITEM_DIRE_HIT
+	end
+
+Route143_EventScript_ItemEther::
+	finditem ITEM_ETHER
+	end
+
+Route143_EventScript_ItemPpUp::
+	finditem ITEM_PP_UP
+	end
+
+Route143_EventScript_ItemProtein::
+	finditem ITEM_PROTEIN
+	end
+
+Route144_EventScript_ItemRareCandy::
+	finditem ITEM_RARE_CANDY
+	end
+
+Route144_EventScript_ItemHyperPotion::
+	finditem ITEM_HYPER_POTION
+	end
+
+Route145_EventScript_ItemStarPiece::
+	finditem ITEM_STAR_PIECE
+	end
+
+Route146_EventScript_ItemIron::
+	finditem ITEM_IRON
+	end
+
+Route146_EventScript_ItemGreatBall::
+	finditem ITEM_GREAT_BALL
+	end
+
+Route146_EventScript_ItemMaxEther::
+	finditem ITEM_MAX_ETHER
+	end
+
+Route147_EventScript_ItemCalcium::
+	finditem ITEM_CALCIUM
+	end
+
+Route147_EventScript_ItemXAccuracy::
+	finditem ITEM_X_ACCURACY
+	end
+
+Route148_EventScript_ItemUltraBall::
+	finditem ITEM_ULTRA_BALL
+	end
+
+Route148_EventScript_ItemEnergyRoot::
+	finditem ITEM_ENERGY_ROOT
+	end
+
+Route148_EventScript_ItemElixir::
+	finditem ITEM_ELIXIR
+	end
+
+Route148_EventScript_ItemStarPiece::
+	finditem ITEM_STAR_PIECE
+	end
+
