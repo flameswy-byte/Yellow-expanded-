@@ -23,6 +23,15 @@
 #define TYPE_DARK             17
 #define NUMBER_OF_MON_TYPES   18
 
+// The physical/special split. Gen 3 reads a move's damage category off its
+// type - everything below TYPE_MYSTERY is physical, everything above it is
+// special - which is why vanilla's Fire Punch runs off Special Attack and its
+// Shadow Ball runs off Attack. From Gen 4 the category belongs to the move, so
+// it is stored per move in gBattleMoves and the type no longer decides it.
+#define SPLIT_PHYSICAL        0
+#define SPLIT_SPECIAL         1
+#define SPLIT_STATUS          2
+
 // Pokémon egg groups
 #define EGG_GROUP_NONE                0
 #define EGG_GROUP_MONSTER             1

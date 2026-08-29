@@ -329,6 +329,7 @@ struct BattleMove
     u8 effect;
     u8 power;
     u8 type;
+    u8 split;       // SPLIT_PHYSICAL, SPLIT_SPECIAL or SPLIT_STATUS
     u8 accuracy;
     u8 pp;
     u8 secondaryEffectChance;
@@ -336,6 +337,12 @@ struct BattleMove
     s8 priority;
     u8 flags;
 };
+
+// A move deals damage off Attack or off Special Attack because of what it is,
+// not because of its type. Everything that used to ask IS_TYPE_PHYSICAL asks
+// this instead, with the move rather than the type.
+#define IS_MOVE_PHYSICAL(move) (gBattleMoves[move].split == SPLIT_PHYSICAL)
+#define IS_MOVE_SPECIAL(move)  (gBattleMoves[move].split == SPLIT_SPECIAL)
 
 #define SPINDA_SPOT_WIDTH 16
 #define SPINDA_SPOT_HEIGHT 16

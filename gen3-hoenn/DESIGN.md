@@ -959,6 +959,55 @@ event islands, the dynamic placeholder — and gets away with it because the
 region map is never opened standing on one. The tool checks that ours are not
 on that list.
 
+### The physical/special split
+
+`python3 tools/split.py`, and unlike everything else here it is an engine
+change — it edits battle logic, not data.
+
+Gen 3 reads a move's damage category off its **type**: everything below
+`TYPE_MYSTERY` is physical, everything above it is special. That is why
+vanilla's Fire Punch runs off Special Attack and its Shadow Ball runs off
+Attack. Gen 4 moved the decision onto the move, and `struct BattleMove` now
+carries a `split` field for it.
+
+There is no Gen 4 category table in Emerald to copy and this environment cannot
+reach one, so the table is built in three layers that can each be checked
+separately:
+
+- **status** — `power == 0`. pokeemerald writes `.power = 1` for the
+  fixed-damage moves (Seismic Toss, Night Shade, Sonic Boom, the OHKOs), so
+  zero really does mean "deals no damage", with no exceptions to hand-wave.
+- **default** — the Gen 3 rule, by type. Right for about nine moves in ten.
+- **override** — the 52 moves Gen 4 actually changed, listed by type in the
+  tool, each on its own line. Every name is checked against the move data, so
+  a typo fails loudly rather than silently leaving a move miscategorised.
+
+`--report` prints the result by type to read through; `--check` verifies the
+written table against the rule and exits non-zero if it disagrees.
+
+Seven places in the engine decided physical from the type. All now ask the
+move: the three branches of `CalculateBaseDamage` (including the type-boosting
+hold items, so Charcoal boosts Fire Punch's Attack), Hustle's accuracy penalty,
+and the damage recorded for Counter and Mirror Coat.
+
+Three things that were not obvious:
+
+- **Defrosting.** Thawing required the Fire move to have been recorded as
+  *special*, which was safe when every Fire move was. Fire Punch and Flame
+  Wheel are physical now and would have stopped thawing anything, so the check
+  takes physical damage too.
+- **Hustle** reads a local `move`, not `gCurrentMove`: a script can ask the
+  accuracy command about a move other than the one being used, and the type it
+  replaced came from that same local.
+- **Battle TV** passes the split where it used to pass the type. Its argument
+  is aliased two ways in one `case` block, because the Water Sport and Mud
+  Sport cases still want the type from the same parameter.
+
+Confusion's self-hit needed nothing: it already calls the damage formula with
+`MOVE_POUND`, which is physical either way. The AI inherits the change through
+`AI_CalcDmg`. `struct BattleMove` goes from 9 bytes to 10, no assembly refers
+to it and nothing assumes its size, and the ROM is unchanged at 44.49% used.
+
 ---
 
 ## 5. Open questions
