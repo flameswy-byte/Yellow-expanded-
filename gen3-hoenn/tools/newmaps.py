@@ -437,8 +437,55 @@ def build_classes(spec, wcls):
     #    pocket is worse than a plain one. Everything walkable is flooded, and
     #    any component of real size that is not part of the largest gets a
     #    one-cell corridor cut back to it through whatever is in the way.
+    separate(grid, w, h)
     repair_connectivity(grid, w, h)
     return grid
+
+# Terrain pairs vanilla never puts side by side, measured per million joins
+# across its 49 maps against ours:
+#
+#   sand | tall grass        0    1531   tall grass growing out of a beach
+#   water | pond             0     435   fresh water touching the sea
+#   sand | pond              0      69
+#   sand | plateau           0      59
+#
+# None of these can be fixed by the painter. It picks a metatile per cell and
+# the harmoniser only ever swaps one for another of the same class, so where
+# the classes themselves are a pairing vanilla has no art for - and there is no
+# transition tile between sand and tall grass because vanilla never needs one -
+# every choice available is wrong. The fix has to be on the class grid, before
+# any of that: one side gives way to something vanilla does draw against the
+# other.
+SEPARATE = {
+    (T.SAND, T.TALL): (T.TALL, T.GRASS),        # grass is the buffer vanilla uses
+    (T.WATER, T.POND): (T.POND, T.WATER),       # if it touches the sea it is the sea
+    (T.SAND, T.POND): (T.POND, T.GRASS),
+    (T.SAND, T.PLATEAU): (T.SAND, T.GRASS),
+}
+
+def separate(grid, w, h):
+    """Pull apart the terrain pairs vanilla has no art for."""
+    for _ in range(4):
+        changed = 0
+        for i in range(w * h):
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+                j = ny*w + nx
+                a, b = grid[i], grid[j]
+                rule = SEPARATE.get((a, b)) or SEPARATE.get((b, a))
+                if not rule:
+                    continue
+                loser, becomes = rule
+                if a == loser:
+                    grid[i] = becomes
+                    changed += 1
+                elif b == loser:
+                    grid[j] = becomes
+                    changed += 1
+        if not changed:
+            break
 
 # Vanilla's sea is not empty. Its water routes carry 386 islets between them -
 # 10.9 per thousand water cells - and 353 of those are rock: small outcrops, a
@@ -455,18 +502,21 @@ def build_classes(spec, wcls):
 # what a sea looks like: at 5.5 it comes out median 4 against vanilla's 3, and
 # 13% eight or more away against vanilla's 14%.
 ISLET_RATE = 5.5            # tuned to the distances below, not to that count
-# And they are stamps, not shapes. Of vanilla's 333 rock outcrops in open sea,
-# 151 are 2x2 and 112 are 2x1, at a median solidity of 1.00, and they are drawn
-# from three fixed metatile groups: 150/151/158/159 for a whole rock a hundred
-# and six times, 175/176/17D/17E for a taller one, and 17D/17E on its own -
-# the half-submerged bottom of that same rock - a hundred and ten times. Not
-# one one-cell rock surrounded by water in the whole game, which is what
-# growing them as organic blobs kept producing, and letting the class painter
-# choose the tiles for a 2x2 of cliff in open water produced something with the
-# sea drawn onto the wrong edges.
+# And they are stamps, not shapes: every rock outcrop in vanilla's open sea is
+# one of two 2x2 groups, 150/151/158/159 a hundred and six times and
+# 175/176/17D/17E a hundred and forty-four. There is not one single-cell rock
+# surrounded by water in the whole game, which is what growing them as organic
+# blobs kept producing, and letting the class painter choose the tiles for a
+# 2x2 of cliff in open water drew the sea onto the wrong edges.
+#
+# 17D/17E is not a third stamp, though the first count said it was 110 times.
+# It is the bottom half of 175/176/17D/17E, and the scan that found it broke
+# the 2x2 apart because Mossdeep's variant of the top half classifies as trees
+# rather than cliff. Vanilla has water directly above a 17D exactly zero times
+# in 654; stamping it alone put half a rock - a ring of foam with nothing in it
+# - across every sea in the hack.
 ISLET_STAMP = ([((0x150, 0x151), (0x158, 0x159))] * 106
-               + [((0x17D, 0x17E),)] * 110
-               + [((0x175, 0x176), (0x17D, 0x17E))] * 35)
+               + [((0x175, 0x176), (0x17D, 0x17E))] * 144)
 ISLET_APART = 6
 ISLET_ROUNDS = 8
 
@@ -506,8 +556,14 @@ def sea_rocks(grid, w, h, seed):
                                     * len(ISLET_STAMP)) % len(ISLET_STAMP)]
             cells = [(x + dx, y + dy)
                      for dy, row in enumerate(stamp) for dx in range(len(row))]
+            # a ring of water all the way round, so a rock never touches a
+            # coastline or another rock: 07C above 159 and 159 beside 159 are
+            # joins vanilla does not draw, and both came from a stamp landing
+            # against something
+            ring = [(cx + dx, cy + dy) for cx, cy in cells
+                    for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
             if not all(1 <= cx < w - 1 and 1 <= cy < h - 1
-                       and grid[cy*w + cx] == T.WATER for cx, cy in cells):
+                       and grid[cy*w + cx] == T.WATER for cx, cy in ring):
                 continue
             for cx, cy in cells:
                 grid[cy*w + cx] = T.CLIFF

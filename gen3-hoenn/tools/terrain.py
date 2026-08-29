@@ -338,6 +338,7 @@ def furniture(lay, maps, pos, skip):
             for t in set(use) | set(under)}
 
 SWEEPS = 6
+PASSES = 4
 
 # Long grass - metatile 015, MB_LONG_GRASS - is the only one of its behaviour
 # in the General tileset, and vanilla draws it on Route 119 and Route 120 and
@@ -364,6 +365,22 @@ class Painter:
             self.ph.update(self.s['ph'])
             self.pv.update(self.s['pv'])
             self.cmap.update(self.s['cls'])
+        # every metatile of a given terrain and collision, commonest first.
+        # The 3x3 tables answer "what does vanilla draw in this situation";
+        # this answers "what else could this cell be at all", which is what
+        # finding a transition tile needs when the situation itself is one
+        # vanilla never met.
+        self.byclass = collections.defaultdict(list)
+        seen = collections.Counter()
+        for tab in (self.m['t1'],) + ((self.s['t1'],) if self.s else ()):
+            for d in tab.values():
+                for v, n in d.items():
+                    if (v & 0x3FF) not in self.avoid:
+                        seen[v] += n
+        for v, n in seen.most_common():
+            k = self.cmap.get((v & 0x3FF, (v >> 10) & 3))
+            if k is not None:
+                self.byclass[(k, v & 0x0C00)].append(v)
 
     CAP = 200
 
@@ -452,7 +469,11 @@ class Painter:
         # with rock. The homogeneous tile is the one that tiles.
         out = [self.first(cls, x, y, w, h)
                for y in range(h) for x in range(w)]
-        self.harmonise(out, cls, w, h)
+        # the two passes feed each other: a two-cell repair opens single-cell
+        # improvements next to it, and those open more repairs
+        for _ in range(PASSES):
+            if not self.harmonise(out, cls, w, h):
+                break
         return out
 
     def seams(self, out, i, v, w, h):
@@ -493,23 +514,232 @@ class Painter:
                 if i not in cand:
                     cand[i] = self.choices(cls, i % w, i // w, w, h)
                 col, kc = v & 0x0C00, self.cmap.get((v & 0x3FF, (v >> 10) & 3))
+                fits = lambda c: ((c & 0x0C00) == col and c != v
+                                  and self.cmap.get((c & 0x3FF,
+                                                     (c >> 10) & 3)) == kc)
                 # ties go to the cell as it stands: a swap has to earn itself
-                bestv, bestk = v, (self.seams(out, i, v, w, h), float('-inf'))
+                bestv, best_n = v, self.seams(out, i, v, w, h)
+                best_rank = float('-inf')
                 for c, cnt in cand[i].items():
-                    if c == v or (c & 0x0C00) != col:
+                    if not fits(c):
                         continue
-                    if self.cmap.get((c & 0x3FF, (c >> 10) & 3)) != kc:
-                        continue
-                    k = (self.seams(out, i, c, w, h), -cnt)
-                    if k < bestk:
-                        bestv, bestk = c, k
+                    n_c = self.seams(out, i, c, w, h)
+                    if n_c < best_n or (n_c == best_n and -cnt < best_rank):
+                        bestv, best_n, best_rank = c, n_c, -cnt
+                if best_n:
+                    # Nothing vanilla drew in this situation fits, because it
+                    # never met this situation: there is no art between sand
+                    # and grass, or between the desert floor and a field, since
+                    # vanilla walls both in. Widen to every metatile of the
+                    # same terrain and collision, commonest first, and take the
+                    # first that joins up - which is how the desert's own edge
+                    # tiles get found without anyone naming them.
+                    for c in self.byclass.get((kc, col), ()):
+                        if not fits(c):
+                            continue
+                        n_c = self.seams(out, i, c, w, h)
+                        if n_c < best_n:
+                            bestv, best_n = c, n_c
+                            if not n_c:
+                                break
                 if bestv != v:
                     out[i] = (bestv & 0x0FFF) | (v & 0xF000)
                     n += 1
             moved += n
             if not n:
                 break
-        return moved
+        return moved + self.repair(out, w, h) + self.runs(out, w, h)
+
+    def partners(self):
+        """for each metatile, what vanilla will put on each side of it."""
+        if getattr(self, '_part', None) is None:
+            L = collections.defaultdict(set)
+            Rt = collections.defaultdict(set)
+            U = collections.defaultdict(set)
+            D = collections.defaultdict(set)
+            for a, b in self.ph:
+                Rt[a].add(b)
+                L[b].add(a)
+            for a, b in self.pv:
+                D[a].add(b)
+                U[b].add(a)
+            self._part = (L, Rt, U, D)
+        return self._part
+
+    def repair(self, out, w, h, rounds=3):
+        """Fix the joins one cell at a time cannot.
+
+        harmonise() swaps a cell only when that cell's own four joins get
+        better, and swapping one cell changes only those four - so it descends
+        to a local minimum and stops. It leaves 3,061 joins where a legal tile
+        for one end does exist and taking it would spoil the other end.
+
+        This moves both ends together. For each bad join it tries only the
+        tiles vanilla actually puts on that side of the neighbour - a handful,
+        straight out of the pair table - and then re-picks the neighbour to
+        suit, keeping the pair if the two cells have fewer bad joins between
+        them than before.
+        """
+        L, Rt, U, D = self.partners()
+        fixed = 0
+        for _ in range(rounds):
+            n = 0
+            for i in range(w * h):
+                x, y = i % w, i // w
+                for dx, dy in ((1, 0), (0, 1)):
+                    if x + dx >= w or y + dy >= h:
+                        continue
+                    j = i + dx + dy * w
+                    a, b = out[i] & 0x3FF, out[j] & 0x3FF
+                    tab = self.ph if dx else self.pv
+                    if (a, b) in tab:
+                        continue
+                    want_a = (L if dx else U)[b]
+                    want_b = (Rt if dx else D)[a]
+                    base = (self.seams(out, i, out[i], w, h)
+                            + self.seams(out, j, out[j], w, h))
+                    best = None
+                    for who, other, pool in ((i, j, want_a), (j, i, want_b)):
+                        v = out[who]
+                        col = v & 0x0C00
+                        kc = self.cmap.get((v & 0x3FF, (v >> 10) & 3))
+                        for c in self.byclass.get((kc, col), ()):
+                            if (c & 0x3FF) not in pool or c == v:
+                                continue
+                            keep = out[who]
+                            out[who] = (c & 0x0FFF) | (v & 0xF000)
+                            cost = (self.seams(out, i, out[i], w, h)
+                                    + self.seams(out, j, out[j], w, h))
+                            out[who] = keep
+                            if cost < base and (best is None or cost < best[0]):
+                                best = (cost, who, (c & 0x0FFF) | (v & 0xF000))
+                    if best:
+                        out[best[1]] = best[2]
+                        n += 1
+            fixed += n
+            if not n:
+                break
+        return fixed
+
+    RUN_CAP = 16        # candidate tiles per cell; 24 and 40 gain nothing
+
+    def runs(self, out, w, h):
+        """Re-solve whole runs of one terrain at a time, exactly.
+
+        Two-cell repair still leaves 316 cliff-face joins and 209 where a cliff
+        meets tall grass, every one of which has a legal tile available. They
+        survive because a rock face is a sequence: fixing the join at one end
+        of a five-cell wall needs all five to change together, and no move that
+        looks at one or two cells can see that.
+
+        A run of one terrain along one axis is a chain, so it solves exactly by
+        Viterbi. Each cell may take any tile of its own terrain and collision;
+        a tile costs one for each perpendicular neighbour vanilla would not put
+        it beside, and a step from one tile to the next costs one if vanilla
+        never draws that pair. Only runs that already contain a bad join are
+        touched, and the run is only rewritten if it comes out strictly better.
+        """
+        total = 0
+        for axis in (0, 1):
+            step = 1 if axis == 0 else w
+            tab = self.ph if axis == 0 else self.pv
+            perp = self.pv if axis == 0 else self.ph
+            pstep = w if axis == 0 else 1
+            outer = h if axis == 0 else w
+            length = w if axis == 0 else h
+            for o in range(outer):
+                base = o * w if axis == 0 else o
+                k = 0
+                while k < length:
+                    i = base + k * step
+                    key = (self.cmap.get((out[i] & 0x3FF, (out[i] >> 10) & 3)),
+                           out[i] & 0x0C00)
+                    n = 1
+                    while k + n < length:
+                        j = base + (k + n) * step
+                        if (self.cmap.get((out[j] & 0x3FF, (out[j] >> 10) & 3)),
+                                out[j] & 0x0C00) != key:
+                            break
+                        n += 1
+                    if n >= 2 and any(
+                            (out[base + (k+t) * step] & 0x3FF,
+                             out[base + (k+t+1) * step] & 0x3FF) not in tab
+                            for t in range(n - 1)):
+                        total += self._solve(out, base, k, n, step, pstep,
+                                             key, tab, perp, axis, w, h)
+                    k += n
+        return total
+
+    def _solve(self, out, base, k, n, step, pstep, key, tab, perp, axis, w, h):
+        pool = self.byclass.get(key, ())[:self.RUN_CAP]
+        cells = [base + (k + t) * step for t in range(n)]
+        cands = []
+        for i in cells:
+            c = [out[i]] + [v for v in pool if v != out[i]]
+            cands.append(c)
+        def side(i, v):
+            """cost of this tile against the two neighbours off the run."""
+            x, y = i % w, i // w
+            c = 0
+            for d in (-pstep, pstep):
+                j = i + d
+                if not (0 <= j < w * h):
+                    continue
+                # a vertical run's perpendicular neighbours are left and
+                # right, and i-1 at the start of a row is the previous row's
+                # last cell. That is the only wrap possible; the earlier guard
+                # tested j % w != x, which is true of every horizontal
+                # neighbour, so no vertical run ever paid for the joins it
+                # broke - it added 45 bad joins to Route 148 while reporting
+                # that it had saved 9.
+                if axis == 1 and j // w != y:
+                    continue
+                a, b = (out[j] & 0x3FF, v & 0x3FF) if d < 0 else (v & 0x3FF,
+                                                                  out[j] & 0x3FF)
+                c += (a, b) not in perp
+            return c
+        # the joins at the two ends of the run are outside it and must still
+        # be paid for, or the solver rewrites a wall to suit itself and breaks
+        # both places it meets the rest of the map
+        before = base + (k - 1) * step if k else None
+        after = base + (k + n) * step if k + n < (w if axis == 0 else h) else None
+        head = lambda v: ((out[before] & 0x3FF, v & 0x3FF) not in tab
+                          if before is not None else 0)
+        tail = lambda v: ((v & 0x3FF, out[after] & 0x3FF) not in tab
+                          if after is not None else 0)
+        INF = float('inf')
+        cost = [[side(cells[0], v) + head(v) for v in cands[0]]]
+        back = [[-1] * len(cands[0])]
+        for t in range(1, n):
+            row, br = [], []
+            for v in cands[t]:
+                bestc, bestp = INF, 0
+                for p, u in enumerate(cands[t-1]):
+                    c = cost[t-1][p] + ((u & 0x3FF, v & 0x3FF) not in tab)
+                    if c < bestc:
+                        bestc, bestp = c, p
+                row.append(bestc + side(cells[t], v))
+                br.append(bestp)
+            cost.append(row)
+            back.append(br)
+        end = min(range(len(cands[-1])),
+                  key=lambda p: cost[-1][p] + tail(cands[-1][p]))
+        best = cost[-1][end] + tail(cands[-1][end])
+        now = (sum(side(cells[t], out[cells[t]]) for t in range(n))
+               + sum((out[cells[t]] & 0x3FF, out[cells[t+1]] & 0x3FF) not in tab
+                     for t in range(n - 1))
+               + head(out[cells[0]]) + tail(out[cells[-1]]))
+        if best >= now:
+            return 0
+        seq, p = [], end
+        for t in range(n - 1, -1, -1):
+            seq.append(cands[t][p])
+            p = back[t][p]
+        for t, v in enumerate(reversed(seq)):
+            i = cells[t]
+            out[i] = (v & 0x0FFF) | (out[i] & 0xF000)
+        return now - best
+
 
 MODEL = os.path.join(HERE, '..', 'terrain_model.pickle')
 
