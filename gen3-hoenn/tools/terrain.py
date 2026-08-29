@@ -159,6 +159,22 @@ def generated():
         return set()
     return {l.strip() for l in open(GENERATED) if l.strip()}
 
+BASELINE = os.path.join(HERE, '..', 'baseline')
+
+def blockdata(name, L):
+    """a vanilla map's blockdata as it was before this project touched it.
+
+    generated() keeps the model off our own maps, but the vanilla maps whose
+    borders were softened to meet them are still vanilla as far as R.solve()
+    is concerned - so the model was learning from its own softening, and every
+    rebuild moved a little. Reading the untouched copy makes the model a pure
+    function of the vendored game: rebuild it any time and get the same maps.
+    """
+    p = os.path.join(BASELINE, f'{name}.bin')
+    if os.path.exists(p):
+        return open(p, 'rb').read()
+    return open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+
 def learn(maps_wanted=None, primary='gTileset_General'):
     """Walk vanilla maps and tally metatile choices per class neighbourhood."""
     lay, maps, pos = R.solve()
@@ -167,6 +183,14 @@ def learn(maps_wanted=None, primary='gTileset_General'):
     t3 = collections.defaultdict(collections.Counter)
     t4 = collections.defaultdict(collections.Counter)
     t1 = collections.defaultdict(collections.Counter)
+    # which metatiles vanilla ever sets side by side, and one above the other.
+    # The 3x3 tables describe a cell's *class* surroundings, which is too
+    # coarse to catch a seam: grass whose art has a rock edge on its right and
+    # plain grass to its right are both "grass beside grass", and both are a
+    # legal answer to the same mask. These say which of the legal answers
+    # actually line up.
+    ph = collections.Counter()
+    pv = collections.Counter()
     used = []
     for k in sorted(maps_wanted or pos):
         if k not in maps or k in skip:
@@ -175,7 +199,7 @@ def learn(maps_wanted=None, primary='gTileset_General'):
         if L['primary_tileset'] != primary:
             continue
         w, h = L['width'], L['height']
-        blk = open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+        blk = blockdata(L['blockdata_filepath'].split('/')[-2], L)
         C = Classifier(rend, primary, L.get('secondary_tileset'))
         raw = []
         for i in range(w * h):
@@ -193,10 +217,21 @@ def learn(maps_wanted=None, primary='gTileset_General'):
                 t3[m3][v] += 1
                 t4[mask4(m3)][v] += 1
                 t1[m3[4]][v] += 1
+                m = v & 0x3FF
+                if x + 1 < w and (raw[y*w + x+1] & 0x3FF) < R.NUM_METATILES_IN_PRIMARY:
+                    ph[(m, raw[y*w + x+1] & 0x3FF)] += 1
+                if y + 1 < h and (raw[(y+1)*w + x] & 0x3FF) < R.NUM_METATILES_IN_PRIMARY:
+                    pv[(m, raw[(y+1)*w + x] & 0x3FF)] += 1
         used.append(k)
+    # class of every primary metatile at every collision, so the harmoniser can
+    # tell whether a swap would change the terrain and not just the art
+    CG = Classifier(rend, primary, None)
+    cmap = {(m, c): CG(m, c)
+            for m in range(R.NUM_METATILES_IN_PRIMARY) for c in range(4)}
     return {'t3': {k: dict(v) for k, v in t3.items()},
             't4': {k: dict(v) for k, v in t4.items()},
             't1': {k: dict(v) for k, v in t1.items()}, 'maps': used,
+            'ph': dict(ph), 'pv': dict(pv), 'cls': cmap,
             'furniture': sorted(furniture(lay, maps, pos, skip))}
 
 def best(table, key, avoid=()):
@@ -231,7 +266,7 @@ def furniture(lay, maps, pos, skip):
         if L['primary_tileset'] != 'gTileset_General':
             continue
         w, h = L['width'], L['height']
-        blk = open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'rb').read()
+        blk = blockdata(L['blockdata_filepath'].split('/')[-2], L)
         for i in range(w * h):
             m = (blk[i*2] | (blk[i*2+1] << 8)) & 0x3FF
             if m < R.NUM_METATILES_IN_PRIMARY:
@@ -249,10 +284,54 @@ def furniture(lay, maps, pos, skip):
                     under[m] += 1
     return {m for m in under if under[m] >= 0.5 * use[m]}
 
+SWEEPS = 6
+
+# Long grass - metatile 015, MB_LONG_GRASS - is the only one of its behaviour
+# in the General tileset, and vanilla draws it on Route 119 and Route 120 and
+# nowhere else: it is the rainy jungle's grass, and the south-edge tile that
+# finishes a patch of it lives in those two maps' secondary tileset, which our
+# routes do not load. The classifier calls it tall grass like any other, so the
+# painter was mixing it cell by cell with the ordinary sort - 675 joins in the
+# new maps that vanilla has never drawn once.
+EXCLUDE = {0x015}
+
 class Painter:
     def __init__(self, model):
         self.m = model
-        self.avoid = set(model.get('furniture', ()))
+        self.avoid = set(model.get('furniture', ())) | EXCLUDE
+        self.ph = model.get('ph', {})
+        self.pv = model.get('pv', {})
+        self.cmap = model.get('cls', {})
+
+    CAP = 48
+
+    def choices(self, cls, x, y, w, h):
+        """every metatile vanilla used in this cell's situation, with weights.
+
+        paint() takes the most popular answer to the exact 3x3 mask. The
+        harmoniser needs more than that, and specifically it needs the coarser
+        tables too: Route 144 had a cliff cell whose 3x3 mask had exactly one
+        vanilla answer, and that answer was a sea cliff - a rock face with the
+        ocean drawn onto its edge - which put a stripe of blue down the middle
+        of a mountain thirty cells long. There was nothing to swap it for
+        because the exact mask offered nothing else.
+
+        So all three tables contribute, scaled so the exact match still wins
+        wherever it fits: only when the exact answer makes a join vanilla has
+        never drawn does a coarser one get to replace it.
+        """
+        m3 = mask3(cls, x, y, w, h, GRASS)
+        out = collections.Counter()
+        for scale, tab, key in ((1000, self.m['t3'], m3),
+                                (10, self.m['t4'], mask4(m3)),
+                                (10, self.m['t3'], (m3[4],) * 9),
+                                (1, self.m['t1'], m3[4])):
+            for v, n in (tab.get(key) or {}).items():
+                if (v & 0x3FF) not in self.avoid:
+                    out[v] += scale * n
+        if not out:
+            return {1: 1}
+        return dict(out.most_common(self.CAP))
 
     def paint(self, cls, w, h):
         """class grid (list, row-major) -> list of u16 blockdata entries."""
@@ -272,7 +351,64 @@ class Painter:
                      or best(self.m['t3'], (m3[4],) * 9, av)
                      or best(self.m['t1'], m3[4], av) or 1)
                 out.append(v)
+        self.harmonise(out, cls, w, h)
         return out
+
+    def seams(self, out, i, v, w, h):
+        """how many of this cell's four joins are pairs vanilla never draws."""
+        x, y, m = i % w, i // w, v & 0x3FF
+        n = 0
+        if x and (out[i-1] & 0x3FF, m) not in self.ph:
+            n += 1
+        if x + 1 < w and (m, out[i+1] & 0x3FF) not in self.ph:
+            n += 1
+        if y and (out[i-w] & 0x3FF, m) not in self.pv:
+            n += 1
+        if y + 1 < h and (m, out[i+w] & 0x3FF) not in self.pv:
+            n += 1
+        return n
+
+    def harmonise(self, out, cls, w, h):
+        """Swap cells for equally-legal alternatives that join up better.
+
+        paint() decides every cell on its own, so two cells can each be the
+        right answer to their own 3x3 mask and still not line up where they
+        meet. This re-picks from the same candidate set - so the terrain never
+        changes, only which drawing of it is used - choosing whichever
+        candidate leaves the fewest joins vanilla has never drawn.
+
+        A swap must keep the cell's class and its collision: the point is to
+        fix the art, and moving a wall or a shore would undo work that
+        reachability and the encounter tables depend on.
+        """
+        cand = {}
+        moved = 0
+        for _ in range(SWEEPS):
+            n = 0
+            for i in range(w * h):
+                v = out[i]
+                if not self.seams(out, i, v, w, h):
+                    continue
+                if i not in cand:
+                    cand[i] = self.choices(cls, i % w, i // w, w, h)
+                col, kc = v & 0x0C00, self.cmap.get((v & 0x3FF, (v >> 10) & 3))
+                # ties go to the cell as it stands: a swap has to earn itself
+                bestv, bestk = v, (self.seams(out, i, v, w, h), float('-inf'))
+                for c, cnt in cand[i].items():
+                    if c == v or (c & 0x0C00) != col:
+                        continue
+                    if self.cmap.get((c & 0x3FF, (c >> 10) & 3)) != kc:
+                        continue
+                    k = (self.seams(out, i, c, w, h), -cnt)
+                    if k < bestk:
+                        bestv, bestk = c, k
+                if bestv != v:
+                    out[i] = (bestv & 0x0FFF) | (v & 0xF000)
+                    n += 1
+            moved += n
+            if not n:
+                break
+        return moved
 
 MODEL = os.path.join(HERE, '..', 'terrain_model.pickle')
 

@@ -221,13 +221,24 @@ TREE_BORDER = [0x1D4, 0x1D5, 0x1DC, 0x1DD]      # what every land route uses
 SEA_BORDER = [0x170] * 4
 
 # --- terrain generation ---------------------------------------------------
-def world_classes():
-    """class of every occupied world cell in vanilla, plus the map it is on."""
+def world_classes(skip=()):
+    """class of every occupied world cell in vanilla, plus the map it is on.
+
+    Our own maps are left out. They are on disk from the last run, and a new
+    map seeds its rim from whatever is across the seam, so reading them made
+    each run depend on the one before it: running the generator twice produced
+    two different Hoenns, alternating forever - 401 cells of Route 139 flipped
+    between two states, because a single rim seed decides a whole voronoi
+    region. The maps are added back below as they are built, in order, so a
+    seam between two new maps still matches - it matches the one built first.
+    """
     lay, maps, pos = R.solve()
     minx = min(x for x, _ in pos.values()); miny = min(y for _, y in pos.values())
     rend = R.Renderer()
     cls, owner = {}, {}
     for k, (mx, my) in pos.items():
+        if k in skip:
+            continue
         L = lay[maps[k]['layout']]
         w, h = L['width'], L['height']
         blk = open(f'{ROOT}/{L["blockdata_filepath"]}', 'rb').read()
@@ -824,6 +835,25 @@ def ensure_reachable(grid, level, w, h):
 STAIR_L, STAIR_R = 0x0AF, 0x0CF
 STAIR_NOTCH = 0x071           # mountain top, for a gap a staircase cannot fill
 
+def notch(blocks, j, w, h):
+    """Cut a hole through the blocker at j, drawn as whatever it is cut through.
+
+    The value has to be elevation 0 - that is the level that connects two
+    different ones - and collision 0. What it must not be is a fixed tile: a
+    mountain top opened through a forest to reach a stranded pocket leaves a
+    pink rock speck in the middle of the trees, which is exactly what Route
+    141 had three of. So the art comes from the walkable neighbours, which are
+    the two sides this hole is joining.
+    """
+    x, y = j % w, j // w
+    near = collections.Counter()
+    for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+        if 0 <= nx < w and 0 <= ny < h:
+            v = blocks[ny*w + nx]
+            if not ((v >> 10) & 3):
+                near[v & 0x3FF] += 1
+    blocks[j] = near.most_common(1)[0][0] if near else STAIR_NOTCH
+
 def cut_stairs(grid, level, mass, w, h, want=2):
     """Open a way up, and say where the staircases went."""
     tops = collections.defaultdict(set)
@@ -894,6 +924,12 @@ def cut_stairs(grid, level, mass, w, h, want=2):
 # was a hard arbitrary edge.
 GRASS_TOP_CHANCE = 0.5
 TERRACE_TALL = 0.16
+# A whole summit of bare rock is something vanilla only does small. Its 35
+# summits run to 468 cells, but the two drawn as bare mountain top - both on
+# Route 114 - are 127 and 95; every larger one is grass, most of them with
+# tall grass and a path on top. Route 144's was 707 cells of empty pink rock,
+# bigger than anything in Hoenn and blanker than all of it.
+ROCK_TOP_MAX = 127
 
 def vegetate_terraces(grid, level, w, h, seed):
     """Decide each terrace's surface as a whole, not cell by cell.
@@ -921,7 +957,8 @@ def vegetate_terraces(grid, level, w, h, seed):
         if len(comp) < 12:
             continue
         x0, y0 = comp[0] % w, comp[0] // w
-        if T.fbm(x0, y0, seed + 91, octaves=1, freq=0.21) > GRASS_TOP_CHANCE:
+        if (len(comp) <= ROCK_TOP_MAX
+                and T.fbm(x0, y0, seed + 91, octaves=1, freq=0.21) > GRASS_TOP_CHANCE):
             continue                       # this one stays a rock summit
         for i in comp:
             grid[i] = T.GRASS
@@ -1051,16 +1088,26 @@ def place_ledges(grid, level, w, h, seed):
     A ledge only makes sense where the player can stand above it and land
     below, so both rows have to be walkable and at the same elevation, and the
     landing row must not itself be a ledge or a wall.
+
+    It also has to start or finish somewhere. Of vanilla's 47 horizontal ledge
+    runs, 42 have at least one end butting into trees or a cliff - the ledge
+    closes a gap, which is what makes hopping it a shortcut. Five float free in
+    open ground. Ours were placed by length alone, so they were all of the
+    fifth sort: three brown bars lying in the middle of a field.
     """
     def open_at(i):
         return grid[i] in (T.GRASS, T.TALL, T.PATH, T.SAND)
+
+    def wall(x, y):
+        return not (0 <= x < w) or grid[y*w + x] in (T.TREE, T.CLIFF,
+                                                     T.WATER, T.POND)
 
     runs = []
     for y in range(2, h - 2):
         x = 1
         while x < w - 1:
             n = 0
-            while (x + n < w - 1 and n < LEDGE_MAX
+            while (x + n < w - 1
                    and open_at((y)*w + x + n)
                    and open_at((y-1)*w + x + n) and open_at((y+1)*w + x + n)
                    and level[(y)*w + x + n] == GROUND_LEVEL
@@ -1068,15 +1115,19 @@ def place_ledges(grid, level, w, h, seed):
                    and level[(y+1)*w + x + n] == GROUND_LEVEL):
                 n += 1
             if n >= LEDGE_MIN:
-                runs.append((x, y, n))
-                x += n
-            x += 1
+                # anchor it: left end against a wall, else right end against
+                # one, else this gap is not a gap and gets no ledge
+                if wall(x - 1, y):
+                    runs.append((x, y, min(n, LEDGE_MAX), +1))
+                elif wall(x + n, y):
+                    runs.append((x + n - 1, y, min(n, LEDGE_MAX), -1))
+            x += max(n, 1)
     if not runs:
         return []
     runs.sort(key=lambda r: -(r[2] + 3 * T.fbm(r[0], r[1], seed + 131,
                                                octaves=1, freq=0.08)))
     picked = []
-    for x, y, n in runs:
+    for x, y, n, d in runs:
         if len(picked) >= LEDGE_PER_MAP:
             break
         if any(abs(x - px) + abs(y - py) <= LEDGE_APART for px, py, _ in picked):
@@ -1085,7 +1136,8 @@ def place_ledges(grid, level, w, h, seed):
         # longest run available every time gave every ledge the same length
         # and twice vanilla's ledge count by area.
         u = T.fbm(x, y, seed + 137, octaves=1, freq=0.3)
-        picked.append((x, y, min(n, LEDGE_MIN + int((LEDGE_MAX - LEDGE_MIN + 1) * u * u))))
+        k = min(n, LEDGE_MIN + int((LEDGE_MAX - LEDGE_MIN + 1) * u * u))
+        picked.append((x if d > 0 else x - k + 1, y, k))
     return picked
 
 def stamp_ledges(blocks, ledges, w, h):
@@ -1101,7 +1153,7 @@ def stamp_stairs(blocks, stairs, w, h):
                 blocks[i + r] = STAIR_L
                 blocks[i + r + 1] = STAIR_R
         else:
-            blocks[i] = STAIR_NOTCH
+            notch(blocks, i, w, h)
 
 def apply_levels(blocks, level, cls, w, h):
     """Stamp the terrace elevations onto the painted blockdata.
@@ -1180,7 +1232,7 @@ def final_check(blocks, w, h, beh_cache=[]):
                             m = (y+dy+ey)*w + (x+dx+ex)
                             if (0 <= x+dx+ex < w and 0 <= y+dy+ey < h
                                     and m in seen and walk(m)):
-                                blocks[j] = STAIR_NOTCH
+                                notch(blocks, j, w, h)
                                 fixed += 1
                                 done = True
                                 break
@@ -1722,11 +1774,15 @@ def main():
     soften(painter, dry)
 
     print('classifying vanilla terrain...')
-    wcls, _ = world_classes()
+    wcls, _ = world_classes(skip={s['const'] for s in NEWMAPS})
 
     built = {}
     for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
+        # publish this map's terrain for the maps built after it
+        for j in range(spec['h']):
+            for i in range(spec['w']):
+                wcls[(spec['x'] + i, spec['y'] + j)] = cls[j * spec['w'] + i]
         level, stairs = terrace(cls, spec['w'], spec['h'])
         vegetate_terraces(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
         ledges = place_ledges(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
