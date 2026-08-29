@@ -2,7 +2,7 @@
   "id": "MAP_ROUTE143",
   "name": "Route143",
   "layout": "LAYOUT_ROUTE143",
-  "music": "MUS_ROUTE110",
+  "music": "MUS_ROUTE104",
   "region_map_section": "MAPSEC_ROUTE_143",
   "requires_flash": false,
   "weather": "WEATHER_SUNNY",

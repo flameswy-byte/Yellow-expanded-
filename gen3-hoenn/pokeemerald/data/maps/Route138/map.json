@@ -2,7 +2,7 @@
   "id": "MAP_ROUTE138",
   "name": "Route138",
   "layout": "LAYOUT_ROUTE138",
-  "music": "MUS_ROUTE110",
+  "music": "MUS_ROUTE101",
   "region_map_section": "MAPSEC_ROUTE_138",
   "requires_flash": false,
   "weather": "WEATHER_SUNNY",

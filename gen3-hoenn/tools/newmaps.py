@@ -1861,6 +1861,37 @@ def write_map(spec, blocks, dry):
     open(f'{ld}/border.bin', 'wb').write(u16(SEA_BORDER if water else TREE_BORDER))
     open(f'{md}/scripts.inc', 'w').write(f'{spec["name"]}_MapScripts::\n\t.byte 0\n')
 
+def derive_music(spec, dry):
+    """the track its vanilla neighbours play, weighted by how much edge they share.
+
+    Hand-picked, these were mostly right and occasionally not: Route 137 borders
+    four routes that all play MUS_ROUTE104 and was set to MUS_ROUTE110; Route
+    145's three neighbours play ROUTE110 and ROUTE104 and it was set to
+    ROUTE113, the ash route's theme, which none of them is. Every other choice
+    in this file comes from the maps next door, and there is no reason this one
+    should not.
+    """
+    lay, maps, _ = R.solve()
+    tally = collections.Counter()
+    for side, nb, off in sorted(set(CONN[spec['const']])):
+        if nb in {t['const'] for t in NEWMAPS}:
+            continue
+        p = f'{ROOT}/data/maps/{map_dir(nb)}/map.json'
+        if not os.path.exists(p):
+            continue
+        j = json.load(open(p))
+        if not j.get('music'):
+            continue
+        L = lay[maps[nb]['layout']] if nb in maps else None
+        nw, nh = (L['width'], L['height']) if L else (1, 1)
+        if side in ('up', 'down'):
+            n = min(spec['w'], off + nw) - max(0, off)
+        else:
+            n = min(spec['h'], off + nh) - max(0, off)
+        if n > 0:
+            tally[j['music']] += n
+    return tally.most_common(1)[0][0] if tally else spec['music']
+
 def write_header(spec, dry):
     if dry:
         return
@@ -1868,7 +1899,7 @@ def write_header(spec, dry):
     os.makedirs(md, exist_ok=True)
     hdr = {
         'id': spec['const'], 'name': spec['name'],
-        'layout': f'LAYOUT_{spec["name"].upper()}', 'music': spec['music'],
+        'layout': f'LAYOUT_{spec["name"].upper()}', 'music': derive_music(spec, dry),
         'region_map_section': spec['mapsec'], 'requires_flash': False,
         'weather': 'WEATHER_SUNNY', 'map_type': 'MAP_TYPE_ROUTE',
         'allow_cycling': True, 'allow_escaping': False, 'allow_running': True,
