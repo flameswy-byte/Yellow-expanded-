@@ -1241,59 +1241,115 @@
     },
     {
       "id": "MAPSEC_ROUTE_135",
-      "name": "ROUTE 135"
+      "name": "ROUTE 135",
+      "x": 2,
+      "y": 10,
+      "width": 2,
+      "height": 2
     },
     {
       "id": "MAPSEC_ROUTE_136",
-      "name": "ROUTE 136"
+      "name": "ROUTE 136",
+      "x": 2,
+      "y": 12,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_137",
-      "name": "ROUTE 137"
+      "name": "ROUTE 137",
+      "x": 3,
+      "y": 12,
+      "width": 4,
+      "height": 2
     },
     {
       "id": "MAPSEC_ROUTE_138",
-      "name": "ROUTE 138"
+      "name": "ROUTE 138",
+      "x": 5,
+      "y": 9,
+      "width": 2,
+      "height": 3
     },
     {
       "id": "MAPSEC_ROUTE_139",
-      "name": "ROUTE 139"
+      "name": "ROUTE 139",
+      "x": 2,
+      "y": 6,
+      "width": 2,
+      "height": 3
     },
     {
       "id": "MAPSEC_ROUTE_140",
-      "name": "ROUTE 140"
+      "name": "ROUTE 140",
+      "x": 6,
+      "y": 5,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_141",
-      "name": "ROUTE 141"
+      "name": "ROUTE 141",
+      "x": 1,
+      "y": 6,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_142",
-      "name": "ROUTE 142"
+      "name": "ROUTE 142",
+      "x": 4,
+      "y": 7,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_143",
-      "name": "ROUTE 143"
+      "name": "ROUTE 143",
+      "x": 2,
+      "y": 4,
+      "width": 5,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_144",
-      "name": "ROUTE 144"
+      "name": "ROUTE 144",
+      "x": 3,
+      "y": 1,
+      "width": 2,
+      "height": 3
     },
     {
       "id": "MAPSEC_ROUTE_145",
-      "name": "ROUTE 145"
+      "name": "ROUTE 145",
+      "x": 5,
+      "y": 5,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "MAPSEC_ROUTE_146",
-      "name": "ROUTE 146"
+      "name": "ROUTE 146",
+      "x": 12,
+      "y": 1,
+      "width": 1,
+      "height": 5
     },
     {
       "id": "MAPSEC_ROUTE_147",
-      "name": "ROUTE 147"
+      "name": "ROUTE 147",
+      "x": 13,
+      "y": 4,
+      "width": 2,
+      "height": 2
     },
     {
       "id": "MAPSEC_ROUTE_148",
-      "name": "ROUTE 148"
+      "name": "ROUTE 148",
+      "x": 9,
+      "y": 0,
+      "width": 1,
+      "height": 6
     }
   ]
 }
