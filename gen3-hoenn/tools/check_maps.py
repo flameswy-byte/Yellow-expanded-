@@ -119,30 +119,40 @@ def check(const, lay, maps, rend, wild, hdrs):
     if trapped:
         out.append(f'{len(trapped)} cells reachable but with no way back to an edge')
 
-    # 3. items. An item ball you cannot reach is worse than no item ball: it
-    #    is visible from across a cliff and there is no way round. Surfing
-    #    counts, as it does above. --all reports 55 of these against vanilla,
-    #    which are not bugs: this does not model the HMs, so vanilla's items
-    #    behind a Cut tree or a Rock Smash boulder read as walled in.
+    # 3. everything standing on the map. An item ball or a trainer you cannot
+    #    reach is worse than none: it is visible from across a cliff and there
+    #    is no way round. Surfing counts, as it does above. --all reports 30 of
+    #    these against vanilla, which are not bugs: this does not model the
+    #    HMs, so an item behind a Cut tree reads as walled in.
     hdr = hdrs.get(const, {})
+    here = collections.Counter()
     for e in (hdr.get('object_events') or []) + (hdr.get('bg_events') or []):
-        if ('ITEM_BALL' not in str(e.get('graphics_id', ''))
-                and 'hidden' not in str(e.get('type', ''))):
+        item = ('ITEM_BALL' in str(e.get('graphics_id', ''))
+                or 'hidden' in str(e.get('type', '')))
+        trainer = str(e.get('trainer_type', '')) == 'TRAINER_TYPE_NORMAL'
+        if not (item or trainer):
             continue
+        what = 'item' if item else 'trainer'
         try:
             x, y = int(e['x']), int(e['y'])
         except (KeyError, TypeError, ValueError):
             continue
         i = y*w + x
         if not (0 <= x < w and 0 <= y < h):
-            out.append(f'item at {x},{y} is off the map')
-        elif not walk[i]:
-            out.append(f'item at {x},{y} is inside a wall')
+            out.append(f'{what} at {x},{y} is off the map')
+            continue
+        if not walk[i]:
+            out.append(f'{what} at {x},{y} is inside a wall')
         elif i not in wet:
-            out.append(f'item at {x},{y} cannot be reached')
+            out.append(f'{what} at {x},{y} cannot be reached')
         elif int(e.get('elevation', -1)) not in (ele(i), 0):
-            out.append(f'item at {x},{y} is at elevation '
+            out.append(f'{what} at {x},{y} is at elevation '
                        f'{e.get("elevation")} on ground at {ele(i)}')
+        if 'hidden' not in str(e.get('type', '')):
+            here[(x, y)] += 1          # two sprites on one cell is one sprite
+    for (x, y), n in here.items():
+        if n > 1:
+            out.append(f'{n} objects share the cell {x},{y}')
 
     # 4. encounters
     tall = sum(1 for i in range(w * h) if cls[i] == T.TALL)

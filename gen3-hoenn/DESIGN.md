@@ -759,15 +759,80 @@ Route 148 picks up Sandshrew, Trapinch and Baltoy from Route 111 — the desert
 species — which is the check that the weighting works: it is the desert seam,
 and it got the desert's Pokémon without being told to.
 
+### Items and trainers
+
+`python3 tools/populate.py` then `python3 tools/trainers.py`, in that order and
+after `newmaps.py`, which rewrites the map headers from scratch. Both are
+idempotent: run either twice and the files come out byte-identical.
+
+Vanilla's land routes carry a median of two item balls, one hidden item and
+eight trainers each — 0.67, 0.42 and 3.04 per thousand cells. Ours carried
+none, so fourteen maps of terrain had nothing in them to find and nobody on
+them. They now carry 34, 24 and 155 at vanilla's own rates.
+
+Placement is measured. Vanilla's 77 route item balls stand on grass 43 times,
+shallow water 15, sand and path 7 each, a plateau 5, and 30% of their four
+neighbours are trees or cliff — tucked into a nook, not dropped in the open, so
+ours need a blocked neighbour too. Its 55 hidden items are buried anywhere.
+Trainers stand where there is a line of sight to stand in and face down the
+longest open run.
+
+Trainers are harvested, not invented. The 60 combinations of overworld sprite,
+trainer class, battle portrait and encounter fanfare are read out of vanilla's
+own route trainers, so every generated trainer is a pairing the game already
+ships. Party species come from that map's own wild table. Party size follows
+vanilla's distribution — 90 twos, 63 ones, 19 threes. The top level sits one
+above the highest level the route's wild Pokémon reach, which is the tighter of
+the two relationships available: against the median wild level vanilla's
+trainers scatter over +0 to +4, against the highest they sit at +1, between −1
+and +2. Only the dialogue is written rather than measured.
+
+Two format constraints decide things you would not otherwise think about. A
+hidden item does not store its flag — `bg_hidden_item_event` stores the offset
+from `FLAG_HIDDEN_ITEMS_START` in one byte — so hidden items can only draw from
+that 256-wide window; vanilla has used 112 of it. And a trainer's defeat flag
+is its id plus `TRAINER_FLAGS_START`, with the system flags starting
+immediately after the last one, so 155 new trainers meant raising
+`MAX_TRAINERS_COUNT` from 864 to 1024. That is the knob `opponents.h` itself
+names, and it costs 20 bytes of the 120 spare in `SaveBlock1` (0x3D88 used of
+0x3E00). Nothing else changed: `SYSTEM_FLAGS` is defined off `TRAINER_FLAGS_END`
+and follows on its own.
+
+### Region map
+
+`python3 tools/regionmap.py`. All fourteen new `MAPSEC`s had a name and nothing
+else, which is not cosmetic — `region_map.c` does
+
+```c
+dimensionScale = mapWidth / gRegionMapEntries[mapSecId].width;
+```
+
+with no guard, so opening the region map while standing on one divided by zero.
+
+The rectangle is derived. The region map is Hoenn scaled to a 28×15 grid, and
+fitting vanilla's 49 placed sections against their world positions recovers
+that scale to about one square either way. Each new map's world box goes
+through the fit and is trimmed to squares nothing has claimed. Staying put
+beats staying big — the square is where the game says you are — so a rectangle
+shrinks before it moves. Nine of the fourteen land exactly on the fit; Route
+142 moves furthest, three squares, because Petalburg's corner is full.
+
+Vanilla ships nine sections with no rectangle — the truck, secret bases, the
+event islands, the dynamic placeholder — and gets away with it because the
+region map is never opened standing on one. The tool checks that ours are not
+on that list.
+
 ---
 
 ## 5. Open questions
 
 - **What goes in the remaining inland gaps.** Gap 1 is built; Gaps 2–5 are
   about nine chunks of ground and nothing is designed yet.
-- **Wild encounters.** The new maps have tall grass and nothing in it.
-- **Region map.** The four new `MAPSEC`s have names but no region-map
-  rectangle, so they do not light up on the town map.
+- **The region map art.** The rectangles are right, but the picture underneath
+  them is still vanilla's: the new routes sit over blank sea. Redrawing it is
+  a graphics job, not a data one.
+- **Trainer dialogue.** 155 trainers draw on six lines per class per slot, so
+  a line recurs about four times across the region. Vanilla writes every one.
 - **What the ocean is for.** Thirty-one chunks of sea. Vanilla already uses
   Dive to layer underwater maps over surface ones, which is a mechanic worth
   exploiting rather than working around.
