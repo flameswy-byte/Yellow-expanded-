@@ -229,6 +229,15 @@
     {
       "type": "trigger",
       "x": 0,
+      "y": 3,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
       "y": 4,
       "elevation": 0,
       "var": "VAR_ROUTE101_STATE",
@@ -239,6 +248,15 @@
       "type": "trigger",
       "x": 0,
       "y": 5,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
+      "y": 6,
       "elevation": 0,
       "var": "VAR_ROUTE101_STATE",
       "var_value": "2",
@@ -301,6 +319,15 @@
     {
       "type": "trigger",
       "x": 0,
+      "y": 13,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
       "y": 14,
       "elevation": 0,
       "var": "VAR_ROUTE101_STATE",
@@ -311,6 +338,15 @@
       "type": "trigger",
       "x": 0,
       "y": 15,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
+      "y": 16,
       "elevation": 0,
       "var": "VAR_ROUTE101_STATE",
       "var_value": "2",
@@ -342,6 +378,60 @@
       "var": "VAR_ROUTE101_STATE",
       "var_value": "2",
       "script": "Route101_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 0,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 1,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 2,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 3,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 4,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 5,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
     },
     {
       "type": "trigger",
@@ -410,6 +500,15 @@
       "type": "trigger",
       "x": 19,
       "y": 13,
+      "elevation": 0,
+      "var": "VAR_ROUTE101_STATE",
+      "var_value": "2",
+      "script": "Route101_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 14,
       "elevation": 0,
       "var": "VAR_ROUTE101_STATE",
       "var_value": "2",

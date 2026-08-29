@@ -3,19 +3,33 @@ Route136_MapScripts::
 
 // Open Hoenn - tools/trainers.py
 
+Route136_EventScript_Becca::
+	trainerbattle_single TRAINER_BECCA, Route136_Text_BeccaIntro, Route136_Text_BeccaDefeat
+	msgbox Route136_Text_BeccaPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+Route136_Text_BeccaIntro:
+	.string "Cold? You get used to it.$"
+
+Route136_Text_BeccaDefeat:
+	.string "I'll float here a while.$"
+
+Route136_Text_BeccaPostBattle:
+	.string "I'll race you next time.$"
+
 Route136_EventScript_Bonnie::
 	trainerbattle_single TRAINER_BONNIE, Route136_Text_BonnieIntro, Route136_Text_BonnieDefeat
 	msgbox Route136_Text_BonniePostBattle, MSGBOX_AUTOCLOSE
 	end
 
 Route136_Text_BonnieIntro:
-	.string "Cold? You get used to it.$"
+	.string "Battle me and I'll let you pass.$"
 
 Route136_Text_BonnieDefeat:
-	.string "I'll float here a while.$"
+	.string "That settles it.$"
 
 Route136_Text_BonniePostBattle:
-	.string "I'll race you next time.$"
+	.string "Safe travels.$"
 
 Route136_EventScript_Briar::
 	trainerbattle_single TRAINER_BRIAR, Route136_Text_BriarIntro, Route136_Text_BriarDefeat
@@ -23,26 +37,12 @@ Route136_EventScript_Briar::
 	end
 
 Route136_Text_BriarIntro:
-	.string "Battle me and I'll let you pass.$"
-
-Route136_Text_BriarDefeat:
-	.string "That settles it.$"
-
-Route136_Text_BriarPostBattle:
-	.string "Safe travels.$"
-
-Route136_EventScript_Arlo::
-	trainerbattle_single TRAINER_ARLO, Route136_Text_ArloIntro, Route136_Text_ArloDefeat
-	msgbox Route136_Text_ArloPostBattle, MSGBOX_AUTOCLOSE
-	end
-
-Route136_Text_ArloIntro:
 	.string "Not many come this far. Battle me.$"
 
-Route136_Text_ArloDefeat:
+Route136_Text_BriarDefeat:
 	.string "You've come a long way indeed.$"
 
-Route136_Text_ArloPostBattle:
+Route136_Text_BriarPostBattle:
 	.string "Keep heading on. It opens out.$"
 
 Route136_EventScript_Asher::

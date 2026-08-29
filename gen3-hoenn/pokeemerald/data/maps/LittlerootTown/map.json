@@ -279,6 +279,15 @@
     {
       "type": "trigger",
       "x": 0,
+      "y": 3,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
       "y": 4,
       "elevation": 0,
       "var": "VAR_TEMP_2",
@@ -405,6 +414,15 @@
     {
       "type": "trigger",
       "x": 0,
+      "y": 18,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateLeft"
+    },
+    {
+      "type": "trigger",
+      "x": 0,
       "y": 19,
       "elevation": 0,
       "var": "VAR_TEMP_2",
@@ -433,6 +451,15 @@
       "type": "trigger",
       "x": 19,
       "y": 2,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
+      "y": 3,
       "elevation": 0,
       "var": "VAR_TEMP_2",
       "var_value": "0",
@@ -549,6 +576,15 @@
     {
       "type": "trigger",
       "x": 19,
+      "y": 16,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateRight"
+    },
+    {
+      "type": "trigger",
+      "x": 19,
       "y": 17,
       "elevation": 0,
       "var": "VAR_TEMP_2",
@@ -576,6 +612,15 @@
     {
       "type": "trigger",
       "x": 0,
+      "y": 19,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateDown"
+    },
+    {
+      "type": "trigger",
+      "x": 1,
       "y": 19,
       "elevation": 0,
       "var": "VAR_TEMP_2",
@@ -702,6 +747,15 @@
     {
       "type": "trigger",
       "x": 15,
+      "y": 19,
+      "elevation": 0,
+      "var": "VAR_TEMP_2",
+      "var_value": "0",
+      "script": "LittlerootTown_EventScript_OpenHoennGateDown"
+    },
+    {
+      "type": "trigger",
+      "x": 16,
       "y": 19,
       "elevation": 0,
       "var": "VAR_TEMP_2",

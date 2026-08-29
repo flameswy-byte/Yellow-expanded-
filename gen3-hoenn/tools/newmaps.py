@@ -1584,6 +1584,16 @@ def pristine(name, L):
     return open(orig, 'rb').read(), p
 
 def event_cells(name):
+    """cells softening must not touch, because vanilla put something on them.
+
+    The gate triggers this project adds are deliberately not among them. They
+    are written onto the walkable cells of a town's rim, softening skips cells
+    with events on them, and the number of walkable rim cells is what decides
+    how many triggers there are - so counting our own triggers made the pass
+    oscillate: 6 metatiles softened and 40 triggers one run, 31 and 54 the
+    next, back to 6 the run after. Vanilla's own triggers still count - a
+    cutscene fires on a tile, and walling that tile off would break it.
+    """
     p = f'{ROOT}/data/maps/{name}/map.json'
     if not os.path.exists(p):
         return set()
@@ -1591,6 +1601,8 @@ def event_cells(name):
     out = set()
     for key in ('object_events', 'warp_events', 'coord_events', 'bg_events'):
         for e in j.get(key) or []:
+            if 'OpenHoennGate' in str(e.get('script', '')):
+                continue                       # ours; vanilla's still count
             try:
                 x, y = int(e['x']), int(e['y'])
             except (KeyError, ValueError, TypeError):

@@ -40,9 +40,19 @@ RATES = {
 }
 
 def load():
+    """the vanilla tables, and only the vanilla ones.
+
+    Our own tables are in the same file once this has run once, and pass one
+    reads them as if they were donors - so running it twice gave a different
+    answer, and a third run a different one again. Same rule as the terrain
+    model: never learn from your own output. Pass two still feeds this run's
+    results to the maps that had no vanilla neighbour, which is deliberate and
+    happens within the run.
+    """
     d = json.load(open(WILD))
     grp = next(g for g in d['wild_encounter_groups'] if g['label'] == GROUP)
-    return d, grp, {e['map']: e for e in grp['encounters']}
+    skip = T.generated()
+    return d, grp, {e['map']: e for e in grp['encounters'] if e['map'] not in skip}
 
 def spans(box, const):
     """neighbour -> number of shared edge cells, from the map's own header."""

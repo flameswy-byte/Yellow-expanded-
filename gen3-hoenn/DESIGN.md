@@ -728,6 +728,42 @@ for the three vanilla pairs whose offsets disagree: a map's world position then
 depends on which way the solver reached it, and Route 116/Verdanturf came out
 blocked in one direction and open in the other from the same data.
 
+### Reproducibility
+
+The pipeline is five tools in order, and running it twice from a clean checkout
+now produces the same bytes:
+
+```bash
+python3 tools/newmaps.py      # terrain, connections, town gates
+python3 tools/encounters.py   # wild tables
+python3 tools/populate.py     # items
+python3 tools/trainers.py     # trainers
+python3 tools/regionmap.py    # region map rectangles
+```
+
+It did not, and every reason was the same reason: something read its own
+output back as if it were vanilla.
+
+- The terrain model learned from the vanilla borders it had itself softened, so
+  every rebuild moved. It reads `baseline/` instead.
+- A new map seeded its rim from whatever was across the seam, including our own
+  maps from the last run — 401 cells of Route 139 alternating between two
+  states forever, because one rim seed decides a whole voronoi region. The new
+  maps are left out of the world grid and added back as they are built.
+- `encounters.py` pass one read our own tables as donors, so a second run gave
+  a different answer and a third another.
+- Softening skipped cells with events on them, and the gate triggers this
+  project writes onto a town's rim *are* events — while the number of walkable
+  rim cells is what decides how many triggers there are. Six metatiles softened
+  and 40 triggers one run, 31 and 54 the next, back to six. Vanilla's own
+  triggers still count; ours are skipped by script name.
+- And the model is a cache that is not in the repository, so forgetting to
+  rebuild it meant the committed maps were painted by a model nobody could
+  reproduce. Littleroot's border was committed from a pickle built before the
+  tileset tables existed, and a fresh clone regenerated 25 cells of it
+  differently. `T.load()` now rebuilds when the code or the baselines are newer
+  than the pickle.
+
 ### How empty a route is allowed to be
 
 `tools/study.py` compares against the vanilla land routes on the things only

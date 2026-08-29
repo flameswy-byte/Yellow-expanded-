@@ -513,8 +513,25 @@ class Painter:
 
 MODEL = os.path.join(HERE, '..', 'terrain_model.pickle')
 
+def stale():
+    """is the cached model older than the code or the maps that made it?
+
+    It is a cache, it is not in the repository, and forgetting to rebuild it
+    means the maps in the repository were painted by a model nobody can
+    reproduce. That is not hypothetical: Littleroot's softened border was
+    committed from a pickle built before the tileset tables existed, and a
+    fresh clone regenerated 25 cells of it differently.
+    """
+    if not os.path.exists(MODEL):
+        return True
+    age = os.path.getmtime(MODEL)
+    newer = [__file__, R.__file__, GENERATED]
+    newer += [os.path.join(BASELINE, f) for f in os.listdir(BASELINE)] \
+        if os.path.isdir(BASELINE) else []
+    return any(os.path.exists(p) and os.path.getmtime(p) > age for p in newer)
+
 def load(rebuild=False, **kw):
-    if not rebuild and os.path.exists(MODEL):
+    if not rebuild and not stale():
         return pickle.load(open(MODEL, 'rb'))
     m = learn(**kw)
     pickle.dump(m, open(MODEL, 'wb'))
