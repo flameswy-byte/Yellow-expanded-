@@ -991,8 +991,10 @@ TREE_TARGET = 0.32
 # How much of the tree field is masses and how much is scattered singles. Half
 # of vanilla's 635 route tree clumps are one cell and 58% are one or two; at
 # 0.55/0.45 ours were 21% and 31% - blobs where vanilla has a wood with single
-# trees standing out in the open around it.
-TREE_MASS, TREE_SPECK = 0.90, 0.10
+# trees standing out in the open around it. The singles are worth six per cent
+# of the trees and a third of the clumps, because each one is a clump on its
+# own: at 0.94 the count comes out at 29 a map against vanilla's 30.
+TREE_MASS, TREE_SPECK = 0.94, 0.06
 VEG_KINDS = (T.GRASS, T.TALL, T.TREE, T.PATH, T.SAND)
 
 def vegetate(grid, dist, rim, w, h, seed):
@@ -1056,16 +1058,63 @@ def vegetate(grid, dist, rim, w, h, seed):
     # scattered singles, and the mix reproduces vanilla's shape - about 30
     # clumps a map with a median size of 2 but a few very large ones. Biased
     # away from the paths so the corridors stay open, and out of the grass.
+    # The singles get a budget of their own rather than a share of whatever is
+    # left after the sketch. Route 142's sketch drew enough trees to meet the
+    # target as one slab on the right, so there was nothing left to spend and
+    # the left half of the map stayed a blank field. A map whose sketch is
+    # generous in trees ends a couple of points over the target, which is
+    # nothing next to vanilla's own spread of 0% to 68%.
     have_tree = sum(1 for i in land if grid[i] == T.TREE)
-    want_tree = max(0, int(TREE_TARGET * len(land)) - have_tree)
+    want_total = int(TREE_TARGET * len(land))
+    single = int(want_total * (1.0 - TREE_MASS))
+    want_tree = max(0, want_total - have_tree - single) + single
     cand = [i for i in elig if dist[i] > 2 and i not in tall_cells]
     if want_tree and cand:
+        mass = want_tree - single
         score = sorted(cand, key=lambda i: -(
-            TREE_MASS * T.fbm(i % w, i // w, seed + 47, octaves=3, freq=0.05)
-            + TREE_SPECK * T._hash(i % w, i // w, seed + 61)
+            T.fbm(i % w, i // w, seed + 47, octaves=3, freq=0.05)
             + 0.25 * t_of(i)))
-        for i in score[:want_tree]:
+        for i in score[:mass]:
             grid[i] = T.TREE
+        # The rest go where there is nothing, which is not the same as
+        # anywhere. Vanilla puts 58% of its open ground within one cell of a
+        # feature and only 7% four or more away; scattering the singles by
+        # noise alone left 35% of ours four or more away - five times the
+        # emptiness, in the same tree share, because the singles landed near
+        # the masses. Ranking by distance to the nearest feature puts each one
+        # in the middle of whatever is still bare.
+        # in rounds, because each tree changes what is still empty: place a
+        # tenth, remeasure, place the next tenth
+        rest = [i for i in cand if grid[i] != T.TREE]
+        todo = want_tree - mass
+        for _ in range(OPEN_ROUNDS):
+            if todo <= 0 or not rest:
+                break
+            d = open_dist(grid, w, h)
+            rest.sort(key=lambda i: -(d[i] + 0.5 * T._hash(i % w, i // w,
+                                                           seed + 61)))
+            n = min(todo, max(1, single // OPEN_ROUNDS))
+            for i in rest[:n]:
+                grid[i] = T.TREE
+            rest = rest[n:]
+            todo -= n
+
+OPEN_GROUND = (T.GRASS, T.PATH, T.SAND)
+OPEN_ROUNDS = 10
+
+def open_dist(grid, w, h):
+    """for every open-ground cell, how far the nearest thing that is not."""
+    d = [None if c in OPEN_GROUND else 0 for c in grid]
+    q = collections.deque(i for i, v in enumerate(d) if v == 0)
+    while q:
+        i = q.popleft()
+        x, y = i % w, i // w
+        for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+            j = ny*w + nx
+            if 0 <= nx < w and 0 <= ny < h and d[j] is None:
+                d[j] = d[i] + 1
+                q.append(j)
+    return [0 if v is None else v for v in d]
 
 # MB_JUMP_* - the ledges you hop down. Vanilla only ever draws them as long
 # runs; the learned painter will happily emit a single one wherever a height

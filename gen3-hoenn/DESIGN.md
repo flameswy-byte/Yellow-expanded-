@@ -728,6 +728,51 @@ for the three vanilla pairs whose offsets disagree: a map's world position then
 depends on which way the solver reached it, and Route 116/Verdanturf came out
 blocked in one direction and open in the other from the same data.
 
+### How empty a route is allowed to be
+
+`tools/study.py` compares against the vanilla land routes on the things only
+aggregates show. Two of its numbers were badly out and one of them turned out
+to be the most useful measurement in the project.
+
+Ledges: a vanilla route carries a median of 1.96 ledge cells per thousand and
+seven of its twenty-one carry none at all. Ours had 7.19 and not one map
+without. The count is now derived from area and decided in `stamp_ledges`,
+after painting — the learned painter emits ledges of its own wherever a height
+change looks like the top of one, and those already spend the budget. A map
+only gets a run if there is room for a whole one, which is where the maps with
+none come from. Now 2.08 per thousand, three of eleven with none.
+
+Tree clumps: half of vanilla's 635 route tree clumps are a single tree. Ours
+were 21% singles — blobs. The scattered-singles term was value noise at
+frequency 0.45, which is still smooth at that scale, so a "speck" came out as
+a three-cell blot. Sweeping the mass/speck weights moved the singles share by
+two points across the whole range, which is what said the weighting was not the
+problem. Per-cell white noise at 0.94/0.06 gives 29 clumps a map against
+vanilla's 30.
+
+Then the measurement that mattered. For every cell of open ground, how far is
+the nearest thing that is not open ground:
+
+```
+                 adjacent   2    3    4+
+  vanilla           58%    25%  10%    7%
+  ours (before)     32%    20%  13%   35%
+  ours (after)      34%    22%  14%   19%
+```
+
+A third of our ground was four or more cells from anything — five times
+vanilla's emptiness, at the same tree share, because the singles landed near
+the masses. They are now placed by distance to the nearest feature, in ten
+rounds so each one changes where the next should go, and they have a budget of
+their own rather than a share of whatever the sketch left over: Route 142's
+sketch met the tree target as one slab on the right, so there was nothing left
+to spend and the left half stayed a blank field.
+
+19% against vanilla's 7% is where it rests. The remainder is not tree-shaped:
+a vanilla route is 21.6% cliff and ours is 5.4%, because vanilla frames its
+routes with rock walls and the sketch drew open country. Filling the difference
+with more trees would overshoot a share that is already right.
+
 ### Wild encounters
 
 `python3 tools/encounters.py`. The tables come from the same place the terrain
