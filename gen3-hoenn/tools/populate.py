@@ -50,6 +50,7 @@ HIDDEN_ITEMS = ['ITEM_HEART_SCALE', 'ITEM_RARE_CANDY', 'ITEM_REVIVE',
                 'ITEM_SUPER_POTION', 'ITEM_CARBOS', 'ITEM_IRON',
                 'ITEM_CALCIUM', 'ITEM_ULTRA_BALL']
 
+SIGN_TILE = 0x003               # the signpost; see signs() below
 MARK = '// Open Hoenn - tools/populate.py'
 FLAGS = 'include/constants/flags.h'
 BALLS = 'data/scripts/item_ball_scripts.inc'
@@ -57,11 +58,45 @@ BALLS = 'data/scripts/item_ball_scripts.inc'
 def camel(item):
     return ''.join(p.capitalize() for p in item[5:].split('_'))
 
+def camel_map(const):
+    return ''.join(p.capitalize() for p in const[4:].split('_'))
+
+def town_name(const):
+    return const[4:].replace('_', ' ')
+
+def trim(text, mark):
+    """everything before the generated blocks, so this run replaces them.
+
+    Cuts at the first generated block of any kind, not just this tool's.
+    populate.py runs before trainers.py and appends after whatever it finds, so
+    trimming only its own left its block sitting after trainers' - and trainers
+    then cut at its own mark and took populate's with it. Eleven route signs
+    with no script behind them, and a link error naming every one.
+    """
+    i = text.find(mark)
+    return text if i < 0 else text[:i].rstrip('\n') + '\n'
+
 def load(const, lay, maps):
+    """the map's blockdata with this tool's own signposts taken back out.
+
+    A signpost is solid, and the second run would see the first run's as a wall
+    and put the sign somewhere else - and the run after that somewhere else
+    again. Every cell that holds one goes back to whatever its walkable
+    neighbours are, so the tool always decides from the map newmaps.py wrote.
+    """
     L = lay[maps[const]['layout']]
     w, h = L['width'], L['height']
     blk = open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'rb').read()
     raw = [(blk[i*2] | (blk[i*2+1] << 8)) for i in range(w * h)]
+    for i, v in enumerate(raw):
+        if (v & 0x3FF) != SIGN_TILE:
+            continue
+        x, y = i % w, i // w
+        near = collections.Counter(
+            raw[ny*w + nx] for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1))
+            if 0 <= nx < w and 0 <= ny < h and not ((raw[ny*w + nx] >> 10) & 3))
+        if near:
+            raw[i] = near.most_common(1)[0][0]
     return L, w, h, raw
 
 def reachable(w, h, raw, cls):
@@ -186,8 +221,63 @@ def spots(spec, lay, maps, rend, beh):
     hidden = [p for p in pick(HIDDEN_ON, nh + len(balls), 29, False, solid=False)
               if all(abs(p[0]-b[0]) + abs(p[1]-b[1]) >= APART for b in balls)][:nh]
     elev = lambda x, y: (raw[y*w + x] >> 12) & 0xF
+    used = set(balls) | set(hidden)
     return ([(x, y, elev(x, y)) for x, y in balls],
-            [(x, y, elev(x, y)) for x, y in hidden])
+            [(x, y, elev(x, y)) for x, y in hidden],
+            signs(spec, w, h, raw, cls, live, walk, cut, used))
+
+# A route sign is metatile 003, which vanilla uses 101 times and always at
+# collision 1 - you read it, you do not stand on it. All 23 of vanilla's route
+# sign texts are the same two lines: the route's name, then an arrow and where
+# that way goes.
+TOWNS = ('_TOWN', '_CITY')
+ARROW = {'left': 'LEFT_ARROW', 'right': 'RIGHT_ARROW',
+         'up': 'UP_ARROW', 'down': 'DOWN_ARROW'}
+
+def signs(spec, w, h, raw, cls, live, walk, cut, used):
+    """one sign per edge that leads to a town, pointing at it.
+
+    Vanilla signs the way to places worth naming: RUSTBORO CITY, PETALBURG
+    CITY, OLDALE TOWN. It does not sign the way to another route. Ours border
+    seven towns between them.
+    """
+    # from the header newmaps.py just wrote, not from its CONN table: that is
+    # replaced at run time by the derived one and the import sees the seed
+    j = json.load(open(f'{R.ROOT}/data/maps/{spec["name"]}/map.json'))
+    out = []
+    for c in sorted((c['direction'], c['map'], c.get('offset', 0))
+                    for c in j.get('connections') or []):
+        side, nb, off = c
+        if not nb.endswith(TOWNS):
+            continue
+        # a walkable cell near that edge, with open ground beside it to read
+        # it from, that nothing falls apart without
+        if side in ('left', 'right'):
+            xs = [3] if side == 'left' else [w - 4]
+            ys = range(max(2, off + 2), min(h - 2, off + 40))
+        else:
+            ys = [3] if side == 'up' else [h - 4]
+            xs = range(max(2, off + 2), min(w - 2, off + 40))
+        best = None
+        for x in xs:
+            for y in ys:
+                i = y*w + x
+                if i not in live or i in cut or (x, y) in used:
+                    continue
+                if cls[i] not in (T.GRASS, T.PATH, T.SAND):
+                    continue
+                near = sum(1 for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1))
+                           if 0 <= nx < w and 0 <= ny < h and walk[ny*w + nx])
+                if near < 3:
+                    continue            # room to stand and read it
+                k = abs(y - (off + h // 2)) if side in ('left', 'right') else \
+                    abs(x - (off + w // 2))
+                if best is None or k < best[0]:
+                    best = (k, x, y, side, nb)
+        if best:
+            used.add((best[1], best[2]))
+            out.append(best[1:])
+    return out
 
 # A hidden item does not store its flag: bg_hidden_item_event stores the
 # offset from FLAG_HIDDEN_ITEMS_START in a single byte, and the assembler
@@ -234,7 +324,7 @@ def main():
     plan, claimed, hclaimed, scripts = [], [], [], []
     used_names = set(re.findall(r'#define (FLAG_\w+)', flags))
     for spec in N.NEWMAPS:
-        balls, hidden = spots(spec, lay, maps, rend, beh)
+        balls, hidden, posts = spots(spec, lay, maps, rend, beh)
         n = spec['num']
         objs, bgs = [], []
         for k, (x, y, e) in enumerate(balls):
@@ -264,7 +354,13 @@ def main():
             hclaimed.append(name)
             bgs.append({'type': 'hidden_item', 'x': x, 'y': y, 'elevation': e,
                         'item': item, 'flag': name})
-        plan.append((spec, objs, bgs))
+        posts = [(x, y, side, nb) for x, y, side, nb in posts]
+        for x, y, side, nb in posts:
+            script = f'{spec["name"]}_EventScript_RouteSign{camel_map(nb)}'
+            bgs.append({'type': 'sign', 'x': x, 'y': y, 'elevation': 0,
+                        'player_facing_dir': 'BG_EVENT_PLAYER_FACING_ANY',
+                        'script': script})
+        plan.append((spec, objs, bgs, posts))
 
     if len(claimed) > len(pool) or len(hclaimed) > len(hidden_pool):
         sys.exit(f'{len(claimed)} item flags wanted of {len(pool)} free, '
@@ -287,16 +383,39 @@ def main():
     if not a.dry_run:
         open(f'{R.ROOT}/{BALLS}', 'w').write(f'{src}{MARK}\n\n{body}')
 
-    for spec, objs, bgs in plan:
+    for spec, objs, bgs, posts in plan:
         p = f'{R.ROOT}/data/maps/{spec["name"]}/map.json'
         d = json.load(open(p))
         d['object_events'] = objs
         d['bg_events'] = bgs
+        # the sign has to be there to read: metatile 003 is what a signpost
+        # looks like, and it is on the painter's avoid list precisely so that
+        # one never appears without a script behind it. This is the script.
+        L, w, h, raw = load(spec['const'], lay, maps)
+        for x, y, side, nb in posts:
+            raw[y*w + x] = SIGN_TILE | (1 << 10)
+        chunks = []
+        for x, y, side, nb in posts:
+            pre = f'{spec["name"]}_{{}}_RouteSign{camel_map(nb)}'
+            chunks.append(
+                f'{pre.format("EventScript")}::\n'
+                f'\tmsgbox {pre.format("Text")}, MSGBOX_SIGN\n\tend\n\n'
+                f'{pre.format("Text")}:\n'
+                f'\t.string "ROUTE {spec["num"]}\\n"\n'
+                f'\t.string "{{{ARROW[side]}}} {town_name(nb)}$"\n\n')
+        sp = f'{R.ROOT}/data/maps/{spec["name"]}/scripts.inc'
+        body = trim(open(sp).read(), '// Open Hoenn - tools/').rstrip('\n')
         if not a.dry_run:
             json.dump(d, open(p, 'w'), indent=2)
-        print(f'  {spec["name"]:10s} {len(objs)} item balls, {len(bgs)} hidden')
-    print(f'{sum(len(o) for _, o, _ in plan)} item balls and '
-          f'{sum(len(b) for _, _, b in plan)} hidden items across '
+            open(f'{R.ROOT}/{L["blockdata_filepath"]}', 'wb').write(
+                b''.join(v.to_bytes(2, 'little') for v in raw))
+            open(sp, 'w').write(f'{body}\n\n{MARK}\n\n' + ''.join(chunks))
+        print(f'  {spec["name"]:10s} {len(objs)} item balls, '
+              f'{len([b for b in bgs if b["type"] == "hidden_item"])} hidden, '
+              f'{len(posts)} signs')
+    print(f'{sum(len(o) for _, o, _, _ in plan)} item balls, '
+          f'{sum(1 for _, _, b, _ in plan for e in b if e["type"] == "hidden_item")} '
+          f'hidden items and {sum(len(q) for _, _, _, q in plan)} signs across '
           f'{len(plan)} maps; {len(claimed)} flags claimed of {len(pool)} free, '
           f'{len(hclaimed)} hidden-item flags of {len(hidden_pool)}')
 

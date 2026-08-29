@@ -238,6 +238,22 @@
       "elevation": 0,
       "item": "ITEM_ULTRA_BALL",
       "flag": "FLAG_HIDDEN_ITEM_ROUTE_138_ULTRA_BALL"
+    },
+    {
+      "type": "sign",
+      "x": 3,
+      "y": 57,
+      "elevation": 0,
+      "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+      "script": "Route138_EventScript_RouteSignLittlerootTown"
+    },
+    {
+      "type": "sign",
+      "x": 3,
+      "y": 2,
+      "elevation": 0,
+      "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+      "script": "Route138_EventScript_RouteSignOldaleTown"
     }
   ]
 }

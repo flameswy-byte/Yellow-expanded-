@@ -433,6 +433,14 @@
       "elevation": 5,
       "item": "ITEM_NUGGET",
       "flag": "FLAG_HIDDEN_ITEM_ROUTE_139_NUGGET"
+    },
+    {
+      "type": "sign",
+      "x": 116,
+      "y": 3,
+      "elevation": 0,
+      "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+      "script": "Route139_EventScript_RouteSignVerdanturfTown"
     }
   ]
 }

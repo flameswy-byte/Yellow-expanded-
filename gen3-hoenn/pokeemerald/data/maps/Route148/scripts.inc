@@ -1,6 +1,8 @@
 Route148_MapScripts::
 	.byte 0
 
+// Open Hoenn - tools/populate.py
+
 // Open Hoenn - tools/trainers.py
 
 Route148_EventScript_Renata::

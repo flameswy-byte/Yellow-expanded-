@@ -111,6 +111,22 @@
       "elevation": 3,
       "item": "ITEM_FULL_HEAL",
       "flag": "FLAG_HIDDEN_ITEM_ROUTE_141_FULL_HEAL"
+    },
+    {
+      "type": "sign",
+      "x": 3,
+      "y": 9,
+      "elevation": 0,
+      "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+      "script": "Route141_EventScript_RouteSignRustboroCity"
+    },
+    {
+      "type": "sign",
+      "x": 76,
+      "y": 9,
+      "elevation": 0,
+      "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+      "script": "Route141_EventScript_RouteSignVerdanturfTown"
     }
   ]
 }

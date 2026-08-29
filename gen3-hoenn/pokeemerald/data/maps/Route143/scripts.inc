@@ -1,6 +1,8 @@
 Route143_MapScripts::
 	.byte 0
 
+// Open Hoenn - tools/populate.py
+
 // Open Hoenn - tools/trainers.py
 
 Route143_EventScript_Garland::

@@ -858,7 +858,16 @@ ours need a blocked neighbour too. Its 55 hidden items are buried anywhere.
 Trainers stand where there is a line of sight to stand in and face down the
 longest open run.
 
-Neither may stand on an articulation point of the walkable graph. A sprite is
+Eleven route signs, one per edge that leads to a town. Vanilla signs the way to
+places worth naming — RUSTBORO CITY, PETALBURG CITY, OLDALE TOWN — and not the
+way to another route, and all 23 of its route sign texts are the same two
+lines: the route's name, then an arrow and where that way goes. The signpost is
+metatile 003, which is on the painter's avoid list precisely so one never
+appears without a script behind it; this is the script, so the tile is stamped
+here.
+
+Neither an item ball nor a trainer may stand on an articulation point of the
+walkable graph. A sprite is
 solid and stays solid — an item ball you have not picked up and a trainer you
 have already beaten both block their cell for good — so one in a one-cell gap
 shuts whatever is behind it. Route 137 had 252 cells behind a single sprite,
