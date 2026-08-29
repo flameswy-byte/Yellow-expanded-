@@ -804,7 +804,30 @@ their own rather than a share of whatever the sketch left over: Route 142's
 sketch met the tree target as one slab on the right, so there was nothing left
 to spend and the left half stayed a blank field.
 
-19% against vanilla's 7% is where it rests. The remainder is not tree-shaped:
+And the same measurement for the sea. A vanilla water cell is a median of 3
+cells from something that is not sea and only 14% are eight or more away; ours
+were 8 and 53%, a flat blue field you surf across for a minute without passing
+anything. Vanilla's water routes carry 386 islets between them and 353 of those
+are rock.
+
+They are stamps, not shapes. Of the 333 rock outcrops in open sea, 151 are 2x2
+and 112 are 2x1 at a median solidity of 1.00, drawn from three fixed metatile
+groups — 150/151/158/159 for a whole rock, 175/176/17D/17E for a taller one,
+and 17D/17E alone for the half-submerged bottom of it. There is not one
+single-cell rock surrounded by water in the whole game, which is what growing
+them as organic blobs kept producing, and letting the class painter choose
+tiles for a 2x2 of cliff in open water produced something with the sea drawn
+onto the wrong edges. So the class grid gets CLIFF and the metatiles are
+stamped afterwards, the way the ledges and staircases already were.
+
+The count is not the target either: placing vanilla's 10.9 islets per thousand
+water cells and spreading them by distance covered the sea too evenly — median
+3 like vanilla, but only 1% of cells eight or more from anything against
+vanilla's 14%, because vanilla's islets cluster and leave real open water
+between them. The rate is set from the distance distribution instead, and at
+5.5 comes out median 4 and 13%.
+
+19% against vanilla's 7% is where the land rests. The remainder is not tree-shaped:
 a vanilla route is 21.6% cliff and ours is 5.4%, because vanilla frames its
 routes with rock walls and the sketch drew open country. Filling the difference
 with more trees would overshoot a share that is already right.

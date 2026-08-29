@@ -338,6 +338,8 @@ def bfs_dist(sources, blocked, w, h):
                 q.append((nx, ny))
     return d
 
+ROCKS = []          # where sea_rocks put its outcrops, for stamp_rocks
+
 def build_classes(spec, wcls):
     w, h, ox, oy = spec['w'], spec['h'], spec['x'], spec['y']
     seed = spec['num'] * 1013
@@ -428,6 +430,7 @@ def build_classes(spec, wcls):
     place_ponds(grid, dist, rim, w, h, seed, spec_num)
     rocky_coast(grid, rim, w, h, seed)
     shoreline(grid, rim, w, h, seed)
+    ROCKS[:] = sea_rocks(grid, w, h, seed)
     vegetate(grid, dist, rim, w, h, seed)
 
     # 6. connectivity. Scattering trees can wall a pocket off, and a stranded
@@ -436,6 +439,89 @@ def build_classes(spec, wcls):
     #    one-cell corridor cut back to it through whatever is in the way.
     repair_connectivity(grid, w, h)
     return grid
+
+# Vanilla's sea is not empty. Its water routes carry 386 islets between them -
+# 10.9 per thousand water cells - and 353 of those are rock: small outcrops, a
+# median of 4 cells. The rest are sandbars, shallow and bigger. The effect is
+# that a vanilla sea cell is a median of 3 cells from something that is not
+# sea, and only 14% are eight or more away. Ours were 8 and 53%: a flat blue
+# field you surf across for a minute without passing anything.
+#
+# The count is not the target, though. Placing 10.9 per thousand and spreading
+# them by distance covered the sea too evenly - median 3 like vanilla, but only
+# 1% of cells eight or more from anything against vanilla's 14%, because
+# vanilla's islets cluster and leave real open water between them. The rate is
+# set from the distance distribution instead, which is the thing that describes
+# what a sea looks like: at 5.5 it comes out median 4 against vanilla's 3, and
+# 13% eight or more away against vanilla's 14%.
+ISLET_RATE = 5.5            # tuned to the distances below, not to that count
+# And they are stamps, not shapes. Of vanilla's 333 rock outcrops in open sea,
+# 151 are 2x2 and 112 are 2x1, at a median solidity of 1.00, and they are drawn
+# from three fixed metatile groups: 150/151/158/159 for a whole rock a hundred
+# and six times, 175/176/17D/17E for a taller one, and 17D/17E on its own -
+# the half-submerged bottom of that same rock - a hundred and ten times. Not
+# one one-cell rock surrounded by water in the whole game, which is what
+# growing them as organic blobs kept producing, and letting the class painter
+# choose the tiles for a 2x2 of cliff in open water produced something with the
+# sea drawn onto the wrong edges.
+ISLET_STAMP = ([((0x150, 0x151), (0x158, 0x159))] * 106
+               + [((0x17D, 0x17E),)] * 110
+               + [((0x175, 0x176), (0x17D, 0x17E))] * 35)
+ISLET_APART = 6
+ISLET_ROUNDS = 8
+
+def sea_rocks(grid, w, h, seed):
+    """Scatter rock outcrops through the open water; return where they went.
+
+    Distance-driven and in rounds, the same as the lone trees on land: each
+    outcrop changes where the next one should go, so they spread over the whole
+    sea instead of clustering wherever the noise happened to peak. The class
+    grid gets CLIFF so that everything downstream sees a wall; the metatiles
+    are stamped after painting by stamp_rocks.
+    """
+    water = [i for i in range(w * h) if grid[i] == T.WATER]
+    want = round(ISLET_RATE * len(water) / 1000)
+    if want < 1:
+        return []
+    out = []
+    for _ in range(ISLET_ROUNDS):
+        if len(out) >= want:
+            break
+        d = open_dist(grid, w, h, ground=(T.WATER,))
+        free = [i for i in water if grid[i] == T.WATER and d[i] >= 3
+                and 2 <= i % w < w - 2 and 2 <= i // w < h - 2]
+        free.sort(key=lambda i: -(d[i] + 0.5 * T._hash(i % w, i // w, seed + 41)))
+        n = max(1, want // ISLET_ROUNDS)
+        for i in free:
+            if len(out) >= want or n <= 0:
+                break
+            x, y = i % w, i // w
+            if any(abs(x - px) + abs(y - py) < ISLET_APART for px, py, _ in out):
+                continue
+            # drawn by hash rather than by a counter with a stride: walking
+            # a sorted list seven at a time lands seven times in the same
+            # block, and the mix came out 34 whole rocks to 3 half-submerged
+            # where vanilla's is 106 to 110
+            stamp = ISLET_STAMP[int(T._hash(x, y, seed + 53)
+                                    * len(ISLET_STAMP)) % len(ISLET_STAMP)]
+            cells = [(x + dx, y + dy)
+                     for dy, row in enumerate(stamp) for dx in range(len(row))]
+            if not all(1 <= cx < w - 1 and 1 <= cy < h - 1
+                       and grid[cy*w + cx] == T.WATER for cx, cy in cells):
+                continue
+            for cx, cy in cells:
+                grid[cy*w + cx] = T.CLIFF
+            out.append((x, y, stamp))
+            n -= 1
+    return out
+
+def stamp_rocks(blocks, rocks, w, h):
+    """Lay vanilla's own rock art over the cells sea_rocks claimed."""
+    for x, y, stamp in rocks:
+        for dy, row in enumerate(stamp):
+            for dx, m in enumerate(row):
+                i = (y + dy)*w + x + dx
+                blocks[i] = m | (1 << 10) | (blocks[i] & 0xF000)
 
 # Eleven of vanilla's 34 land routes have a pond, 31 ponds between them, median
 # 4 cells and the largest 100. Six of ours had no inland water at all, including
@@ -1102,9 +1188,15 @@ def vegetate(grid, dist, rim, w, h, seed):
 OPEN_GROUND = (T.GRASS, T.PATH, T.SAND)
 OPEN_ROUNDS = 10
 
-def open_dist(grid, w, h):
-    """for every open-ground cell, how far the nearest thing that is not."""
-    d = [None if c in OPEN_GROUND else 0 for c in grid]
+def open_dist(grid, w, h, ground=None):
+    """for every cell of the given kind, how far the nearest thing that is not.
+
+    Open ground by default - that is the land measurement. Passing (WATER,)
+    gives the same thing for the sea, which is how the rock outcrops find the
+    emptiest water.
+    """
+    ground = OPEN_GROUND if ground is None else ground
+    d = [None if c in ground else 0 for c in grid]
     q = collections.deque(i for i, v in enumerate(d) if v == 0)
     while q:
         i = q.popleft()
@@ -1946,6 +2038,7 @@ def main():
     built = {}
     for spec in NEWMAPS:
         cls = build_classes(spec, wcls)
+        rocks = list(ROCKS)
         # publish this map's terrain for the maps built after it
         for j in range(spec['h']):
             for i in range(spec['w']):
@@ -1963,6 +2056,7 @@ def main():
         nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
         # after tidy, so raising its stray-ledge threshold cannot eat these
         ledges = ledges[:stamp_ledges(blocks, ledges, spec['w'], spec['h'])]
+        stamp_rocks(blocks, rocks, spec['w'], spec['h'])
         nf = final_check(blocks, spec['w'], spec['h'])
         built[spec['const']] = blocks
         n = collections.Counter(cls)
