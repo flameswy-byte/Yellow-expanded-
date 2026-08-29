@@ -149,13 +149,13 @@ Route137_EventScript_Carlotta::
 	end
 
 Route137_Text_CarlottaIntro:
-	.string "I swam here from the last shore.\pWorth it, if you'll battle.$"
+	.string "A challenger! At last.$"
 
 Route137_Text_CarlottaDefeat:
-	.string "You swim better than you look.$"
+	.string "The ROUTE is yours.$"
 
 Route137_Text_CarlottaPostBattle:
-	.string "Follow the shallows and you'll be\nfine.$"
+	.string "There's more of us further along.$"
 
 Route137_EventScript_Carmen::
 	trainerbattle_single TRAINER_CARMEN, Route137_Text_CarmenIntro, Route137_Text_CarmenDefeat
@@ -261,13 +261,13 @@ Route137_EventScript_Conrad::
 	end
 
 Route137_Text_ConradIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
+	.string "You walked. I swam. Let's settle\nit.$"
 
 Route137_Text_ConradDefeat:
-	.string "Well fought.$"
+	.string "The current's yours.$"
 
 Route137_Text_ConradPostBattle:
-	.string "Good luck out there.$"
+	.string "There's a beach north of here. Rest\nthere.$"
 
 Route137_EventScript_Colby::
 	trainerbattle_single TRAINER_COLBY, Route137_Text_ColbyIntro, Route137_Text_ColbyDefeat

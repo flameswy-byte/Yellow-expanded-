@@ -31,6 +31,7 @@ sys.path.insert(0, HERE)
 import render_hoenn as R
 import terrain as T
 import newmaps as N
+import populate as P
 
 RATE = 3.04                     # trainers per thousand cells, vanilla's median
 APART = 8
@@ -346,9 +347,12 @@ def spots(spec, lay, maps, rend, taken):
             best = max(best, n)
         return best
 
+    # a trainer is solid and stays solid after you beat them, so one standing
+    # in a one-cell gap shuts whatever is behind it for good
+    cut = P.articulations(walk, ele, w, h)
     cand = [i for i in range(w*h)
             if MARGIN <= i % w < w - MARGIN and MARGIN <= i // w < h - MARGIN
-            and i in live and cls[i] in STAND_ON + WADE_ON
+            and i in live and cls[i] in STAND_ON + WADE_ON and i not in cut
             and (i % w, i // w) not in taken and room(i) >= 2]
     cand.sort(key=lambda i: -T.fbm(i % w, i // w, spec['num'] * 13 + 5,
                                    octaves=2, freq=0.06))

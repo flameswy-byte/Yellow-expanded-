@@ -154,6 +154,27 @@ def check(const, lay, maps, rend, wild, hdrs):
         if n > 1:
             out.append(f'{n} objects share the cell {x},{y}')
 
+    # A trainer is solid and stays where they are after you beat them, so one
+    # standing in a one-cell corridor shuts it for good. Re-run the flood with
+    # every sprite treated as a wall and see whether anything is cut off.
+    if here:
+        solid = {y*w + x for x, y in here}
+        st = [i for i in edge if i not in solid]
+        blocked, dq = set(st), collections.deque(st)
+        while dq:
+            i = dq.popleft()
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in blocked
+                        and j not in solid and step(i, j)):
+                    blocked.add(j)
+                    dq.append(j)
+        shut = [i for i in seen if i not in blocked and i not in solid]
+        if shut:
+            out.append(f'{len(shut)} cells are only reachable through a cell an '
+                       f'object is standing on')
+
     # 4. encounters
     tall = sum(1 for i in range(w * h) if cls[i] == T.TALL)
     has = const in wild

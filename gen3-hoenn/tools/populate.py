@@ -84,6 +84,58 @@ def reachable(w, h, raw, cls):
                 q.append(j)
     return seen, walk
 
+def articulations(walk, ele, w, h):
+    """cells the map falls apart without.
+
+    A sprite is solid and stays solid: an item ball you have not picked up and
+    a trainer you have already beaten both block their cell for good. Standing
+    one in a one-cell gap shuts whatever is behind it - Route 137 had 252 cells
+    behind a single sprite - and nothing else in the pipeline can see that,
+    because the terrain on its own is fine.
+
+    Tarjan's articulation points, iteratively: recursion depth would be the
+    length of the longest path through a 7,000-cell map.
+    """
+    ok = lambda a, b: a == b or 0 in (a, b) or 15 in (a, b)
+    nbrs = lambda i: [j for j in (i+1, i-1, i+w, i-w)
+                      if 0 <= j < w*h and abs(j % w - i % w) <= 1
+                      and walk[j] and ok(ele[i], ele[j])]
+    num = {}
+    low = {}
+    cut = set()
+    t = 0
+    for root in range(w * h):
+        if not walk[root] or root in num:
+            continue
+        stack = [(root, None, iter(nbrs(root)))]
+        num[root] = low[root] = t
+        t += 1
+        kids = 0
+        while stack:
+            i, parent, it = stack[-1]
+            j = next(it, None)
+            if j is None:
+                stack.pop()
+                if stack:
+                    p = stack[-1][0]
+                    low[p] = min(low[p], low[i])
+                    if stack[-1][1] is not None and low[i] >= num[p]:
+                        cut.add(p)
+                continue
+            if j == parent:
+                continue
+            if j in num:
+                low[i] = min(low[i], num[j])
+            else:
+                if i == root:
+                    kids += 1
+                num[j] = low[j] = t
+                t += 1
+                stack.append((j, i, iter(nbrs(j))))
+        if kids > 1:
+            cut.add(root)
+    return cut
+
 def spots(spec, lay, maps, rend, beh):
     """(ball positions, hidden positions) for one map, both deterministic."""
     const = spec['const']
@@ -91,14 +143,18 @@ def spots(spec, lay, maps, rend, beh):
     C = T.Classifier(rend, L['primary_tileset'], L.get('secondary_tileset'))
     cls = [C(v & 0x3FF, (v >> 10) & 3) for v in raw]
     live, walk = reachable(w, h, raw, cls)
+    ele = [(v >> 12) & 0xF for v in raw]
+    cut = articulations(walk, ele, w, h)
     jump = set(range(0x38, 0x40))
 
-    def usable(i, want):
+    def usable(i, want, solid):
         x, y = i % w, i // w
         if not (MARGIN <= x < w - MARGIN and MARGIN <= y < h - MARGIN):
             return False
         if i not in live or cls[i] not in want:
             return False
+        if solid and i in cut:
+            return False        # a buried item has no sprite and blocks nothing
         m = raw[i] & 0x3FF
         return not (m < len(beh) and beh[m] in jump)
 
@@ -107,8 +163,8 @@ def spots(spec, lay, maps, rend, beh):
         return sum(1 for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1))
                    if 0 <= nx < w and 0 <= ny < h and not walk[ny*w + nx])
 
-    def pick(want, n, salt, need_nook):
-        cand = [i for i in range(w*h) if usable(i, want)
+    def pick(want, n, salt, need_nook, solid=True):
+        cand = [i for i in range(w*h) if usable(i, want, solid)
                 and (tucked(i) if need_nook else True)]
         cand.sort(key=lambda i: -T.fbm(i % w, i // w, spec['num']*7 + salt,
                                        octaves=2, freq=0.07))
@@ -127,7 +183,7 @@ def spots(spec, lay, maps, rend, beh):
     nh = max(1, round(HIDDEN_RATE * area / 1000))
     balls = pick(BALL_ON, nb, 11, True)
     # a nook is what a visible item ball wants; a buried one is buried anywhere
-    hidden = [p for p in pick(HIDDEN_ON, nh + len(balls), 29, False)
+    hidden = [p for p in pick(HIDDEN_ON, nh + len(balls), 29, False, solid=False)
               if all(abs(p[0]-b[0]) + abs(p[1]-b[1]) >= APART for b in balls)][:nh]
     elev = lambda x, y: (raw[y*w + x] >> 12) & 0xF
     return ([(x, y, elev(x, y)) for x, y in balls],

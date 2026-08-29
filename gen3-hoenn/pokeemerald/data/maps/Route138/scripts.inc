@@ -149,11 +149,11 @@ Route138_EventScript_Driscoll::
 	end
 
 Route138_Text_DriscollIntro:
-	.string "Cold? You get used to it.$"
+	.string "You've come a long way. Let's see\nwhy.$"
 
 Route138_Text_DriscollDefeat:
-	.string "I'll float here a while.$"
+	.string "I underestimated you.$"
 
 Route138_Text_DriscollPostBattle:
-	.string "I'll race you next time.$"
+	.string "I'll be training when you come\nback.$"
 

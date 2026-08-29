@@ -822,6 +822,13 @@ ours need a blocked neighbour too. Its 55 hidden items are buried anywhere.
 Trainers stand where there is a line of sight to stand in and face down the
 longest open run.
 
+Neither may stand on an articulation point of the walkable graph. A sprite is
+solid and stays solid — an item ball you have not picked up and a trainer you
+have already beaten both block their cell for good — so one in a one-cell gap
+shuts whatever is behind it. Route 137 had 252 cells behind a single sprite,
+and nothing else in the pipeline can see that, because the terrain on its own
+is fine. Hidden items are exempt: a bg_event has no sprite and blocks nothing.
+
 Trainers are harvested, not invented. The 60 combinations of overworld sprite,
 trainer class, battle portrait and encounter fanfare are read out of vanilla's
 own route trainers, so every generated trainer is a pairing the game already
