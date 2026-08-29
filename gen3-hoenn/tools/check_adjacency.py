@@ -35,25 +35,29 @@ def cells(L, pristine=False):
     return w, h, raw
 
 def pairs(w, h, raw):
-    """yield (axis, a, b) for every adjacent pair of primary metatiles.
+    """yield (axis, a, b) for every adjacent pair of metatiles.
 
     Ids only - collision and elevation live in the same u16 but do not change
     what the cell looks like, and a shore drawn at two elevations is still the
     same shore."""
-    P = R.NUM_METATILES_IN_PRIMARY
     m = [v & 0x3FF for v in raw]
     for y in range(h):
         for x in range(w):
             i = y * w + x
-            if m[i] >= P:
-                continue
-            if x + 1 < w and m[i+1] < P:
+            if x + 1 < w:
                 yield 0, m[i], m[i+1]
-            if y + 1 < h and m[i+w] < P:
+            if y + 1 < h:
                 yield 1, m[i], m[i+w]
 
 def vanilla_pairs(lay, maps, pos, skip):
+    """what joins vanilla draws: one table for the primary tileset, which every
+    map shares, and one per secondary tileset, which only the maps that load it
+    can use. A secondary id means a different picture in every tileset, so its
+    joins only count against the maps that load the same one."""
+    P = R.NUM_METATILES_IN_PRIMARY
     seen = (collections.Counter(), collections.Counter())
+    bysec = collections.defaultdict(lambda: (collections.Counter(),
+                                             collections.Counter()))
     for k in sorted(pos):
         if k in skip or k not in maps:
             continue
@@ -61,9 +65,13 @@ def vanilla_pairs(lay, maps, pos, skip):
         if L['primary_tileset'] != 'gTileset_General':
             continue
         w, h, raw = cells(L, pristine=True)
+        sec = L.get('secondary_tileset')
         for ax, a, b in pairs(w, h, raw):
-            seen[ax][(a, b)] += 1
-    return seen
+            if a < P and b < P:
+                seen[ax][(a, b)] += 1
+            elif sec:
+                bysec[sec][ax][(a, b)] += 1
+    return seen, bysec
 
 def main():
     ap = argparse.ArgumentParser()
@@ -76,9 +84,16 @@ def main():
     lay, maps, pos = R.solve()
     rend = R.Renderer()
     new = T.generated()
-    van = vanilla_pairs(lay, maps, pos, new)
+    van, vsec = vanilla_pairs(lay, maps, pos, new)
     print(f'vanilla: {len(van[0])} horizontal, {len(van[1])} vertical '
-          f'metatile pairs')
+          f'metatile pairs, plus {sum(len(a)+len(b) for a, b in vsec.values())} '
+          f'across {len(vsec)} secondary tilesets')
+
+    def known(sec, ax, a, b):
+        P = R.NUM_METATILES_IN_PRIMARY
+        if a < P and b < P:
+            return (a, b) in van[ax]
+        return sec in vsec and (a, b) in vsec[sec][ax]
 
     if a.control:
         # 0% is not the target. A vanilla map scored against the *other*
@@ -95,8 +110,11 @@ def main():
             mine = (collections.Counter(), collections.Counter())
             for ax, x, y in pairs(w, h, raw):
                 mine[ax][(x, y)] += 1
+            sec = L.get('secondary_tileset')
             n = sum(c for ax in (0, 1) for p, c in mine[ax].items()
-                    if van[ax][p] == c)          # this map's only use of it
+                    if (van[ax][p] == c if p[0] < R.NUM_METATILES_IN_PRIMARY
+                        and p[1] < R.NUM_METATILES_IN_PRIMARY
+                        else vsec[sec][ax][p] == c))   # this map's only use of it
             tot = sum(sum(m.values()) for m in mine)
             if tot:
                 rows.append((100.0*n/tot, k, n, tot))
@@ -108,16 +126,19 @@ def main():
             print(f'    {k[4:]:22s} {n:5d} / {tot:6d}  {p:5.2f}%')
 
     C = T.Classifier(rend, 'gTileset_General', None)
+    name = lambda m: (T.CLASS_NAME[C(m, 0)] if m < R.NUM_METATILES_IN_PRIMARY
+                      else 'secondary')
     bad = collections.Counter()
     per_map = {}
     keys = [k for k in sorted(new) if not a.map or a.map in k]
     for k in keys:
         L = lay[maps[k]['layout']]
         w, h, raw = cells(L)
+        sec = L.get('secondary_tileset')
         n = tot = 0
         for ax, x, y in pairs(w, h, raw):
             tot += 1
-            if (x, y) not in van[ax]:
+            if not known(sec, ax, x, y):
                 n += 1
                 bad[(ax, x, y)] += 1
         per_map[k] = (n, tot)
@@ -134,7 +155,7 @@ def main():
     # problem is one bad tile or a whole seam type
     byc = collections.Counter()
     for (ax, x, y), c in bad.items():
-        byc[(T.CLASS_NAME[C(x, 0)], T.CLASS_NAME[C(y, 0)])] += c
+        byc[(name(x), name(y))] += c
     print('\nunseen pairs by class transition:')
     for (p, q), c in byc.most_common(12):
         print(f'  {p:11s} -> {q:11s} {c:6d}')
@@ -142,8 +163,8 @@ def main():
     if a.worst:
         print(f'\n{a.worst} most common pairs vanilla never draws:')
         for (ax, x, y), c in bad.most_common(a.worst):
-            print(f'  {"HV"[ax]} {x:03X} {T.CLASS_NAME[C(x,0)]:11s} | '
-                  f'{y:03X} {T.CLASS_NAME[C(y,0)]:11s}  x{c}')
+            print(f'  {"HV"[ax]} {x:03X} {name(x):11s} | '
+                  f'{y:03X} {name(y):11s}  x{c}')
 
 if __name__ == '__main__':
     sys.exit(main())

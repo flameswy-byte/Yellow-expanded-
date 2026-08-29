@@ -191,6 +191,21 @@ def learn(maps_wanted=None, primary='gTileset_General'):
     # actually line up.
     ph = collections.Counter()
     pv = collections.Counter()
+    # ...and the same thing again, per secondary tileset, keeping the secondary
+    # metatiles this time. A secondary id means nothing on its own - 0x251 is a
+    # different picture in every tileset - but it means exactly the same thing
+    # on two maps that load the same one, and our maps do load vanilla's. Route
+    # 111's desert floor is 92% metatile 251 out of gTileset_Mauville and only
+    # 8% anything from General; ours, painted from the primary alone, was 2,376
+    # cells of the beach tile. Route 143 has Lavaridge's volcanic rock
+    # available to it and was drawing plain grey cliffs, which is 82% of what
+    # vanilla puts on the maps that load it.
+    S = lambda: dict(t3=collections.defaultdict(collections.Counter),
+                     t4=collections.defaultdict(collections.Counter),
+                     t1=collections.defaultdict(collections.Counter),
+                     ph=collections.Counter(), pv=collections.Counter(),
+                     cls={}, maps=[])
+    bysec = collections.defaultdict(S)
     used = []
     for k in sorted(maps_wanted or pos):
         if k not in maps or k in skip:
@@ -199,25 +214,47 @@ def learn(maps_wanted=None, primary='gTileset_General'):
         if L['primary_tileset'] != primary:
             continue
         w, h = L['width'], L['height']
+        sec = L.get('secondary_tileset')
         blk = blockdata(L['blockdata_filepath'].split('/')[-2], L)
-        C = Classifier(rend, primary, L.get('secondary_tileset'))
+        C = Classifier(rend, primary, sec)
         raw = []
         for i in range(w * h):
             o = i * 2
             raw.append((blk[o] | (blk[o+1] << 8)) if o + 1 < len(blk) else 0)
-        # only learn from primary metatiles: a secondary id means something
-        # local to that town and will not exist in the map we are painting
         cls = [C(v & 0x3FF, (v >> 10) & 3) for v in raw]
+        B = bysec[sec] if sec else None
+        if B is not None:
+            B['maps'].append(k)
         for y in range(h):
             for x in range(w):
                 v = raw[y * w + x]
-                if (v & 0x3FF) >= R.NUM_METATILES_IN_PRIMARY:
-                    continue
                 m3 = mask3(cls, x, y, w, h, GRASS)
+                m = v & 0x3FF
+                if B is not None:
+                    B['t3'][m3][v] += 1
+                    B['t4'][mask4(m3)][v] += 1
+                    B['t1'][m3[4]][v] += 1
+                    if m >= R.NUM_METATILES_IN_PRIMARY:
+                        B['cls'][(m, (v >> 10) & 3)] = cls[y * w + x]
+                    # only joins involving one of this tileset's own metatiles:
+                    # a join between two primary tiles is the same everywhere,
+                    # and letting six maps' worth of them into this table just
+                    # tells the harmoniser that more seams are fine than are
+                    if x + 1 < w:
+                        n = raw[y*w + x+1] & 0x3FF
+                        if m >= R.NUM_METATILES_IN_PRIMARY or n >= R.NUM_METATILES_IN_PRIMARY:
+                            B['ph'][(m, n)] += 1
+                    if y + 1 < h:
+                        n = raw[(y+1)*w + x] & 0x3FF
+                        if m >= R.NUM_METATILES_IN_PRIMARY or n >= R.NUM_METATILES_IN_PRIMARY:
+                            B['pv'][(m, n)] += 1
+                # the tileset-agnostic tables stay primary-only: a secondary id
+                # in them would be painted onto a map that does not load it
+                if m >= R.NUM_METATILES_IN_PRIMARY:
+                    continue
                 t3[m3][v] += 1
                 t4[mask4(m3)][v] += 1
                 t1[m3[4]][v] += 1
-                m = v & 0x3FF
                 if x + 1 < w and (raw[y*w + x+1] & 0x3FF) < R.NUM_METATILES_IN_PRIMARY:
                     ph[(m, raw[y*w + x+1] & 0x3FF)] += 1
                 if y + 1 < h and (raw[(y+1)*w + x] & 0x3FF) < R.NUM_METATILES_IN_PRIMARY:
@@ -228,11 +265,19 @@ def learn(maps_wanted=None, primary='gTileset_General'):
     CG = Classifier(rend, primary, None)
     cmap = {(m, c): CG(m, c)
             for m in range(R.NUM_METATILES_IN_PRIMARY) for c in range(4)}
+    furn = furniture(lay, maps, pos, skip)
     return {'t3': {k: dict(v) for k, v in t3.items()},
             't4': {k: dict(v) for k, v in t4.items()},
             't1': {k: dict(v) for k, v in t1.items()}, 'maps': used,
             'ph': dict(ph), 'pv': dict(pv), 'cls': cmap,
-            'furniture': sorted(furniture(lay, maps, pos, skip))}
+            'sec': {s: {'t3': {a: dict(b) for a, b in B['t3'].items()},
+                        't4': {a: dict(b) for a, b in B['t4'].items()},
+                        't1': {a: dict(b) for a, b in B['t1'].items()},
+                        'ph': dict(B['ph']), 'pv': dict(B['pv']),
+                        'cls': B['cls'], 'maps': B['maps']}
+                    for s, B in bysec.items()},
+            'furniture': sorted(furn.get(None, ())),
+            'sec_furniture': {s: sorted(v) for s, v in furn.items() if s}}
 
 def best(table, key, avoid=()):
     d = table.get(key)
@@ -252,13 +297,18 @@ def furniture(lay, maps, pos, skip):
     of the signpost's 112 uses have a sign script behind them, and all ten of
     the blue secret-base cave mouth's do. Painting one into a new route puts a
     sign with nothing to read or a cave mouth with nothing behind it.
+
+    Returns one set per tileset: None for the primary ids, and one per
+    secondary tileset for its own. The secondary sets matter more than the
+    primary one - doors, cave mouths and gate fronts nearly all live there.
     """
     import glob
     hdr = {}
     for f in glob.glob(f'{R.ROOT}/data/maps/*/map.json'):
         j = json.load(open(f))
         hdr[j['id']] = j
-    use, under = collections.Counter(), collections.Counter()
+    use = collections.defaultdict(collections.Counter)
+    under = collections.defaultdict(collections.Counter)
     for k in pos:
         if k in skip:
             continue
@@ -266,11 +316,13 @@ def furniture(lay, maps, pos, skip):
         if L['primary_tileset'] != 'gTileset_General':
             continue
         w, h = L['width'], L['height']
+        sec = L.get('secondary_tileset')
         blk = blockdata(L['blockdata_filepath'].split('/')[-2], L)
+        who = lambda m: None if m < R.NUM_METATILES_IN_PRIMARY else sec
         for i in range(w * h):
             m = (blk[i*2] | (blk[i*2+1] << 8)) & 0x3FF
-            if m < R.NUM_METATILES_IN_PRIMARY:
-                use[m] += 1
+            if who(m) is not None or m < R.NUM_METATILES_IN_PRIMARY:
+                use[who(m)][m] += 1
         for key in ('bg_events', 'warp_events'):
             for e in (hdr.get(k, {}).get(key) or []):
                 try:
@@ -280,9 +332,10 @@ def furniture(lay, maps, pos, skip):
                 if not (0 <= x < w and 0 <= y < h):
                     continue
                 m = (blk[(y*w + x)*2] | (blk[(y*w + x)*2 + 1] << 8)) & 0x3FF
-                if m < R.NUM_METATILES_IN_PRIMARY:
-                    under[m] += 1
-    return {m for m in under if under[m] >= 0.5 * use[m]}
+                if who(m) is not None or m < R.NUM_METATILES_IN_PRIMARY:
+                    under[who(m)][m] += 1
+    return {t: {m for m in under[t] if under[t][m] >= 0.5 * use[t][m]}
+            for t in set(use) | set(under)}
 
 SWEEPS = 6
 
@@ -296,14 +349,23 @@ SWEEPS = 6
 EXCLUDE = {0x015}
 
 class Painter:
-    def __init__(self, model):
+    def __init__(self, model, secondary=None):
         self.m = model
         self.avoid = set(model.get('furniture', ())) | EXCLUDE
-        self.ph = model.get('ph', {})
-        self.pv = model.get('pv', {})
-        self.cmap = model.get('cls', {})
+        self.ph = dict(model.get('ph', {}))
+        self.pv = dict(model.get('pv', {}))
+        self.cmap = dict(model.get('cls', {}))
+        # the maps that load this same secondary tileset get a say of their
+        # own, and their secondary metatiles come with them
+        self.s = (model.get('sec') or {}).get(secondary)
+        if self.s:
+            self.avoid |= set((model.get('sec_furniture') or {})
+                              .get(secondary, ()))
+            self.ph.update(self.s['ph'])
+            self.pv.update(self.s['pv'])
+            self.cmap.update(self.s['cls'])
 
-    CAP = 48
+    CAP = 200
 
     def choices(self, cls, x, y, w, h):
         """every metatile vanilla used in this cell's situation, with weights.
@@ -320,12 +382,8 @@ class Painter:
         wherever it fits: only when the exact answer makes a join vanilla has
         never drawn does a coarser one get to replace it.
         """
-        m3 = mask3(cls, x, y, w, h, GRASS)
         out = collections.Counter()
-        for scale, tab, key in ((1000, self.m['t3'], m3),
-                                (10, self.m['t4'], mask4(m3)),
-                                (10, self.m['t3'], (m3[4],) * 9),
-                                (1, self.m['t1'], m3[4])):
+        for scale, tab, key, _ in self.tables(cls, x, y, w, h):
             for v, n in (tab.get(key) or {}).items():
                 if (v & 0x3FF) not in self.avoid:
                     out[v] += scale * n
@@ -333,24 +391,67 @@ class Painter:
             return {1: 1}
         return dict(out.most_common(self.CAP))
 
+    def tables(self, cls, x, y, w, h):
+        """the lookups for this cell, most specific first.
+
+        A map that loads the same secondary tileset as some vanilla maps gets
+        their answers ahead of the rest of Hoenn's at each level of precision,
+        because they are the ones drawing this terrain with these tiles to
+        hand. An exact 3x3 match anywhere still beats a 4-neighbourhood match
+        from the same tileset - the mask is the more specific thing.
+        """
+        m3 = mask3(cls, x, y, w, h, GRASS)
+        m4, hom, m1 = mask4(m3), (m3[4],) * 9, m3[4]
+        s = self.s or {'t3': {}, 't4': {}, 't1': {}}
+        return ((4000, s['t3'], m3, 1), (1000, self.m['t3'], m3, 0),
+                (40, s['t4'], m4, 1), (10, self.m['t4'], m4, 0),
+                (40, s['t3'], hom, 1), (10, self.m['t3'], hom, 0),
+                (4, s['t1'], m1, 1), (1, self.m['t1'], m1, 0))
+
+    def first(self, cls, x, y, w, h):
+        """the pick before anything is known about the neighbours.
+
+        Deliberately not the argmax of choices(): merging the tables lets a
+        common approximate answer outvote a rare exact one, and doing that put
+        two thousand joins of bare mountain top against plain grass into the
+        new maps - vanilla has 45 in the whole game. The most specific table
+        that has anything to say decides, and only if it has nothing does the
+        next one get a turn.
+
+        A tileset's own table only gets to pre-empt the global one when its
+        answer is one of its own metatiles, and then only when that answer is
+        what it usually does there. It exists to supply tiles the global table
+        cannot reach - the desert floor, a volcanic rock face. Where its answer
+        is an ordinary primary tile it is a handful of maps guessing at
+        something all of Hoenn knows better, and letting it win on that put
+        Route 143 from 2% of joins vanilla never draws to 7%.
+        """
+        P = R.NUM_METATILES_IN_PRIMARY
+        for _, tab, key, mine in self.tables(cls, x, y, w, h):
+            d = tab.get(key)
+            if not d:
+                continue
+            if mine:
+                own = {v: n for v, n in d.items()
+                       if (v & 0x3FF) >= P and (v & 0x3FF) not in self.avoid}
+                if own and max(own.values()) * 2 > sum(d.values()):
+                    return max(own, key=own.get)
+                continue
+            v = best(tab, key, self.avoid)
+            if v is not None:
+                return v
+        return 1
+
     def paint(self, cls, w, h):
         """class grid (list, row-major) -> list of u16 blockdata entries."""
-        out = []
-        for y in range(h):
-            for x in range(w):
-                m3 = mask3(cls, x, y, w, h, GRASS)
-                # If vanilla never drew this arrangement, paint the cell as
-                # though it were the middle of its own terrain. The obvious
-                # fallback - that class's most common metatile - is wrong:
-                # for a path it picks the mountain-top tile, whose art expects
-                # a plateau edge, so a one-cell-wide path came out fringed
-                # with rock. The homogeneous tile is the one that tiles.
-                av = self.avoid
-                v = (best(self.m['t3'], m3, av)
-                     or best(self.m['t4'], mask4(m3), av)
-                     or best(self.m['t3'], (m3[4],) * 9, av)
-                     or best(self.m['t1'], m3[4], av) or 1)
-                out.append(v)
+        # Where vanilla never drew this arrangement, first() falls back to the
+        # 4-neighbourhood and then to the cell as though it were the middle of
+        # its own terrain. The obvious last resort - that class's most common
+        # metatile - is wrong: for a path it picks the mountain-top tile, whose
+        # art expects a plateau edge, so a one-cell-wide path came out fringed
+        # with rock. The homogeneous tile is the one that tiles.
+        out = [self.first(cls, x, y, w, h)
+               for y in range(h) for x in range(w)]
         self.harmonise(out, cls, w, h)
         return out
 
@@ -368,7 +469,7 @@ class Painter:
             n += 1
         return n
 
-    def harmonise(self, out, cls, w, h):
+    def harmonise(self, out, cls, w, h, cand=None):
         """Swap cells for equally-legal alternatives that join up better.
 
         paint() decides every cell on its own, so two cells can each be the
@@ -381,7 +482,7 @@ class Painter:
         fix the art, and moving a wall or a shore would undo work that
         reachability and the encounter tables depend on.
         """
-        cand = {}
+        cand = {} if cand is None else cand
         moved = 0
         for _ in range(SWEEPS):
             n = 0

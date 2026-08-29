@@ -8712,12 +8712,12 @@
               {
                 "min_level": 7,
                 "max_level": 18,
-                "species": "SPECIES_GOLDEEN"
+                "species": "SPECIES_TENTACOOL"
               },
               {
                 "min_level": 7,
                 "max_level": 18,
-                "species": "SPECIES_TENTACOOL"
+                "species": "SPECIES_GOLDEEN"
               },
               {
                 "min_level": 30,
@@ -8742,7 +8742,7 @@
               {
                 "min_level": 7,
                 "max_level": 18,
-                "species": "SPECIES_GOLDEEN"
+                "species": "SPECIES_TENTACOOL"
               }
             ]
           }
@@ -8869,14 +8869,14 @@
                 "species": "SPECIES_CORPHISH"
               },
               {
-                "min_level": 7,
-                "max_level": 18,
-                "species": "SPECIES_GOLDEEN"
-              },
-              {
                 "min_level": 30,
                 "max_level": 35,
                 "species": "SPECIES_SHARPEDO"
+              },
+              {
+                "min_level": 7,
+                "max_level": 18,
+                "species": "SPECIES_GOLDEEN"
               },
               {
                 "min_level": 7,

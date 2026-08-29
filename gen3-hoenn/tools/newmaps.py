@@ -1786,7 +1786,10 @@ def main():
         level, stairs = terrace(cls, spec['w'], spec['h'])
         vegetate_terraces(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
         ledges = place_ledges(cls, level, spec['w'], spec['h'], spec['num'] * 1013)
-        blocks = painter.paint(cls, spec['w'], spec['h'])
+        # a painter per map: the tiles it may reach for depend on which
+        # secondary tileset that map loads
+        blocks = T.Painter(model, spec.get('secondary')).paint(
+            cls, spec['w'], spec['h'])
         stamp_stairs(blocks, stairs, spec['w'], spec['h'])
         apply_levels(blocks, level, cls, spec['w'], spec['h'])
         wide = sum(1 for _, wd in stairs if wd)
