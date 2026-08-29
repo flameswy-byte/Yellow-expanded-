@@ -191,6 +191,10 @@ def cross(grid, k, x, y):
             return (nb, p[0], p[1])
     return None
 
+# Lavaridge is expected to be missing from both figures. It is reached in
+# vanilla through the Fiery Path and Jagged Pass, which are indoor maps, and
+# this only follows warps between the outdoor ones - so the whole west half of
+# Route 112 is behind a cave as far as it is concerned. Vanilla scores the same.
 def reach(grid, warp_at, warp_dst, beh, start, mode):
     surf = mode != 'walk'
     def at(k, x, y):

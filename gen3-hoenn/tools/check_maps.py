@@ -154,6 +154,20 @@ def check(const, lay, maps, rend, wild, hdrs):
         if n > 1:
             out.append(f'{n} objects share the cell {x},{y}')
 
+    # a trainer facing a wall can never see you coming, which makes the sight
+    # range they were given meaningless
+    FACE = {'MOVEMENT_TYPE_FACE_DOWN': (0, 1), 'MOVEMENT_TYPE_FACE_UP': (0, -1),
+            'MOVEMENT_TYPE_FACE_LEFT': (-1, 0), 'MOVEMENT_TYPE_FACE_RIGHT': (1, 0)}
+    for e in hdr.get('object_events') or []:
+        if str(e.get('trainer_type', '')) != 'TRAINER_TYPE_NORMAL':
+            continue
+        d = FACE.get(e.get('movement_type'))
+        if not d:
+            continue
+        x, y = int(e['x']) + d[0], int(e['y']) + d[1]
+        if not (0 <= x < w and 0 <= y < h and walk[y*w + x]):
+            out.append(f'trainer at {e["x"]},{e["y"]} is facing a wall')
+
     # A trainer is solid and stays where they are after you beat them, so one
     # standing in a one-cell corridor shuts it for good. Re-run the flood with
     # every sprite treated as a wall and see whether anything is cut off.

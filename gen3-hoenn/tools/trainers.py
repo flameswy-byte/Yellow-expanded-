@@ -409,11 +409,21 @@ def spots(spec, lay, maps, rend, taken):
         x, y = i % w, i // w
         if any(abs(x - px) + abs(y - py) < APART for px, py, _, _, _ in out):
             continue
-        # face the longest open run, so the sight line has somewhere to go
-        best = max(((sum(1 for k in range(1, 7)
-                         if 0 <= x + dx*k < w and 0 <= y + dy*k < h
-                         and walk[(y + dy*k)*w + x + dx*k]), d)
-                    for d, (dx, dy) in enumerate(((0, 1), (0, -1), (-1, 0), (1, 0)))),
+        # face the longest open run, so the sight line has somewhere to go.
+        # The run has to be contiguous: counting walkable cells anywhere in the
+        # line let a direction with a wall one step away win on the strength of
+        # the open ground behind it, and put one of Route 137's trainers nose
+        # to the rock.
+        def run(dx, dy):
+            n = 0
+            while n < 6:
+                nx, ny = x + dx*(n+1), y + dy*(n+1)
+                if not (0 <= nx < w and 0 <= ny < h and walk[ny*w + nx]):
+                    break
+                n += 1
+            return n
+        best = max(((run(dx, dy), d) for d, (dx, dy)
+                    in enumerate(((0, 1), (0, -1), (-1, 0), (1, 0)))),
                    key=lambda t: t[0])
         out.append((x, y, ele[i], cls[i] in WADE_ON, best[1]))
     return out
