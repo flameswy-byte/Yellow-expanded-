@@ -3,6 +3,7 @@
 
 // should they be included here or included individually by every file?
 #include "constants/battle.h"
+#include "constants/battle_config.h"
 #include "battle_main.h"
 #include "battle_message.h"
 #include "battle_util.h"

@@ -602,8 +602,8 @@ static const struct StatFractions sAccuracyStageRatios[] =
     {  3,   1}, // +6
 };
 
-// The chance is 1/N for each stage.
-static const u16 sCriticalHitChance[] = {16, 8, 4, 3, 2};
+// The chance is 1/N for each stage; see constants/battle_config.h.
+static const u16 sCriticalHitChance[] = CRIT_CHANCES;
 
 static const u32 sStatusFlagsForMoveEffects[NUM_MOVE_EFFECTS] =
 {
@@ -1283,9 +1283,9 @@ static void Cmd_critcalc(void)
      && !(gStatuses3[gBattlerAttacker] & STATUS3_CANT_SCORE_A_CRIT)
      && !(gBattleTypeFlags & (BATTLE_TYPE_WALLY_TUTORIAL | BATTLE_TYPE_FIRST_BATTLE))
      && !(Random() % sCriticalHitChance[critChance]))
-        gCritMultiplier = 2;
+        gCritMultiplier = CRIT_MULTIPLIER;
     else
-        gCritMultiplier = 1;
+        gCritMultiplier = BASE_CRIT_MULTIPLIER;
 
     gBattlescriptCurrInstr++;
 }
@@ -1296,7 +1296,7 @@ static void Cmd_damagecalc(void)
     gBattleMoveDamage = CalculateBaseDamage(&gBattleMons[gBattlerAttacker], &gBattleMons[gBattlerTarget], gCurrentMove,
                                             sideStatus, gDynamicBasePower,
                                             gBattleStruct->dynamicMoveType, gBattlerAttacker, gBattlerTarget);
-    gBattleMoveDamage = gBattleMoveDamage * gCritMultiplier * gBattleScripting.dmgMultiplier;
+    gBattleMoveDamage = gBattleMoveDamage * gCritMultiplier * gBattleScripting.dmgMultiplier / BASE_CRIT_MULTIPLIER;
 
     if (gStatuses3[gBattlerAttacker] & STATUS3_CHARGED_UP && gBattleMoves[gCurrentMove].type == TYPE_ELECTRIC)
         gBattleMoveDamage *= 2;
@@ -1313,7 +1313,7 @@ void AI_CalcDmg(u8 attacker, u8 defender)
                                             sideStatus, gDynamicBasePower,
                                             gBattleStruct->dynamicMoveType, attacker, defender);
     gDynamicBasePower = 0;
-    gBattleMoveDamage = gBattleMoveDamage * gCritMultiplier * gBattleScripting.dmgMultiplier;
+    gBattleMoveDamage = gBattleMoveDamage * gCritMultiplier * gBattleScripting.dmgMultiplier / BASE_CRIT_MULTIPLIER;
 
     if (gStatuses3[attacker] & STATUS3_CHARGED_UP && gBattleMoves[gCurrentMove].type == TYPE_ELECTRIC)
         gBattleMoveDamage *= 2;
@@ -1992,7 +1992,7 @@ static void Cmd_critmessage(void)
 {
     if (gBattleControllerExecFlags == 0)
     {
-        if (gCritMultiplier == 2 && !(gMoveResultFlags & MOVE_RESULT_NO_EFFECT))
+        if (gCritMultiplier > BASE_CRIT_MULTIPLIER && !(gMoveResultFlags & MOVE_RESULT_NO_EFFECT))
         {
             PrepareStringBattle(STRINGID_CRITICALHIT, gBattlerAttacker);
             gBattleCommunication[MSG_DISPLAY] = 1;
@@ -2481,7 +2481,7 @@ void SetMoveEffect(bool8 primary, u8 certain)
             BattleScriptPush(gBattlescriptCurrInstr + 1);
 
             if (sStatusFlagsForMoveEffects[gBattleCommunication[MOVE_EFFECT_BYTE]] == STATUS1_SLEEP)
-                gBattleMons[gEffectBattler].status1 |= STATUS1_SLEEP_TURN((Random() & 3) + 2); // 2-5 turns
+                gBattleMons[gEffectBattler].status1 |= STATUS1_SLEEP_TURN((Random() % SLEEP_TURNS_RANGE) + SLEEP_TURNS_MIN); // 1-3 turns
             else
                 gBattleMons[gEffectBattler].status1 |= sStatusFlagsForMoveEffects[gBattleCommunication[MOVE_EFFECT_BYTE]];
 
@@ -2637,7 +2637,14 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 }
                 break;
             case MOVE_EFFECT_RECOIL_25: // 25% recoil
-                gBattleMoveDamage = (gHpDealt) / 4;
+                // Gen 4 onwards Struggle takes a quarter of the user's maximum
+                // HP rather than a quarter of what it dealt, so it hurts just
+                // as much against a wall as against paper. Take Down and the
+                // rest still pay a share of the damage they did.
+                if (gCurrentMove == MOVE_STRUGGLE)
+                    gBattleMoveDamage = gBattleMons[gBattlerAttacker].maxHP / STRUGGLE_RECOIL_FRACTION;
+                else
+                    gBattleMoveDamage = (gHpDealt) / 4;
                 if (gBattleMoveDamage == 0)
                     gBattleMoveDamage = 1;
 
@@ -3625,7 +3632,7 @@ static void MoveValuesCleanUp(void)
 {
     gMoveResultFlags = 0;
     gBattleScripting.dmgMultiplier = 1;
-    gCritMultiplier = 1;
+    gCritMultiplier = BASE_CRIT_MULTIPLIER;
     gBattleCommunication[MOVE_EFFECT_BYTE] = 0;
     gBattleCommunication[MISS_TYPE] = 0;
     gHitMarker &= ~HITMARKER_DESTINYBOND;

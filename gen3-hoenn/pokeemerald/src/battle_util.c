@@ -88,7 +88,7 @@ void HandleAction_UseMove(void)
         return;
     }
 
-    gCritMultiplier = 1;
+    gCritMultiplier = BASE_CRIT_MULTIPLIER;
     gBattleScripting.dmgMultiplier = 1;
     gBattleStruct->atkCancelerTracker = 0;
     gMoveResultFlags = 0;
@@ -1546,7 +1546,7 @@ u8 DoBattlerEndTurnEffects(void)
             case ENDTURN_BURN:  // burn
                 if ((gBattleMons[gActiveBattler].status1 & STATUS1_BURN) && gBattleMons[gActiveBattler].hp != 0)
                 {
-                    gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / 8;
+                    gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / BURN_DAMAGE_FRACTION;
                     if (gBattleMoveDamage == 0)
                         gBattleMoveDamage = 1;
                     BattleScriptExecute(BattleScript_BurnTurnDmg);
@@ -1755,7 +1755,7 @@ u8 DoBattlerEndTurnEffects(void)
                      && gBattleMons[gActiveBattler].ability != ABILITY_INSOMNIA && !UproarWakeUpCheck(gActiveBattler))
                     {
                         CancelMultiTurnMoves(gActiveBattler);
-                        gBattleMons[gActiveBattler].status1 |= STATUS1_SLEEP_TURN((Random() & 3) + 2); // 2-5 turns of sleep
+                        gBattleMons[gActiveBattler].status1 |= STATUS1_SLEEP_TURN((Random() % SLEEP_TURNS_RANGE) + SLEEP_TURNS_MIN); // 1-3 turns of sleep
                         BtlController_EmitSetMonData(B_COMM_TO_CONTROLLER, REQUEST_STATUS_BATTLE, 0, 4, &gBattleMons[gActiveBattler].status1);
                         MarkBattlerForControllerExec(gActiveBattler);
                         gEffectBattler = gActiveBattler;

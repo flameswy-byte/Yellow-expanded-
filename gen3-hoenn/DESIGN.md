@@ -1008,6 +1008,69 @@ Confusion's self-hit needed nothing: it already calls the damage formula with
 `AI_CalcDmg`. `struct BattleMove` goes from 9 bytes to 10, no assembly refers
 to it and nothing assumes its size, and the ROM is unchanged at 44.49% used.
 
+### Gen 4–6 battle constants
+
+`include/constants/battle_config.h`, included from `battle.h` so every battle
+file sees it. The point of the header is that the whole of the change can be
+read in one screen and argued with, rather than being scattered across four
+`.c` files as bare numbers.
+
+The reference is **CFRU** (Skeli789's Complete Fire Red Upgrade), the engine
+Radical Red is built on and the only part of it that is public — Radical Red
+itself ships as a binary patch. Where CFRU's default differs from the official
+games, CFRU wins and the difference is written on the line.
+
+**Critical hits.** Vanilla's table is `{16, 8, 4, 3, 2}` — 1/16 at no boost,
+and even a fully boosted move crits only half the time. From Gen 6 two stages
+of boost guarantee a crit. CFRU's `sCriticalHitChances` has three settings and
+takes none of them by default; its default row is `{24, 8, 2, 1, 1}`, which is
+Gen 7's, so `CRIT_CHANCES` is that.
+
+> **Differs from the official games.** Gen 6 crits at 1/16 with no boost.
+> CFRU's default — and therefore ours — is Gen 7's 1/24, so an unboosted crit
+> is a third rarer here than in ORAS. Changing one number in the header undoes
+> it.
+
+Crit damage drops from 2× to 1.5×, which does not survive integer arithmetic
+as a multiplier. CFRU keeps `gCritMultiplier` in tenths and divides at the end,
+so we do too: `BASE_CRIT_MULTIPLIER 10`, `CRIT_MULTIPLIER 15`. That touches
+twenty sites, all mechanical — eight assignments of 1 become `BASE`, one
+assignment of 2 becomes `CRIT`, five `== 2` tests become `> BASE`, two `== 1`
+tests become `== BASE`, and the two damage lines gain a `/ BASE`. Non-crit
+damage is arithmetically identical afterwards (`d × 10 ÷ 10`), so nothing but a
+crit changes value.
+
+The `== 2` tests are the ones worth naming: inside `CalculateBaseDamage` a crit
+ignores the attacker's lowered Attack stages and the defender's raised Defence
+stages, and Reflect and Light Screen are the mirror of that — they apply only
+when `gCritMultiplier` is exactly the base. Both readings survive the change to
+tenths; a comparison against a literal 2 would not have.
+
+**Sleep.** Vanilla rolls `(Random() & 3) + 2`, so 2–5 on the counter and up to
+four turns actually asleep. Gen 5 cut it to 1–3, which is `SLEEP_TURNS_MIN 2`
+and `SLEEP_TURNS_RANGE 2`. Two sites: the sleep move effect, and Yawn coming
+due. Rest is untouched — it sets the counter to a fixed 3 and always did.
+
+**Struggle.** Gen 4 made the recoil a quarter of the user's *maximum HP* rather
+than a quarter of the damage dealt, so Struggle costs the same against a wall
+as against paper. The 25% recoil case is shared with Take Down and Submission,
+which did not change, so the new fraction is behind a `gCurrentMove ==
+MOVE_STRUGGLE` test rather than replacing the case.
+
+Gen 4's other Struggle change — that it stops being Normal-typed, so Ghosts are
+not immune — is **already** how Emerald behaves: `Cmd_typecalc` and both
+`TypeCalc` variants return early on `MOVE_STRUGGLE`, before any immunity is
+looked up. No change, recorded in the header so the absence is deliberate.
+
+**Burn.** 1/8 of maximum HP per turn in Gens 3–6, 1/16 from Gen 7. Vanilla's
+1/8 is already right for the generation being targeted, so `BURN_DAMAGE_FRACTION`
+is 8 and the only edit is that the site now names the constant.
+
+Not in this batch and not pretended otherwise: the Gen 5 burn/paralysis damage
+reduction, the Gen 6 accuracy of the evasion moves, the Gen 5 hail and sandstorm
+changes, and every move whose base power was rebalanced after Gen 3. The header
+is the list of what was changed, not a claim to have finished the job.
+
 ---
 
 ## 5. Open questions

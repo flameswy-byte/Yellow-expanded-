@@ -73,6 +73,27 @@ python3 tools/study.py             # composition, against the vanilla routes
 running for their own sake: they say how far the generated maps are from the
 real ones, on the numbers a screenshot cannot show.
 
+## Hoenn's battle engine
+
+Everything above is data. These two are engine changes, kept apart from the map
+work and documented in `gen3-hoenn/DESIGN.md` §4 so the line is visible.
+
+```bash
+cd gen3-hoenn
+python3 tools/split.py --report   # the physical/special split, by type
+python3 tools/split.py --check    # verify the written table against the rule
+```
+
+The **physical/special split** gives every move its own damage category
+instead of reading it off the type, as Gen 4 did. The **Gen 4–6 battle
+constants** live in one header, `pokeemerald/include/constants/battle_config.h`:
+crit rate and crit damage, sleep length, Struggle's recoil. The reference for
+both is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade), the
+engine Radical Red is built on and the only part of it that is public. Where
+CFRU's default differs from the official games it wins, and the difference is
+written on the line — the crit rate is one such: CFRU defaults to Gen 7's 1/24,
+not Gen 6's 1/16.
+
 ## Why one repo
 
 The two games share almost no code. What they share is the method, and that has
