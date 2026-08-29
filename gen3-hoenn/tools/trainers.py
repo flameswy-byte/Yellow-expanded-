@@ -412,7 +412,17 @@ def main():
     nid = 0
     for spec in N.NEWMAPS:
         top, species = wild_levels(spec['const'], wild)
-        here = spots(spec, lay, maps, rend, set())
+        # populate.py has already put the items down and does not know about
+        # this pass, so the cells it used are read back off the header rather
+        # than assumed free. Route 138 had a trainer standing on an item ball.
+        h0 = hdrs.get(spec['const'], {})
+        # its own trainers from a previous run are not obstacles - counting
+        # them would move everybody one square further along every time
+        taken = {(int(e['x']), int(e['y']))
+                 for e in (h0.get('object_events') or []) + (h0.get('bg_events') or [])
+                 if 'x' in e and 'y' in e
+                 and str(e.get('trainer_type', '')) != 'TRAINER_TYPE_NORMAL'}
+        here = spots(spec, lay, maps, rend, taken)
         objs = []
         for k, (x, y, e, wade, face) in enumerate(here):
             src = wet if (wade and wet) else dry

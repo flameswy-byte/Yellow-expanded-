@@ -135,13 +135,13 @@ Route138_EventScript_Dexter::
 	end
 
 Route138_Text_DexterIntro:
-	.string "Stop there. This ROUTE is mine to\ndefend.$"
+	.string "You walked. I swam. Let's settle\nit.$"
 
 Route138_Text_DexterDefeat:
-	.string "Well fought.$"
+	.string "The current's yours.$"
 
 Route138_Text_DexterPostBattle:
-	.string "Good luck out there.$"
+	.string "There's a beach north of here. Rest\nthere.$"
 
 Route138_EventScript_Driscoll::
 	trainerbattle_single TRAINER_DRISCOLL, Route138_Text_DriscollIntro, Route138_Text_DriscollDefeat

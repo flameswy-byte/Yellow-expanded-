@@ -988,6 +988,11 @@ def vegetate_terraces(grid, level, w, h, seed):
 # noise happens to be distributed on that map.
 TALL_TARGET = 0.09
 TREE_TARGET = 0.32
+# How much of the tree field is masses and how much is scattered singles. Half
+# of vanilla's 635 route tree clumps are one cell and 58% are one or two; at
+# 0.55/0.45 ours were 21% and 31% - blobs where vanilla has a wood with single
+# trees standing out in the open around it.
+TREE_MASS, TREE_SPECK = 0.90, 0.10
 VEG_KINDS = (T.GRASS, T.TALL, T.TREE, T.PATH, T.SAND)
 
 def vegetate(grid, dist, rim, w, h, seed):
@@ -1056,8 +1061,8 @@ def vegetate(grid, dist, rim, w, h, seed):
     cand = [i for i in elig if dist[i] > 2 and i not in tall_cells]
     if want_tree and cand:
         score = sorted(cand, key=lambda i: -(
-            0.55 * T.fbm(i % w, i // w, seed + 47, octaves=3, freq=0.05)
-            + 0.45 * T.fbm(i % w, i // w, seed + 61, octaves=1, freq=0.45)
+            TREE_MASS * T.fbm(i % w, i // w, seed + 47, octaves=3, freq=0.05)
+            + TREE_SPECK * T._hash(i % w, i // w, seed + 61)
             + 0.25 * t_of(i)))
         for i in score[:want_tree]:
             grid[i] = T.TREE
@@ -1070,16 +1075,23 @@ def vegetate(grid, dist, rim, w, h, seed):
 # south across one that runs horizontally
 JUMP_MB = {0x38: 'v', 0x39: 'v', 0x3A: 'h', 0x3B: 'h',
            0x3C: 'c', 0x3D: 'c', 0x3E: 'c', 0x3F: 'c'}
-MIN_LEDGE = 4     # strays only; the deliberate runs are stamped after tidy
+MIN_LEDGE = 6     # painter accidents only; the deliberate runs are stamped
 
 # Vanilla's ledge is 0x087, MB_JUMP_SOUTH, collision 1 at elevation 3 - you hop
 # down over it southward and cannot come back. It is not a way off a cliff:
 # 179 of them have ordinary grass at elevation 3 both above and below, so they
 # are shortcuts across flat ground. Runs are horizontal, median 4 cells, and
 # 21 vanilla routes carry 74 of them between them.
+#
+# How many is a separate measurement from where. A vanilla route carries a
+# median of 1.96 ledge cells per thousand, and seven of the twenty-one carry
+# none at all; three runs a map gave us 7.19 per thousand and not one map
+# without. At vanilla's rate a small map rounds down to no ledge on its own,
+# which is where the maps with none come from - no extra rule needed.
 LEDGE_TILE = 0x087
 LEDGE_MIN, LEDGE_MAX = 3, 8
-LEDGE_PER_MAP = 3
+LEDGE_RATE = 2.0                 # cells per thousand, vanilla's median
+LEDGE_CAP = 6                    # candidates offered; the target picks from them
 LEDGE_APART = 12
 
 def place_ledges(grid, level, w, h, seed):
@@ -1126,9 +1138,11 @@ def place_ledges(grid, level, w, h, seed):
         return []
     runs.sort(key=lambda r: -(r[2] + 3 * T.fbm(r[0], r[1], seed + 131,
                                                octaves=1, freq=0.08)))
+    # more candidates than will be used: stamp_ledges decides how many, once
+    # it can see how many the painter put down by itself
     picked = []
     for x, y, n, d in runs:
-        if len(picked) >= LEDGE_PER_MAP:
+        if len(picked) >= LEDGE_CAP:
             break
         if any(abs(x - px) + abs(y - py) <= LEDGE_APART for px, py, _ in picked):
             continue
@@ -1141,9 +1155,30 @@ def place_ledges(grid, level, w, h, seed):
     return picked
 
 def stamp_ledges(blocks, ledges, w, h):
+    """Lay ledges until the map has vanilla's share of them, and no more.
+
+    The count cannot be decided before painting: the learned painter emits
+    ledge metatiles of its own wherever a height change looks like the top of
+    one, tidy() keeps every run of four or more, and those already count
+    against the map's budget. Deciding here - after both - is what makes the
+    rate come out at vanilla's rather than at whatever the painter happened to
+    add to it."""
+    beh = T.behaviors('gTileset_General')
+    have = sum(1 for v in blocks
+               if (v & 0x3FF) < len(beh) and beh[v & 0x3FF] in JUMP_MB)
+    want = LEDGE_RATE * w * h / 1000
+    laid = 0
     for x, y, n in ledges:
+        # room for a whole run or none at all. Seven of vanilla's twenty-one
+        # land routes carry no ledge, and this is where that comes from: a map
+        # too small for one at vanilla's rate simply does not get one.
+        if want - have < LEDGE_MIN:
+            break
         for k in range(n):
             blocks[y*w + x + k] = LEDGE_TILE | (1 << 10) | (GROUND_LEVEL << 12)
+        have += n
+        laid += 1
+    return laid
 
 def stamp_stairs(blocks, stairs, w, h):
     """Lay vanilla's staircase art over the cells cut_stairs opened."""
@@ -1221,26 +1256,58 @@ def final_check(blocks, w, h, beh_cache=[]):
                     blocks[i] = (blocks[i] & ~0xF000) | (GROUND_LEVEL << 12)
                     fixed += 1
             else:
-                for i in sorted(comp):
-                    x, y = i % w, i // w
-                    done = False
-                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                        j = (y+dy)*w + (x+dx)
-                        if not (0 <= x+dx < w and 0 <= y+dy < h) or walk(j):
-                            continue
-                        for ex, ey in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                            m = (y+dy+ey)*w + (x+dx+ex)
-                            if (0 <= x+dx+ex < w and 0 <= y+dy+ey < h
-                                    and m in seen and walk(m)):
-                                notch(blocks, j, w, h)
-                                fixed += 1
-                                done = True
-                                break
-                        if done:
-                            break
-                    if done:
-                        break
+                fixed += carve(blocks, comp, seen, w, h)
     return fixed
+
+def carve(blocks, comp, seen, w, h):
+    """Open a way out of a stranded pocket, however thick the wall is.
+
+    This used to look for one blocked cell with reachable ground on its far
+    side and notch it. That works on a wall one cell thick, and the mountains
+    have not had one of those since the rock faces were given height: a
+    two-cell wall has no such cell anywhere along it, so nothing was opened and
+    Route 144 shipped a 715-cell summit with no way up.
+
+    A 0-1 breadth-first search finds the cheapest route out instead - stepping
+    onto ground that already connects costs nothing, cutting through rock costs
+    one - and every rock cell on that route is opened. The cheapest route is by
+    construction the shortest tunnel, so a two-cell wall costs two cells and a
+    thicker one only as much as it has to.
+    """
+    E = lambda i: (blocks[i] >> 12) & 0xF
+    walk = lambda i: ((blocks[i] >> 10) & 3) == 0
+    INF = float('inf')
+    dist = {i: 0 for i in comp}
+    prev = {}
+    dq = collections.deque(comp)
+    goal = None
+    while dq:
+        i = dq.popleft()
+        if i in seen:
+            goal = i
+            break
+        x, y = i % w, i // w
+        for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+            if not (0 <= nx < w and 0 <= ny < h):
+                continue
+            j = ny*w + nx
+            # free where the player could already walk it, one where it is rock
+            free = walk(j) and (not walk(i) or _elev_ok(E(i), E(j)))
+            d = dist[i] + (0 if free else 1)
+            if d < dist.get(j, INF):
+                dist[j] = d
+                prev[j] = i
+                dq.appendleft(j) if free else dq.append(j)
+    if goal is None:
+        return 0
+    cut = 0
+    i = goal
+    while i in prev:
+        if not walk(i):
+            notch(blocks, i, w, h)
+            cut += 1
+        i = prev[i]
+    return cut
 
 def tidy(blocks, w, h, spec):
     """Clean up what the per-cell painter cannot see: stray ledges and stray
@@ -1291,7 +1358,15 @@ def tidy(blocks, w, h, spec):
                 and not JUMP_MB.get(mb(blocks[(y+dy)*w + x+dx]))
                 and ((blocks[(y+dy)*w + x+dx] >> 10) & 3) == 0)
             if nb:
-                blocks[i] = nb.most_common(1)[0][0]
+                # the art comes from the neighbour, the elevation does not.
+                # Copying the whole cell copies one side's level onto a cell
+                # that sits between two, which walls the other side off - and
+                # since a stray ledge is usually exactly where the levels
+                # change, that is where it does the most damage. Elevation 0
+                # is the value that connects both, and is what vanilla puts on
+                # a cell joining a terrace to the ground. Raising MIN_LEDGE
+                # from 4 to 6 turned this from 17 stranded cells into 786.
+                blocks[i] = nb.most_common(1)[0][0] & 0x0FFF
                 fixed_l += 1
 
     # a walkable cell whose elevation disagrees with everything around it is
@@ -1795,7 +1870,7 @@ def main():
         wide = sum(1 for _, wd in stairs if wd)
         nl, ne = tidy(blocks, spec['w'], spec['h'], spec)
         # after tidy, so raising its stray-ledge threshold cannot eat these
-        stamp_ledges(blocks, ledges, spec['w'], spec['h'])
+        ledges = ledges[:stamp_ledges(blocks, ledges, spec['w'], spec['h'])]
         nf = final_check(blocks, spec['w'], spec['h'])
         built[spec['const']] = blocks
         n = collections.Counter(cls)
