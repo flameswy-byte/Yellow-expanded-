@@ -1511,7 +1511,7 @@ animation frames.
 | | type | HP | Atk | Def | Spe | SpA | SpD | BST | abilities |
 |---|---|---|---|---|---|---|---|---|---|
 | SLIME | Normal/Water | 80 | 65 | 50 | 25 | 65 | 50 | 335 | Assimilate |
-| METALSLIME | Steel | 20 | 30 | 235 | 150 | 60 | 235 | 730 | Speed Boost / Sturdy |
+| METALSLIME | Steel | 20 | 30 | 232 | 150 | 60 | 232 | 724 | Speed Boost / Sturdy |
 | KINGSLIME | Water/Fairy | 170 | 125 | 80 | 30 | 75 | 120 | 600 | Water Absorb / Thick Fat |
 
 A slime has no element in its own game. The common one is Normal/Water, which
@@ -1519,13 +1519,16 @@ is what a bouncing blob of liquid is; the metal one is Steel, which is what it
 is called; and the king is Water/Fairy, on the grounds that a crown is a claim
 about the world rather than about chemistry.
 
-**The metal slime** has 235 in both defences against Shuckle's 230, on
-Shuckle's own 20 HP - the bulkiest thing in the game by a hair, and a hair is
-all there is to spare. `ModifyStatByNature` keeps its intermediate in a `u16`
-and the file warns about it: a nature-boosted stat above 595 overflows, which
-happens at a base stat of **248**. At 235 the margin is thirteen points. The
-rest of the joke is mechanical - catch rate 3, and 255 experience if you land
-the hit.
+**The metal slime** has 232 in both defences against Shuckle's 230, on
+Shuckle's own 20 HP - the bulkiest thing in the game, by two points. The rest
+of the joke is mechanical: catch rate 3, and 255 experience if you land the hit.
+
+The number is chosen with the overflow in mind rather than against it.
+`ModifyStatByNature` keeps its intermediate in a `u16`, and the file warns
+about it: a nature-boosted stat above 595 wraps. That happens at a **base stat
+of 248**, not at Shuckle's 230 - 230 is simply as high as vanilla ever goes.
+Maxed out, base 232 gives a stat of 563 and 563 x 110 = 61,930, sixteen base
+points clear of the edge.
 
 **The king slime** is a pseudo-legendary's 600, laid out as Snorlax's 540 with
 sixty points spread over it: HP +10, Attack +15, Defence +15, Sp.Atk +10,

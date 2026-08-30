@@ -144,12 +144,13 @@ MONS = [
               "entirely. It bounces rather than\n"
               "walks, and seems delighted to be\n"
               "here at all."),
-    # 235 in both defences against Shuckle's 230, on Shuckle's own 20 HP: the
-    # bulkiest thing in the game by a hair. 248 is the hard ceiling - above it a
-    # nature-boosted stat overflows the u16 in ModifyStatByNature - so this
-    # leaves thirteen points of margin and no more.
+    # 232 in both defences against Shuckle's 230, on Shuckle's own 20 HP: the
+    # bulkiest thing in the game, by two points. The hard ceiling is a base of
+    # 248 - above that a nature-boosted stat overflows the u16 in
+    # ModifyStatByNature - so this is sixteen points clear of it rather than
+    # thirteen. Neither was ever at risk; the margin is just cheap.
     dict(const='METAL_SLIME', dir='metal_slime', name='METALSLIME', cat='Quicksilver',
-         types=('STEEL', 'STEEL'), stats=(20, 30, 235, 150, 60, 235),
+         types=('STEEL', 'STEEL'), stats=(20, 30, 232, 150, 60, 232),
          catch=3, exp=255, ev=dict(SpDefense=2), gender='MON_GENDERLESS',
          cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
          abilities=('SPEED_BOOST', 'STURDY'), color='GRAY',
