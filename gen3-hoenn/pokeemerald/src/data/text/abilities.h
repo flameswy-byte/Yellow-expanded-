@@ -70,6 +70,7 @@ static const u8 sSwarmDescription[] = _("Ups BUG moves in a pinch.");
 static const u8 sRockHeadDescription[] = _("Prevents recoil damage.");
 static const u8 sDroughtDescription[] = _("Summons sunlight in battle.");
 static const u8 sSnowWarningDescription[] = _("Summons a hailstorm in battle.");
+static const u8 sAssimilateDescription[] = _("Doubles what training gives it.");
 static const u8 sArenaTrapDescription[] = _("Prevents fleeing.");
 static const u8 sVitalSpiritDescription[] = _("Prevents sleep.");
 static const u8 sWhiteSmokeDescription[] = _("Prevents ability reduction.");
@@ -159,6 +160,7 @@ const u8 gAbilityNames[ABILITIES_COUNT][ABILITY_NAME_LENGTH + 1] =
     [ABILITY_CACOPHONY] = _("CACOPHONY"),
     [ABILITY_AIR_LOCK] = _("AIR LOCK"),
     [ABILITY_SNOW_WARNING] = _("SNOW WARNING"),
+    [ABILITY_ASSIMILATE] = _("ASSIMILATE"),
 };
 
 const u8 *const gAbilityDescriptionPointers[ABILITIES_COUNT] =
@@ -242,4 +244,5 @@ const u8 *const gAbilityDescriptionPointers[ABILITIES_COUNT] =
     [ABILITY_CACOPHONY] = sCacophonyDescription,
     [ABILITY_AIR_LOCK] = sAirLockDescription,
     [ABILITY_SNOW_WARNING] = sSnowWarningDescription,
+    [ABILITY_ASSIMILATE] = sAssimilateDescription,
 };

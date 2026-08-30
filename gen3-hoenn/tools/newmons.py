@@ -48,6 +48,9 @@ import render_hoenn as R
 SLOTS = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
 ABILITY_NOTE = {
+    'SLIME':       'Assimilate is invented, not ported: it doubles the stat '
+                   'contribution of every IV and EV and the size of the '
+                   'nature modifier. See CalculateMonStats.',
     'WIMPOD':      'Wimp Out -> Run Away, which is the same idea and exists',
     'GOLISOPOD':   'Emergency Exit -> Intimidate; nothing here flees on damage, '
                    'and Intimidate plays the same defensive-pivot role',
@@ -124,30 +127,32 @@ MONS = [
               "bury those who anger it."),
     # --- and three that are not Pokemon at all -----------------------------
     # Dragon Quest slimes, from the dungeon crawler this repo's author writes.
-    # A slime has no element in its own game, so: the two soft ones are
-    # Normal/Water, which is what a bouncing blob of liquid is, and the metal
-    # one is Steel, which is what it is called.
-    # BST 455, between Mawile's 380 and Flygon's 520. Attack and Special
-    # Attack are equal on purpose - it is a mixed attacker with the movepool to
-    # use either, and the highest HP of anything at that budget.
+    # A slime has no element in its own game. The common one is Normal/Water,
+    # which is what a bouncing blob of liquid is; the metal one is Steel, which
+    # is what it is called; and the king is Water/Fairy, on the grounds that a
+    # crown is a claim about the world rather than about chemistry.
+    # BST 335, twenty off every stat, which is the price of Assimilate. Attack
+    # and Special Attack stay equal: it is a mixed attacker with the movepool to
+    # use either. On paper it is weak; trained, it is not.
     dict(const='SLIME', dir='slime', name='SLIME', cat='Goo',
-         types=('NORMAL', 'WATER'), stats=(100, 85, 70, 45, 85, 70),
+         types=('NORMAL', 'WATER'), stats=(80, 65, 50, 25, 65, 50),
          catch=45, exp=145, ev=dict(HP=1), gender='MON_GENDERLESS',
          cycles=25, growth='GROWTH_MEDIUM_FAST', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
-         abilities=('LIQUID_OOZE', 'STICKY_HOLD'), color='PURPLE',
+         abilities=('ASSIMILATE', 'NONE'), color='PURPLE',
          height=4, weight=80, cry='gulpin',
          text="A wanderer from somewhere else\n"
               "entirely. It bounces rather than\n"
               "walks, and seems delighted to be\n"
               "here at all."),
-    # Def and Sp.Def 200 apiece - short of Shuckle's 230 and above everything
-    # else in the game. Twenty HP means a fixed-damage move or anything super
-    # effective still ends it, which is the point: it tanks, it does not last.
+    # 235 in both defences against Shuckle's 230, on Shuckle's own 20 HP: the
+    # bulkiest thing in the game by a hair. 248 is the hard ceiling - above it a
+    # nature-boosted stat overflows the u16 in ModifyStatByNature - so this
+    # leaves thirteen points of margin and no more.
     dict(const='METAL_SLIME', dir='metal_slime', name='METALSLIME', cat='Quicksilver',
-         types=('STEEL', 'STEEL'), stats=(20, 30, 200, 150, 30, 200),
+         types=('STEEL', 'STEEL'), stats=(20, 30, 235, 150, 60, 235),
          catch=3, exp=255, ev=dict(SpDefense=2), gender='MON_GENDERLESS',
          cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
-         abilities=('RUN_AWAY', 'STURDY'), color='GRAY',
+         abilities=('SPEED_BOOST', 'STURDY'), color='GRAY',
          height=3, weight=200, cry='nosepass',
          text="Almost nothing can hurt it and it\n"
               "would rather not find out. It flees\n"
@@ -157,7 +162,7 @@ MONS = [
     # over it: HP +10, Attack +15, Defence +15, Sp.Atk +10, Sp.Def +10, and
     # Speed left exactly where Snorlax has it.
     dict(const='KING_SLIME', dir='king_slime', name='KINGSLIME', cat='Sovereign',
-         types=('NORMAL', 'WATER'), stats=(170, 125, 80, 30, 75, 120),
+         types=('WATER', 'FAIRY'), stats=(170, 125, 80, 30, 75, 120),
          catch=25, exp=218, ev=dict(HP=3), gender='MON_GENDERLESS',
          cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
          abilities=('WATER_ABSORB', 'THICK_FAT'), color='BLUE',

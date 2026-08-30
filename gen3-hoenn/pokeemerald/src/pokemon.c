@@ -2811,12 +2811,46 @@ static u16 CalculateBoxMonChecksum(struct BoxPokemon *boxMon)
     return checksum;
 }
 
+// ABILITY_ASSIMILATE doubles the size of a nature's boost or penalty, so it
+// needs its own copy of the table lookup. The intermediate is a u32 here
+// rather than the u16 ModifyStatByNature keeps, so this path cannot overflow
+// at all - see the warning on that function.
+static u16 ModifyStatByNatureTwice(u8 nature, u16 stat, u8 statIndex)
+{
+    u32 retVal;
+
+    if (statIndex <= STAT_HP || statIndex > NUM_NATURE_STATS)
+        return stat;
+
+    switch (gNatureStatTable[nature][statIndex - 1])
+    {
+    case 1:
+        retVal = stat * 120;
+        retVal /= 100;
+        break;
+    case -1:
+        retVal = stat * 80;
+        retVal /= 100;
+        break;
+    default:
+        retVal = stat;
+        break;
+    }
+
+    return retVal;
+}
+
+// `gain` is 2 under ABILITY_ASSIMILATE and 1 otherwise. Note ev / 4 * gain
+// and not ev * gain / 4: what doubles is the contribution the EVs make, and
+// the division truncates before the doubling exactly as it does without it.
 #define CALC_STAT(base, iv, ev, statIndex, field)               \
 {                                                               \
     u8 baseStat = gSpeciesInfo[species].base;                   \
-    s32 n = (((2 * baseStat + iv + ev / 4) * level) / 100) + 5; \
+    s32 n = (((2 * baseStat + (iv) * gain + (ev) / 4 * gain)    \
+              * level) / 100) + 5;                              \
     u8 nature = GetNature(mon);                                 \
-    n = ModifyStatByNature(nature, n, statIndex);               \
+    n = (gain == 1) ? ModifyStatByNature(nature, n, statIndex)  \
+                    : ModifyStatByNatureTwice(nature, n, statIndex); \
     SetMonData(mon, field, &n);                                 \
 }
 
@@ -2839,6 +2873,9 @@ void CalculateMonStats(struct Pokemon *mon)
     u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
     s32 level = GetLevelFromMonExp(mon);
     s32 newMaxHP;
+    // Assimilate doubles what the mon takes from its own IVs and EVs, and
+    // from its nature. Base stats are untouched.
+    u8 gain = (GetMonAbility(mon) == ABILITY_ASSIMILATE) ? 2 : 1;
 
     SetMonData(mon, MON_DATA_LEVEL, &level);
 
@@ -2848,8 +2885,8 @@ void CalculateMonStats(struct Pokemon *mon)
     }
     else
     {
-        s32 n = 2 * gSpeciesInfo[species].baseHP + hpIV;
-        newMaxHP = (((n + hpEV / 4) * level) / 100) + level + 10;
+        s32 n = 2 * gSpeciesInfo[species].baseHP + hpIV * gain;
+        newMaxHP = (((n + hpEV / 4 * gain) * level) / 100) + level + 10;
     }
 
     gBattleScripting.levelUpHP = newMaxHP - oldMaxHP;
@@ -5737,6 +5774,18 @@ u16 SpeciesToCryId(u16 species)
     // appended past the end of vanilla's table. Without this they would fall
     // into the branch below and every one of them would sound like Unown.
     if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_NINETALES_A - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
         return 388 + (species - (SPECIES_LARVESTA - 1));
 
     // The six species added in the Old Unown slots have cries of their own,

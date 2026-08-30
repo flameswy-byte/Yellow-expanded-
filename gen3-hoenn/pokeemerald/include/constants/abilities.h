@@ -81,7 +81,10 @@
 #define ABILITY_AIR_LOCK 77
 // Gen 4. Added for Alolan Ninetales, whose whole identity it is.
 #define ABILITY_SNOW_WARNING 78
+// Not from any official game. A slime takes twice as much from what it eats:
+// see CalculateMonStats.
+#define ABILITY_ASSIMILATE 79
 
-#define ABILITIES_COUNT 79
+#define ABILITIES_COUNT 80
 
 #endif  // GUARD_CONSTANTS_ABILITIES_H

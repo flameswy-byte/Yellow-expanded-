@@ -59,7 +59,7 @@ RETYPE = {
 # this tool's business - but --check counts every Fairy in the game, so it has
 # to be told about them or it reports a species it cannot account for. Alolan
 # Ninetales arrives Ice/Fairy from tools/newmons.py.
-BY_DESIGN = {'NINETALES_A'}
+BY_DESIGN = {'NINETALES_A', 'KING_SLIME'}
 
 # the three Gen 3 moves Gen 6 made Fairy. All are status moves, so the
 # physical/special split is not affected by the change of type.

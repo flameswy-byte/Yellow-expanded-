@@ -1508,30 +1508,69 @@ Not Pokémon at all. The art comes from the author's own dungeon crawler
 metal slime and a kingslime already drawn, each with front, back and three
 animation frames.
 
-| | type | HP | Atk | Def | Spe | SpA | SpD | BST |
-|---|---|---|---|---|---|---|---|---|
-| SLIME | Normal/Water | 100 | 85 | 70 | 45 | 85 | 70 | 455 |
-| METALSLIME | Steel | 20 | 30 | 200 | 150 | 30 | 200 | 630 |
-| KINGSLIME | Normal/Water | 170 | 125 | 80 | 30 | 75 | 120 | 600 |
+| | type | HP | Atk | Def | Spe | SpA | SpD | BST | abilities |
+|---|---|---|---|---|---|---|---|---|---|
+| SLIME | Normal/Water | 80 | 65 | 50 | 25 | 65 | 50 | 335 | Assimilate |
+| METALSLIME | Steel | 20 | 30 | 235 | 150 | 60 | 235 | 730 | Speed Boost / Sturdy |
+| KINGSLIME | Water/Fairy | 170 | 125 | 80 | 30 | 75 | 120 | 600 | Water Absorb / Thick Fat |
 
-A slime has no element in its own game, so the two soft ones are Normal/Water,
-which is what a bouncing blob of liquid is, and the metal one is Steel, which
-is what it is called.
+A slime has no element in its own game. The common one is Normal/Water, which
+is what a bouncing blob of liquid is; the metal one is Steel, which is what it
+is called; and the king is Water/Fairy, on the grounds that a crown is a claim
+about the world rather than about chemistry.
 
-**Slime** sits at 455, between Mawile's 380 and Flygon's 520, with Attack and
-Special Attack deliberately equal and the largest HP that budget allows. It
-learns **fifty** TMs and HMs - nearly every offensive one in the game - because
-a mixed attacker with no coverage is just a worse single attacker.
+**The metal slime** has 235 in both defences against Shuckle's 230, on
+Shuckle's own 20 HP - the bulkiest thing in the game by a hair, and a hair is
+all there is to spare. `ModifyStatByNature` keeps its intermediate in a `u16`
+and the file warns about it: a nature-boosted stat above 595 overflows, which
+happens at a base stat of **248**. At 235 the margin is thirteen points. The
+rest of the joke is mechanical - catch rate 3, and 255 experience if you land
+the hit.
 
-**The metal slime** has 200 in both defences, short of Shuckle's 230 and above
-everything else in the game. Twenty HP is the counterweight: a fixed-damage
-move, or anything super effective, still ends it. It tanks, it does not last.
-The rest of the joke is mechanical too - Run Away, catch rate 3, and 255
-experience if you land the hit.
+**The king slime** is a pseudo-legendary's 600, laid out as Snorlax's 540 with
+sixty points spread over it: HP +10, Attack +15, Defence +15, Sp.Atk +10,
+Sp.Def +10, and Speed left exactly where Snorlax has it, at 30.
 
-**The king slime** is a pseudo-legendary's 600, laid out as Snorlax with sixty
-points spread over it: HP +10, Attack +15, Defence +15, Sp.Atk +10, Sp.Def +10,
-and Speed left exactly where Snorlax has it, at 30.
+### Assimilate
+
+`ABILITY_ASSIMILATE`, and unlike Snow Warning it is not from any official game:
+it doubles what a Pokémon takes from **its own training** - the stat
+contribution of every IV, of every EV, and the size of its nature's boost or
+penalty. Base stats are untouched.
+
+It lives in `CalculateMonStats`, which is the one place stats are computed, so
+everything downstream inherits it: battle, the summary screen, the Frontier's
+fixed spreads. `gain` is 2 under the ability and 1 otherwise.
+
+Two details in the arithmetic are deliberate:
+
+- `ev / 4 * gain`, not `ev * gain / 4`. What doubles is the *contribution* the
+  EVs make, and the division truncates before the doubling exactly as it does
+  without the ability.
+- The doubled nature needs its own copy of the table lookup,
+  `ModifyStatByNatureTwice`, at ±20% rather than ±10%. It keeps a `u32`, so
+  that path cannot overflow at all - which matters, because doubling pushes
+  the safe base-stat ceiling down from 248 to about 176. Slime's highest is 65.
+
+Slime pays 20 off every stat for it, dropping from 455 to 335. What that buys,
+at level 100 with 31 IVs and 252 HP / 252 Speed:
+
+| | trained | untrained |
+|---|---|---|
+| Slime, 335 BST, Assimilate | **1431** | 805 |
+| Slime, 455 BST, no ability | 1358 | **1045** |
+
+Which is the shape worth having: a wild one is markedly *worse* than an
+ordinary Pokémon, and a raised one is better. The ability is worth nothing
+until it is trained, which is what it says on the tin.
+
+One thing it does not do is punish a bad nature. On a fully invested stat a
+hindering nature under Assimilate still beats a hindering nature without it,
+because the doubled IVs and EVs outweigh the harsher multiplier. The nature
+half is close to pure upside; only the boosting case really compounds, and
+there it is large - 387 against 295 on a maxed Attack.
+
+
 
 **Quantising was the whole problem.** The sprites are RGBA with 38-66 distinct
 colours; Gen 3 gives them fifteen plus transparency. The first attempt used
