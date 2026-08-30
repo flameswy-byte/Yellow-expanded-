@@ -1375,9 +1375,34 @@ vanilla's 388-entry table.
 would read off the end of both. `--check` compares their length against the
 number of dex entries for exactly that reason.
 
-**Substitutions, named rather than faked.** Wimp Out, Emergency Exit, Snow
-Cloak and Snow Warning are all Gen 4+; each is replaced by the nearest ability
-that exists, and `--report` prints the list. Alolan Vulpix evolves with an Ice
+**Snow Warning is real.** It is the one Gen 4 ability here that was added to
+the engine rather than substituted, because it is the whole of what Alolan
+Ninetales is known for and hail already worked in battle - end-turn damage,
+animation, messages, Castform's ice form. Only the ability was missing. It
+follows Drought exactly: a switch-in case in `AbilityBattleEffects`, a battle
+script, a message, and a new `B_WEATHER_HAIL_PERMANENT` bit.
+
+That bit is the interesting part. Rain, sandstorm and sun each had a
+`_TEMPORARY` and a `_PERMANENT` flag; hail had only `_TEMPORARY`, because
+nothing in Gen 3 could summon it permanently. `gBattleWeather` is a u16 with
+bit 8 free, so hail now has both, and `ENDTURN_HAIL` gained the same
+`!(gBattleWeather & ..._PERMANENT) &&` guard that sun and sandstorm already
+carried - without it, permanent hail would tick down and stop after five turns.
+
+Widening the `B_WEATHER_HAIL` mask is the kind of edit that breaks something
+quietly, so the check was: every place hail is set uses `_TEMPORARY` explicitly.
+`Cmd_sethail` does, so the Hail move is unaffected, and it now fails while
+Snow Warning's hail is up - exactly as Sunny Day fails under Drought.
+
+Both Alolan forms get it, as both have it in the real games. `SNOW WARNING` is
+twelve characters, which is `ABILITY_NAME_LENGTH` exactly; one more and it
+would not have fitted.
+
+**The remaining substitutions, named rather than faked.** Wimp Out, Emergency
+Exit and Snow Cloak are Gen 4+ and are replaced by the nearest ability that
+exists - Run Away, Intimidate and Cute Charm. Intimidate is the closest of the
+three, playing the same defensive-pivot role Emergency Exit does. `--report`
+prints the list. Alolan Vulpix evolves with an Ice
 Stone, which Gen 3 does not have, so it evolves at level 35 rather than
 inventing an item with no icon and no shop to sell it. Level-up movesets drop
 First Impression, Quiver Dance and the rest for Gen 3 equivalents - and every

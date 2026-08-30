@@ -49,10 +49,12 @@ SLOTS = ['B', 'C', 'D', 'E', 'F', 'G']
 
 ABILITY_NOTE = {
     'WIMPOD':      'Wimp Out -> Run Away, which is the same idea and exists',
-    'GOLISOPOD':   'Emergency Exit -> Shell Armor; nothing here flees on damage',
-    'VULPIX_A':    'Snow Cloak -> Cute Charm; no hail-evasion ability exists',
-    'NINETALES_A': 'Snow Warning -> Cute Charm; no ability summons weather it '
-                   'could summon, and adding one is a bigger change than this',
+    'GOLISOPOD':   'Emergency Exit -> Intimidate; nothing here flees on damage, '
+                   'and Intimidate plays the same defensive-pivot role',
+    'VULPIX_A':    'Snow Cloak -> Cute Charm as the second slot; no hail-evasion ability exists. Snow Warning is real - see below',
+    'NINETALES_A': 'Snow Warning is not a substitution: it was added to the '
+                   'engine for these two. Snow Cloak still has no equivalent, '
+                   'so Cute Charm fills the second slot',
 }
 
 # name, dir, dex name, category, types, base stats (HP Atk Def Spe SpA SpD),
@@ -93,7 +95,7 @@ MONS = [
          types=('BUG', 'WATER'), stats=(75, 125, 140, 40, 60, 90),
          catch=45, exp=186, ev=dict(Defense=2), gender='PERCENT_FEMALE(50)',
          cycles=20, growth='GROWTH_MEDIUM_FAST', eggs=('BUG', 'WATER_3'),
-         abilities=('SHELL_ARMOR', 'SWIFT_SWIM'), color='GRAY',
+         abilities=('INTIMIDATE', 'SWIFT_SWIM'), color='GRAY',
          height=20, weight=1080, cry='golisopod',
          text="It lives in caves along the\n"
               "shore. Its six arms are folded\n"
@@ -103,7 +105,7 @@ MONS = [
          types=('ICE', 'ICE'), stats=(38, 41, 40, 65, 50, 65),
          catch=190, exp=63, ev=dict(Speed=1), gender='PERCENT_FEMALE(75)',
          cycles=20, growth='GROWTH_MEDIUM_FAST', eggs=('FIELD', 'FIELD'),
-         abilities=('CUTE_CHARM', 'INNER_FOCUS'), color='WHITE',
+         abilities=('SNOW_WARNING', 'CUTE_CHARM'), color='WHITE',
          height=6, weight=99, cry='vulpix',
          text="A form that settled on snowy\n"
               "mountains. It breathes air cold\n"
@@ -114,7 +116,7 @@ MONS = [
          catch=75, exp=178, ev=dict(SpDefense=1, Speed=1),
          gender='PERCENT_FEMALE(75)',
          cycles=20, growth='GROWTH_MEDIUM_FAST', eggs=('FIELD', 'FIELD'),
-         abilities=('CUTE_CHARM', 'PRESSURE'), color='BLUE',
+         abilities=('SNOW_WARNING', 'CUTE_CHARM'), color='BLUE',
          height=11, weight=199, cry='ninetales',
          text="Revered as a guardian of the\n"
               "peaks. It is said to guide the\n"
@@ -303,8 +305,10 @@ def fill_tables(dry):
     for slot, m in zip(SLOTS, MONS):
         C, S, B = m['const'], camel(m['const']), BORROW[m['const']]
         P = per_file
-        P['src/data/pokemon/species_info.h'].append(
-            (f'    [SPECIES_{C}] = OLD_UNOWN_SPECIES_INFO,', species_block(m)))
+        # species_info is rewritten wholesale rather than matched on the
+        # placeholder, so editing the table above and re-running works. The
+        # other rows are one-line swaps where the new text is stable.
+        P['src/data/pokemon/species_info.h'].append((None, m))
         P['src/data/text/species_names.h'].append(
             (f'[SPECIES_{C}] = _("?")', f'[SPECIES_{C}] = _("{m["name"]}")'))
         # the three sprite tables share a macro but not their column spacing
@@ -340,6 +344,20 @@ def fill_tables(dry):
              f'[SPECIES_{C}] = gMonIcon_{S}'))
         P['src/pokemon_icon.c'].append(
             (f'    [SPECIES_{C}] = 0,', f'    [SPECIES_{C}] = {ICON_PAL[C]},'))
+
+    info = per_file.pop('src/data/pokemon/species_info.h')
+    src = read('src/data/pokemon/species_info.h')
+    for _, m in info:
+        C = m['const']
+        placeholder = f'    [SPECIES_{C}] = OLD_UNOWN_SPECIES_INFO,'
+        if placeholder in src:
+            src = src.replace(placeholder, species_block(m), 1)
+            continue
+        mm = re.search(rf'    \[SPECIES_{C}\] =\n    \{{.*?\n    \}},', src, re.S)
+        if mm is None:
+            sys.exit(f'species_info.h has no row for SPECIES_{C}')
+        src = src[:mm.start()] + species_block(m) + src[mm.end():]
+    write('src/data/pokemon/species_info.h', src, dry)
 
     for path, pairs in per_file.items():
         swap(path, pairs, dry)
