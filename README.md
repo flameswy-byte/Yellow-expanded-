@@ -82,17 +82,30 @@ work and documented in `gen3-hoenn/DESIGN.md` §4 so the line is visible.
 cd gen3-hoenn
 python3 tools/split.py --report   # the physical/special split, by type
 python3 tools/split.py --check    # verify the written table against the rule
+python3 tools/fairy.py --report   # the species and moves Gen 6 made Fairy
+python3 tools/fairy.py --check    # verify those, and the type chart
 ```
 
-The **physical/special split** gives every move its own damage category
-instead of reading it off the type, as Gen 4 did. The **Gen 4–6 battle
-constants** live in one header, `pokeemerald/include/constants/battle_config.h`:
-crit rate and crit damage, sleep length, Struggle's recoil. The reference for
-both is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade), the
-engine Radical Red is built on and the only part of it that is public. Where
-CFRU's default differs from the official games it wins, and the difference is
-written on the line — the crit rate is one such: CFRU defaults to Gen 7's 1/24,
-not Gen 6's 1/16.
+- The **physical/special split** gives every move its own damage category
+  instead of reading it off the type, as Gen 4 did.
+- The **Gen 4–6 battle constants** live in one header,
+  `pokeemerald/include/constants/battle_config.h`: crit rate and crit damage,
+  sleep length, Struggle's recoil, burn, paralysis, confusion.
+- The **quality-of-life batch** lives in `constants/qol_config.h`: running
+  indoors, reusable TMs, poison stopping at 1 HP, the BW repel prompt, and a
+  party-wide Exp. Share that switches on when Mr. Stone hands you the item.
+- The **Fairy type** is in, with a chart that matches Gen 6 — including the two
+  Steel resistances Gen 6 removed — eighteen retyped species, three retyped
+  moves, and both of its icons.
+
+The reference throughout is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade),
+the engine Radical Red is built on and the only part of it that is public. It
+is a specification here rather than a dependency: CFRU is not a decompilation,
+it links its code into free space in an existing Fire Red ROM and hooks vanilla
+routines at fixed addresses, so none of it compiles against pokeemerald. Where
+CFRU's default differs from the official games it wins and the difference is
+written on the line — the crit rate is one such, defaulting to Gen 7's 1/24
+rather than Gen 6's 1/16.
 
 ## Why one repo
 

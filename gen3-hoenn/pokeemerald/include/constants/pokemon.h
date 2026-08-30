@@ -21,7 +21,14 @@
 #define TYPE_ICE              15
 #define TYPE_DRAGON           16
 #define TYPE_DARK             17
-#define NUMBER_OF_MON_TYPES   18
+#define TYPE_FAIRY            18
+#define NUMBER_OF_MON_TYPES   19
+
+// Hidden Power picks a type from IVs across a fixed range - Fighting through
+// Dark, skipping Normal and TYPE_MYSTERY. It has never been able to roll
+// Fairy, in any generation, so this stays 15 rather than following
+// NUMBER_OF_MON_TYPES upwards as vanilla wrote it.
+#define NUMBER_OF_HIDDEN_POWER_TYPES 15
 
 // The physical/special split. Gen 3 reads a move's damage category off its
 // type - everything below TYPE_MYSTERY is physical, everything above it is

@@ -36,7 +36,12 @@ MARK = '.split'
 # physical. The special types are Fire, Water, Grass, Electric, Psychic, Ice,
 # Dragon and Dark.
 SPECIAL_TYPES = {'TYPE_FIRE', 'TYPE_WATER', 'TYPE_GRASS', 'TYPE_ELECTRIC',
-                 'TYPE_PSYCHIC', 'TYPE_ICE', 'TYPE_DRAGON', 'TYPE_DARK'}
+                 'TYPE_PSYCHIC', 'TYPE_ICE', 'TYPE_DRAGON', 'TYPE_DARK',
+                 # Fairy did not exist in Gen 3 and so has no Gen 3 default.
+                 # Listed as special because most Fairy moves are; it makes no
+                 # difference today, since all three of our Fairy moves deal no
+                 # damage, but it is the right default for a fourth.
+                 'TYPE_FAIRY'}
 
 # Special-typed moves that Gen 4 made physical: the punches, the bites, the
 # ones you hit something with.

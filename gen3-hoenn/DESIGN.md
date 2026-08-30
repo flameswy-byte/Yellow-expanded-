@@ -1177,6 +1177,79 @@ Rustboro when the patch is applied will not have it. That is not a case worth
 engineering around — this is a hack applied to a fresh ROM — but it is the kind
 of thing that looks like a bug if you meet it without warning.
 
+### The Fairy type
+
+The largest of the three engine changes, because a type is not one number — it
+is a constant, a chart, a name, two separate icon sheets, a pokédex filter, a
+trading board, and eighteen species.
+
+`python3 tools/fairy.py`, `--check`, `--report`. The tool does the repetitive
+half: the eighteen species and three moves that changed hands, written as a
+table rather than left as a diff. The structural half is in the source.
+
+**The constant.** `TYPE_FAIRY` is 18 and `NUMBER_OF_MON_TYPES` becomes 19. The
+sentinels are safe — `TYPE_FORESIGHT` is `0xFE` and `TYPE_ENDTABLE` is `0xFF`,
+so there is room for a great many more types before they collide.
+
+**Hidden Power is the trap.** Vanilla computes its type as
+
+```c
+gBattleStruct->dynamicMoveType = ((NUMBER_OF_MON_TYPES - 3) * typeBits) / 63 + 1;
+```
+
+which is written in terms of the type count and therefore silently follows it
+upwards. With nineteen types, Hidden Power starts rolling Fairy — something it
+cannot do in any generation. The range is a fixed property of the move, not a
+function of how many types exist, so it is now
+`NUMBER_OF_HIDDEN_POWER_TYPES`, pinned at 15, with the reasoning on the
+constant.
+
+**The chart** grows from 112 entries to 122. Twelve are Fairy's — six
+attacking, six defending — and two of vanilla's are deleted, because Gen 6 took
+away Steel's resistance to Dark and to Ghost. CFRU does the same; its `Ghost`
+and `Dark` rows have no `[TYPE_STEEL]` entry.
+
+Placement matters in one specific way. The table has a `TYPE_FORESIGHT` marker
+near its end, and everything below the marker is an immunity that Foresight and
+Scrappy can lift. Dragon's immunity to Fairy is not one of those, so it goes
+*above* the marker. After the change only Normal→Ghost and Fighting→Ghost sit
+below it, which is what vanilla had.
+
+**Two icon sheets, not one.** This is easy to get half right.
+
+- `graphics/types/` holds the 32×16 badges used on the summary screen. They are
+  concatenated in the order of `types :=` in `graphics_file_rules.mk`, so
+  appending `fairy` puts it at index 18 — exactly where `TYPE_FAIRY` looks. The
+  sheet goes from 5888 to 6144 bytes and the sprite-sheet size follows
+  `NUMBER_OF_MON_TYPES` on its own.
+- `graphics/interface/menu_info.png` holds the smaller 32×12 badges used in the
+  TM/HM pocket. That one is a 128×128 atlas addressed by tile offset, and 210
+  of its 256 tiles were already in use. Fairy went at offset `0x04`, in free
+  space in the top row.
+
+Neither badge was drawn freehand. The lettering was cut out of the existing
+badges — F from FIRE, A from WATER, I and R from FIRE, Y from FLYING — so the
+font matches exactly rather than approximately. Only `graphics/types/flying`
+has a Y, which is the constraint that decides where that glyph comes from.
+
+The colours needed no palette edits. The summary badge uses palette 2's
+existing pinks (`222,131,189` body, with `255,197,180` and `164,65,164` for the
+edges); the TM badge uses index 12, `255,90,139`, which Poison and Psychic
+already share — background sharing is the sheet's own practice, not a shortcut.
+
+**The eighteen species** are every Gen 6 Fairy that exists in Emerald: the
+Clefairy, Jigglypuff, Marill, Snubbull, Togepi and Ralts lines, plus Mr. Mime
+and Mawile. Cottonee, Flabébé and the rest of Gen 6's retypes are not in this
+game to retype. The tool records what each species was as well as what it
+becomes, so running it against an already-edited tree cannot move a species
+twice — and `--check` fails if any species is Fairy that the table does not
+name.
+
+**Three moves** move too: Charm, Sweet Kiss and Moonlight. All three deal no
+damage, so the physical/special split is untouched by the change. `split.py`
+now lists `TYPE_FAIRY` as special anyway, which makes no difference today and
+is the right default for a fourth.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being
