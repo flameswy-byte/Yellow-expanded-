@@ -391,6 +391,13 @@ gCryTable::
 
 	.align 2
 gCryTable_Reverse::
+	cry Cry_Larvesta
+	cry Cry_Volcarona
+	cry Cry_Wimpod
+	cry Cry_Golisopod
+	cry Cry_Vulpix
+	cry Cry_Ninetales
+
 	cry_reverse Cry_Bulbasaur
 	cry_reverse Cry_Ivysaur
 	cry_reverse Cry_Venusaur
@@ -779,3 +786,11 @@ gCryTable_Reverse::
 	cry_reverse Cry_Jirachi
 	cry_reverse Cry_Deoxys
 	cry_reverse Cry_Chimecho
+	cry_reverse Cry_Larvesta
+	cry_reverse Cry_Volcarona
+	cry_reverse Cry_Wimpod
+	cry_reverse Cry_Golisopod
+	cry_reverse Cry_Vulpix
+	cry_reverse Cry_Ninetales
+
+	@ Open Hoenn - tools/newmons.py

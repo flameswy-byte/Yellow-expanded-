@@ -422,3 +422,11 @@ const u32 gMonFrontPic_UnownY[] = INCGFX_U32("graphics/pokemon/unown/y/anim_fron
 const u32 gMonFrontPic_UnownZ[] = INCGFX_U32("graphics/pokemon/unown/z/anim_front.png", ".4bpp.lz");
 const u32 gMonFrontPic_UnownExclamationMark[] = INCGFX_U32("graphics/pokemon/unown/exclamation_mark/anim_front.png", ".4bpp.lz");
 const u32 gMonFrontPic_UnownQuestionMark[] = INCGFX_U32("graphics/pokemon/unown/question_mark/anim_front.png", ".4bpp.lz");
+
+// Open Hoenn - tools/newmons.py
+const u32 gMonFrontPic_Larvesta[] = INCGFX_U32("graphics/pokemon/larvesta/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_Volcarona[] = INCGFX_U32("graphics/pokemon/volcarona/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_Wimpod[] = INCGFX_U32("graphics/pokemon/wimpod/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_Golisopod[] = INCGFX_U32("graphics/pokemon/golisopod/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_VulpixA[] = INCGFX_U32("graphics/pokemon/vulpix_a/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_NinetalesA[] = INCGFX_U32("graphics/pokemon/ninetales_a/anim_front.png", ".4bpp.lz");

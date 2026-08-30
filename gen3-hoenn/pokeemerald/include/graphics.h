@@ -5071,3 +5071,47 @@ extern const u8 gMonMarkingsMenu_Gfx[];
 extern const u16 gMonMarkingsMenu_Pal[];
 
 #endif //GUARD_GRAPHICS_H
+
+// Open Hoenn - tools/newmons.py
+extern const u32 gMonStillFrontPic_Larvesta[];
+extern const u32 gMonPalette_Larvesta[];
+extern const u32 gMonBackPic_Larvesta[];
+extern const u32 gMonShinyPalette_Larvesta[];
+extern const u32 gMonFrontPic_Larvesta[];
+extern const u8 gMonIcon_Larvesta[];
+extern const u8 gMonFootprint_Larvesta[];
+extern const u32 gMonStillFrontPic_Volcarona[];
+extern const u32 gMonPalette_Volcarona[];
+extern const u32 gMonBackPic_Volcarona[];
+extern const u32 gMonShinyPalette_Volcarona[];
+extern const u32 gMonFrontPic_Volcarona[];
+extern const u8 gMonIcon_Volcarona[];
+extern const u8 gMonFootprint_Volcarona[];
+extern const u32 gMonStillFrontPic_Wimpod[];
+extern const u32 gMonPalette_Wimpod[];
+extern const u32 gMonBackPic_Wimpod[];
+extern const u32 gMonShinyPalette_Wimpod[];
+extern const u32 gMonFrontPic_Wimpod[];
+extern const u8 gMonIcon_Wimpod[];
+extern const u8 gMonFootprint_Wimpod[];
+extern const u32 gMonStillFrontPic_Golisopod[];
+extern const u32 gMonPalette_Golisopod[];
+extern const u32 gMonBackPic_Golisopod[];
+extern const u32 gMonShinyPalette_Golisopod[];
+extern const u32 gMonFrontPic_Golisopod[];
+extern const u8 gMonIcon_Golisopod[];
+extern const u8 gMonFootprint_Golisopod[];
+extern const u32 gMonStillFrontPic_VulpixA[];
+extern const u32 gMonPalette_VulpixA[];
+extern const u32 gMonBackPic_VulpixA[];
+extern const u32 gMonShinyPalette_VulpixA[];
+extern const u32 gMonFrontPic_VulpixA[];
+extern const u8 gMonIcon_VulpixA[];
+extern const u8 gMonFootprint_VulpixA[];
+extern const u32 gMonStillFrontPic_NinetalesA[];
+extern const u32 gMonPalette_NinetalesA[];
+extern const u32 gMonBackPic_NinetalesA[];
+extern const u32 gMonShinyPalette_NinetalesA[];
+extern const u32 gMonFrontPic_NinetalesA[];
+extern const u8 gMonIcon_NinetalesA[];
+extern const u8 gMonFootprint_NinetalesA[];

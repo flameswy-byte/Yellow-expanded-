@@ -1313,6 +1313,80 @@ than a compile error, which is how that one announced itself.
 now, but a pinned constant that is right costs nothing and the alternative is a
 latent trap for whoever makes the move reachable again.
 
+### Six Pokemon from later generations
+
+`python3 tools/newmons.py`, `--check`, `--report`.
+
+    Larvesta     Bug/Fire    -> Volcarona at 59
+    Volcarona    Bug/Fire
+    Wimpod       Bug/Water   -> Golisopod at 30
+    Golisopod    Bug/Water
+    Vulpix-A     Ice         -> Ninetales-A at 35
+    Ninetales-A  Ice/Fairy
+
+**They cost no space, because Emerald was already carrying them.** Species
+252-276 are `SPECIES_OLD_UNOWN_B..Z`, twenty-five slots left over from a
+scrapped Unown implementation. Every per-species table in the game already has
+a row for each: base stats, sprites, palettes, icons, footprints, animation
+scripts, learnsets, national dex numbers, Hoenn order, cry ids. So this is not
+an insertion. `NUM_SPECIES` does not move, nothing is resized, no save layout
+changes, and most of the wiring comes free from renaming the constant - twenty
+one files follow along. Six slots used, nineteen still spare.
+
+**Where the art came from.** DPE (Dynamic Pokemon Expansion), Skeli789's
+companion repo to CFRU and the other half of what Radical Red is built on. Like
+CFRU it is an insertion tool for a Fire Red binary rather than anything we can
+compile, but its *assets* are plain files and they are already in exactly the
+shapes this engine wants: front and back sprites 64x64 at 4bpp, icons 32x64 at
+4bpp, cries as mono 8-bit WAV. Its naming also encodes a useful convention -
+back sprites are called `gBackShinySprite`, because the front PNG's own palette
+is the normal one and the back PNG's is the shiny one. That maps one-to-one
+onto `front.png` / `back.png` / `normal.pal` / `shiny.pal`.
+
+Three conversions were not one-to-one:
+
+- **Icons do not carry their own palette here.** Every icon in the game draws
+  from one of three shared 16-colour palettes, chosen per species by
+  `gMonIconPaletteIndices`. Each icon was remapped by nearest-colour matching
+  against all three and assigned the best fit; the worst error is 5 per channel,
+  which is invisible at 32x32.
+- **`anim_front.png` is two stacked frames**, not one. A static mon repeats
+  frame 0.
+- **Cries** were resampled to 10512 Hz, which every vanilla cry uses, so the
+  pitch-shifting the cry system does behaves the same way. Alolan Vulpix and
+  Ninetales reuse the cries Emerald already has for their Kantonian selves.
+  Footprints are borrowed from the nearest body plan, since DPE has none.
+
+**The cry table had a trap in it.** `SpeciesToCryId` reads:
+
+```c
+if (species < SPECIES_TREECKO - 1)
+    return SPECIES_UNOWN - 1;
+```
+
+Every species in the Old Unown band falls into that branch, so without a new
+one all six would have sounded like Unown - and it would have *worked*, quietly,
+which is the worst kind of bug. Their samples are appended past the end of
+vanilla's 388-entry table.
+
+**Hidden Power was already gone**, which is lucky: `gPokedexOrder_Weight` and
+`_Height` stop at the vanilla count, and the loops that read them run to
+`NATIONAL_DEX_COUNT`. Raising the count to 392 without growing those two tables
+would read off the end of both. `--check` compares their length against the
+number of dex entries for exactly that reason.
+
+**Substitutions, named rather than faked.** Wimp Out, Emergency Exit, Snow
+Cloak and Snow Warning are all Gen 4+; each is replaced by the nearest ability
+that exists, and `--report` prints the list. Alolan Vulpix evolves with an Ice
+Stone, which Gen 3 does not have, so it evolves at level 35 rather than
+inventing an item with no icon and no shop to sell it. Level-up movesets drop
+First Impression, Quiver Dance and the rest for Gen 3 equivalents - and every
+move and TM name in the table is checked against the game's own data, which
+caught thirteen Gen 4+ names before a line of the tool ran.
+
+Ninetales-A is the first Pokemon in the game that is part Fairy by design
+rather than by retyping.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

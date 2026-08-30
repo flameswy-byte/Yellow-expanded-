@@ -2319,3 +2319,41 @@ const u8 gDeoxysPokedexText[] = _(
     "extraterrestrial virus exposed to a laser\n"
     "beam. Its body is configured for superior\n"
     "agility and speed.");
+
+// Open Hoenn - tools/newmons.py
+const u8 gLarvestaPokedexText[] = _(
+    "It is said to have been born in\n"
+    "the sun. The five horns on its\n"
+    "head shoot flames when it is\n"
+    "threatened.");
+
+const u8 gVolcaronaPokedexText[] = _(
+    "When volcanic ash blackened the\n"
+    "sky, it is said this POKéMON's\n"
+    "flames took the place of the\n"
+    "sun.");
+
+const u8 gWimpodPokedexText[] = _(
+    "A cowardly scavenger. It flees\n"
+    "the instant anything comes near,\n"
+    "leaving the shore it was picking\n"
+    "over spotlessly clean.");
+
+const u8 gGolisopodPokedexText[] = _(
+    "It lives in caves along the\n"
+    "shore. Its six arms are folded\n"
+    "in what looks like meditation,\n"
+    "until the moment it strikes.");
+
+const u8 gVulpixAPokedexText[] = _(
+    "A form that settled on snowy\n"
+    "mountains. It breathes air cold\n"
+    "enough to freeze its own\n"
+    "footprints behind it.");
+
+const u8 gNinetalesAPokedexText[] = _(
+    "Revered as a guardian of the\n"
+    "peaks. It is said to guide the\n"
+    "lost down the mountain, and to\n"
+    "bury those who anger it.");
+

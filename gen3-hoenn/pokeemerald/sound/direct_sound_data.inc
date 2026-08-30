@@ -2173,3 +2173,21 @@ DirectSoundWaveData_sd90_classical_whistle::
 	.align 2
 DirectSoundWaveData_sd90_enhanced_delay_shaku::
 	.incbin "sound/direct_sound_samples/sd90_enhanced_delay_shaku.bin"
+
+	@ Open Hoenn - tools/newmons.py
+
+	.align 2
+Cry_Golisopod::
+	.incbin "sound/direct_sound_samples/cries/golisopod.bin"
+
+	.align 2
+Cry_Larvesta::
+	.incbin "sound/direct_sound_samples/cries/larvesta.bin"
+
+	.align 2
+Cry_Volcarona::
+	.incbin "sound/direct_sound_samples/cries/volcarona.bin"
+
+	.align 2
+Cry_Wimpod::
+	.incbin "sound/direct_sound_samples/cries/wimpod.bin"

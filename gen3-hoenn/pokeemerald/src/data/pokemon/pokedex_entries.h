@@ -4643,4 +4643,79 @@ const struct PokedexEntry gPokedexEntries[] =
         .trainerScale = 290,
         .trainerOffset = 2,
     },
+
+
+// Open Hoenn - tools/newmons.py
+    [NATIONAL_DEX_LARVESTA] =
+    {
+        .categoryName = _("TORCH"),
+        .height = 11,
+        .weight = 288,
+        .description = gLarvestaPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_VOLCARONA] =
+    {
+        .categoryName = _("SUN"),
+        .height = 16,
+        .weight = 460,
+        .description = gVolcaronaPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_WIMPOD] =
+    {
+        .categoryName = _("TURN TAIL"),
+        .height = 5,
+        .weight = 120,
+        .description = gWimpodPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_GOLISOPOD] =
+    {
+        .categoryName = _("HARD SCALE"),
+        .height = 20,
+        .weight = 1080,
+        .description = gGolisopodPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_VULPIX_A] =
+    {
+        .categoryName = _("FOX"),
+        .height = 6,
+        .weight = 99,
+        .description = gVulpixAPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_NINETALES_A] =
+    {
+        .categoryName = _("FOX"),
+        .height = 11,
+        .weight = 199,
+        .description = gNinetalesAPokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
 };
