@@ -2145,7 +2145,7 @@ u8 AtkCanceler_UnableToUseMove(void)
                 gBattleMons[gBattlerAttacker].status2 -= STATUS2_CONFUSION_TURN(1);
                 if (gBattleMons[gBattlerAttacker].status2 & STATUS2_CONFUSION)
                 {
-                    if (Random() & 1)
+                    if (Random() % CONFUSION_SELF_HIT_DENOM >= CONFUSION_SELF_HIT_NUM)
                     {
                         // The MULTISTRING_CHOOSER is used here as a bool to signal
                         // to BattleScript_MoveUsedIsConfused whether or not damage was taken

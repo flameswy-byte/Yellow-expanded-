@@ -1062,14 +1062,59 @@ not immune — is **already** how Emerald behaves: `Cmd_typecalc` and both
 `TypeCalc` variants return early on `MOVE_STRUGGLE`, before any immunity is
 looked up. No change, recorded in the header so the absence is deliberate.
 
-**Burn.** 1/8 of maximum HP per turn in Gens 3–6, 1/16 from Gen 7. Vanilla's
-1/8 is already right for the generation being targeted, so `BURN_DAMAGE_FRACTION`
-is 8 and the only edit is that the site now names the constant.
+**Burn, paralysis, confusion.** These three came out of CFRU's `src/config.h`,
+which is worth naming as a source in its own right: 340 lines, 183 live
+`#define`s and 83 deliberately commented out, each with the author's reason on
+the line. The commented-out ones are the interesting half, because a switch
+CFRU ships *off* tells you what its default is:
 
-Not in this batch and not pretended otherwise: the Gen 5 burn/paralysis damage
-reduction, the Gen 6 accuracy of the evasion moves, the Gen 5 hail and sandstorm
-changes, and every move whose base power was rebalanced after Gen 3. The header
-is the list of what was changed, not a claim to have finished the job.
+```c
+//#define OLD_BURN_DAMAGE          // ...1/8 of max health instead of 1/16
+//#define OLD_PARALYSIS_SPD_DROP   // ...lower Spd down to 1/4 instead of 1/2
+//#define OLD_CONFUSION_CHANCE     // ...50% instead of 33%
+```
+
+All three of CFRU's defaults are Gen 7 numbers, and all three are gentler than
+Gen 6: burn takes 1/16 of maximum HP rather than 1/8, paralysis halves Speed
+rather than quartering it, and a confused Pokémon hits itself a third of the
+time rather than half. Taken, per *follow CFRU*, and flagged in the header as
+Gen 7 rather than Gen 6 — the same flag the crit rate carries.
+
+Confusion is the one worth a second look. Vanilla writes the coin flip as
+`Random() & 1`, which hides the fraction; it is now `Random() %
+CONFUSION_SELF_HIT_DENOM >= CONFUSION_SELF_HIT_NUM`, and note that the true
+branch is the move *going through*, not the self-hit — reading it the other way
+round inverts the odds.
+
+Not in this batch and not pretended otherwise: the Gen 6 accuracy of the
+evasion moves, the Gen 5 hail and sandstorm changes, Sturdy surviving from full
+HP, and every move whose base power was rebalanced after Gen 3. The header is
+the list of what was changed, not a claim to have finished the job.
+
+### Why CFRU is a specification and not a dependency
+
+Worth writing down, because the obvious question is why any of this is being
+retyped rather than merged.
+
+CFRU is not a decompilation. Its `linker.ld` places everything it compiles at
+`0x08000000 + 0x900000` — it links into free space at the tail of an existing
+8 MB **Fire Red** ROM and hooks vanilla routines at fixed addresses. There is
+no Makefile at the repository root and no source for the base game, because
+there is no base game in the repository. We are on Emerald, from source. A CFRU
+`.c` file would not compile here, and if it did it would be reading the wrong
+memory: different struct layouts, a different battle-script command table, a
+different save block.
+
+The project that *would* be directly adaptable is `rh-hideout/pokeemerald-expanded`
+— same base, same conventions, these features already ported. It is not
+reachable from this environment on any branch, which is why the ports here are
+by hand.
+
+What CFRU gives us instead is better than nothing and arguably better than a
+merge: a complete list of decisions with the reasoning attached, against which
+our own can be checked. Its README also attaches a licence condition — nothing
+built with it or its assets may ever take money, donations included. That costs
+us nothing, and it is recorded here so it is not discovered later.
 
 ---
 

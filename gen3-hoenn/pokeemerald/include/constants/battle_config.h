@@ -45,10 +45,31 @@
 // deliberate.
 
 // --- burn -----------------------------------------------------------------
-// Burn takes 1/8 of maximum HP per turn in Gens 3 to 6 and 1/16 from Gen 7, so
-// vanilla's 1/8 is already right for the generation being targeted and is left
-// alone. Recorded here so that the absence of a change is deliberate rather
-// than an oversight.
-#define BURN_DAMAGE_FRACTION 8
+// Burn takes 1/8 of maximum HP per turn in Gens 3 to 6 and 1/16 from Gen 7.
+// CFRU has an OLD_BURN_DAMAGE switch for the 1/8 behaviour and ships with it
+// commented out, so its default is the Gen 7 value.
+//
+// DIFFERS FROM GEN 6: this is the Gen 7 number, taken because it is CFRU's
+// default. It halves the pressure a burn puts on a wall.
+#define BURN_DAMAGE_FRACTION 16
+
+// --- paralysis ------------------------------------------------------------
+// Paralysis cut Speed to a quarter through Gen 6 and to a half from Gen 7.
+// CFRU's OLD_PARALYSIS_SPD_DROP is likewise commented out, so its default is
+// the half.
+//
+// DIFFERS FROM GEN 6: Gen 6 quarters Speed. A paralysed sweeper here still
+// outruns a good deal of what it used to lose to.
+#define PARALYSIS_SPEED_DIVISOR 2
+
+// --- confusion ------------------------------------------------------------
+// A confused Pokemon hit itself half the time through Gen 6 and a third of the
+// time from Gen 7. CFRU's OLD_CONFUSION_CHANCE is commented out, so a third.
+//
+// DIFFERS FROM GEN 6: Gen 6 is 50%. Expressed as a numerator over
+// CONFUSION_SELF_HIT_DENOM so the fraction is legible rather than hidden in a
+// bitmask - vanilla wrote it as Random() & 1.
+#define CONFUSION_SELF_HIT_NUM   1
+#define CONFUSION_SELF_HIT_DENOM 3
 
 #endif // GUARD_CONSTANTS_BATTLE_CONFIG_H
