@@ -146,6 +146,19 @@ PLANT = [
     # level 35 it evolves at.
     ('MAP_SHOAL_CAVE_LOW_TIDE_ICE_ROOM', 'land_mons', 10, 'SPECIES_VULPIX_A', 26, 28),
     ('MAP_SHOAL_CAVE_LOW_TIDE_ICE_ROOM', 'land_mons', 11, 'SPECIES_VULPIX_A', 26, 28),
+
+    # The three slimes are visitors rather than natives, so each takes only the
+    # single 1% slot rather than the 4%-and-1% pair the others get. Slot 11 is
+    # the rarest thing the land table can express.
+    #
+    # They are spread across three different maps on purpose: finding one
+    # should feel like finding one, not like finding the slime route.
+    ('MAP_ROUTE141', 'land_mons', 11, 'SPECIES_SLIME', 6, 8),
+    ('MAP_ROUTE146', 'land_mons', 11, 'SPECIES_KING_SLIME', 26, 28),
+    # The metal slime is the rarest and the least willing: catch rate 3, Run
+    # Away, and 255 experience if you somehow manage it. Route 148 is the
+    # furthest corner of the new region.
+    ('MAP_ROUTE148', 'land_mons', 11, 'SPECIES_METAL_SLIME', 22, 26),
 ]
 
 

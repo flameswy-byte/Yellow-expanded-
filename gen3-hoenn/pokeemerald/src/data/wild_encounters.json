@@ -9579,9 +9579,9 @@
                 "species": "SPECIES_ABRA"
               },
               {
-                "min_level": 7,
-                "max_level": 7,
-                "species": "SPECIES_SKITTY"
+                "min_level": 6,
+                "max_level": 8,
+                "species": "SPECIES_SLIME"
               }
             ]
           }
@@ -9924,9 +9924,9 @@
                 "species": "SPECIES_KECLEON"
               },
               {
-                "min_level": 28,
+                "min_level": 26,
                 "max_level": 28,
-                "species": "SPECIES_GLOOM"
+                "species": "SPECIES_KING_SLIME"
               }
             ]
           }
@@ -10147,9 +10147,9 @@
                 "species": "SPECIES_MANECTRIC"
               },
               {
-                "min_level": 25,
-                "max_level": 25,
-                "species": "SPECIES_KECLEON"
+                "min_level": 22,
+                "max_level": 26,
+                "species": "SPECIES_METAL_SLIME"
               }
             ]
           },

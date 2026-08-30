@@ -6,7 +6,7 @@
 #include "sprite.h"
 #include "constants/pokemon_icon.h"
 
-#define INVALID_ICON_SPECIES SPECIES_OLD_UNOWN_J // Oddly specific, used when an icon should be a ?. Any of the 'old unown' would work
+#define INVALID_ICON_SPECIES SPECIES_KING_SLIME // Oddly specific, used when an icon should be a ?. Any of the 'old unown' would work
 
 struct MonIconSpriteTemplate
 {
@@ -281,9 +281,9 @@ const u8 *const gMonIconTable[] =
     [SPECIES_GOLISOPOD] = gMonIcon_Golisopod,
     [SPECIES_VULPIX_A] = gMonIcon_VulpixA,
     [SPECIES_NINETALES_A] = gMonIcon_NinetalesA,
-    [SPECIES_OLD_UNOWN_H] = gMonIcon_QuestionMark,
-    [SPECIES_OLD_UNOWN_I] = gMonIcon_QuestionMark,
-    [SPECIES_OLD_UNOWN_J] = gMonIcon_QuestionMark,
+    [SPECIES_SLIME] = gMonIcon_Slime,
+    [SPECIES_METAL_SLIME] = gMonIcon_MetalSlime,
+    [SPECIES_KING_SLIME] = gMonIcon_KingSlime,
     [SPECIES_OLD_UNOWN_K] = gMonIcon_QuestionMark,
     [SPECIES_OLD_UNOWN_L] = gMonIcon_QuestionMark,
     [SPECIES_OLD_UNOWN_M] = gMonIcon_QuestionMark,
@@ -725,9 +725,9 @@ const u8 gMonIconPaletteIndices[] =
     [SPECIES_GOLISOPOD] = 2,
     [SPECIES_VULPIX_A] = 0,
     [SPECIES_NINETALES_A] = 2,
-    [SPECIES_OLD_UNOWN_H] = 0,
-    [SPECIES_OLD_UNOWN_I] = 0,
-    [SPECIES_OLD_UNOWN_J] = 0,
+    [SPECIES_SLIME] = 3,
+    [SPECIES_METAL_SLIME] = 4,
+    [SPECIES_KING_SLIME] = 5,
     [SPECIES_OLD_UNOWN_K] = 0,
     [SPECIES_OLD_UNOWN_L] = 0,
     [SPECIES_OLD_UNOWN_M] = 0,
@@ -915,8 +915,8 @@ const struct SpritePalette gMonIconPaletteTable[] =
     { gMonIconPalettes[1], POKE_ICON_BASE_PAL_TAG + 1 },
     { gMonIconPalettes[2], POKE_ICON_BASE_PAL_TAG + 2 },
 
-// There are only 3 actual palettes. The following are unused
-// and don't point to valid data.
+// Slots 3-5 were unused and pointed at nothing valid. They now hold one
+// palette each for the three slimes - see graphics.c.
     { gMonIconPalettes[3], POKE_ICON_BASE_PAL_TAG + 3 },
     { gMonIconPalettes[4], POKE_ICON_BASE_PAL_TAG + 4 },
     { gMonIconPalettes[5], POKE_ICON_BASE_PAL_TAG + 5 },

@@ -6685,13 +6685,54 @@ const union {
         .SHADOW_BALL = TRUE,
     } },
 
-    [SPECIES_OLD_UNOWN_H] = { .learnset = {
+    [SPECIES_SLIME] = { .learnset = {
+        .TOXIC = TRUE,
+        .PROTECT = TRUE,
+        .FRUSTRATION = TRUE,
+        .RETURN = TRUE,
+        .DOUBLE_TEAM = TRUE,
+        .FACADE = TRUE,
+        .REST = TRUE,
+        .ATTRACT = TRUE,
+        .SECRET_POWER = TRUE,
+        .SLUDGE_BOMB = TRUE,
+        .SHADOW_BALL = TRUE,
     } },
 
-    [SPECIES_OLD_UNOWN_I] = { .learnset = {
+    [SPECIES_METAL_SLIME] = { .learnset = {
+        .TOXIC = TRUE,
+        .PROTECT = TRUE,
+        .FRUSTRATION = TRUE,
+        .RETURN = TRUE,
+        .DOUBLE_TEAM = TRUE,
+        .FACADE = TRUE,
+        .REST = TRUE,
+        .ATTRACT = TRUE,
+        .SECRET_POWER = TRUE,
+        .IRON_TAIL = TRUE,
+        .LIGHT_SCREEN = TRUE,
+        .REFLECT = TRUE,
     } },
 
-    [SPECIES_OLD_UNOWN_J] = { .learnset = {
+    [SPECIES_KING_SLIME] = { .learnset = {
+        .TOXIC = TRUE,
+        .PROTECT = TRUE,
+        .FRUSTRATION = TRUE,
+        .RETURN = TRUE,
+        .DOUBLE_TEAM = TRUE,
+        .FACADE = TRUE,
+        .REST = TRUE,
+        .ATTRACT = TRUE,
+        .SECRET_POWER = TRUE,
+        .SURF = TRUE,
+        .DIVE = TRUE,
+        .RAIN_DANCE = TRUE,
+        .EARTHQUAKE = TRUE,
+        .BRICK_BREAK = TRUE,
+        .ROCK_TOMB = TRUE,
+        .STRENGTH = TRUE,
+        .ROCK_SMASH = TRUE,
+        .WATERFALL = TRUE,
     } },
 
     [SPECIES_OLD_UNOWN_K] = { .learnset = {

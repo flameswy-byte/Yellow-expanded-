@@ -364,9 +364,9 @@ static const u16 sSpeciesToHoennPokedexNum[NUM_SPECIES - 1] =
     SPECIES_TO_HOENN(GOLISOPOD),
     SPECIES_TO_HOENN(VULPIX_A),
     SPECIES_TO_HOENN(NINETALES_A),
-    SPECIES_TO_HOENN(OLD_UNOWN_H),
-    SPECIES_TO_HOENN(OLD_UNOWN_I),
-    SPECIES_TO_HOENN(OLD_UNOWN_J),
+    SPECIES_TO_HOENN(SLIME),
+    SPECIES_TO_HOENN(METAL_SLIME),
+    SPECIES_TO_HOENN(KING_SLIME),
     SPECIES_TO_HOENN(OLD_UNOWN_K),
     SPECIES_TO_HOENN(OLD_UNOWN_L),
     SPECIES_TO_HOENN(OLD_UNOWN_M),
@@ -780,9 +780,9 @@ static const u16 sSpeciesToNationalPokedexNum[NUM_SPECIES - 1] =
     SPECIES_TO_NATIONAL(GOLISOPOD),
     SPECIES_TO_NATIONAL(VULPIX_A),
     SPECIES_TO_NATIONAL(NINETALES_A),
-    SPECIES_TO_NATIONAL(OLD_UNOWN_H),
-    SPECIES_TO_NATIONAL(OLD_UNOWN_I),
-    SPECIES_TO_NATIONAL(OLD_UNOWN_J),
+    SPECIES_TO_NATIONAL(SLIME),
+    SPECIES_TO_NATIONAL(METAL_SLIME),
+    SPECIES_TO_NATIONAL(KING_SLIME),
     SPECIES_TO_NATIONAL(OLD_UNOWN_K),
     SPECIES_TO_NATIONAL(OLD_UNOWN_L),
     SPECIES_TO_NATIONAL(OLD_UNOWN_M),
@@ -1331,9 +1331,9 @@ static const u16 sHoennToNationalOrder[NUM_SPECIES - 1] =
     HOENN_TO_NATIONAL(GOLISOPOD),
     HOENN_TO_NATIONAL(VULPIX_A),
     HOENN_TO_NATIONAL(NINETALES_A),
-    HOENN_TO_NATIONAL(OLD_UNOWN_H),
-    HOENN_TO_NATIONAL(OLD_UNOWN_I),
-    HOENN_TO_NATIONAL(OLD_UNOWN_J),
+    HOENN_TO_NATIONAL(SLIME),
+    HOENN_TO_NATIONAL(METAL_SLIME),
+    HOENN_TO_NATIONAL(KING_SLIME),
     HOENN_TO_NATIONAL(OLD_UNOWN_K),
     HOENN_TO_NATIONAL(OLD_UNOWN_L),
     HOENN_TO_NATIONAL(OLD_UNOWN_M),
@@ -5737,6 +5737,24 @@ u16 SpeciesToCryId(u16 species)
     // appended past the end of vanilla's table. Without this they would fall
     // into the branch below and every one of them would sound like Unown.
     if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_NINETALES_A - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
         return 388 + (species - (SPECIES_LARVESTA - 1));
 
     if (species < SPECIES_TREECKO - 1)

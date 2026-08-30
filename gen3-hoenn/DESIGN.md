@@ -1501,6 +1501,62 @@ Two things about the tool itself, both found by running it twice:
 - `contest_moves.h` holds three tables, and reaching for the file's last `};`
   put six moves inside `gContestEffectFuncs`. Tables are now found by name.
 
+### Three slimes
+
+Not Pokémon at all. The art comes from the author's own dungeon crawler
+(`flameswy-byte/mystery-dungeon`, `assets/enemies/`), which had a Slime, a
+metal slime and a kingslime already drawn, each with front, back and three
+animation frames.
+
+    SLIME        Poison   45-40-40-40-45-40    Liquid Ooze / Sticky Hold
+    METALSLIME   Steel    20-30-150-150-30-150 Run Away / Sturdy
+    KINGSLIME    Water    110-95-90-35-70-85   Water Absorb / Thick Fat
+
+Types follow their colours, which is the only honest way to type something
+that has no element in its own game. The metal slime's stat line is the joke
+made mechanical: almost nothing can hurt it, it would rather not find out
+(Run Away, catch rate 3), and it is worth 255 experience if you land the hit.
+
+**Quantising was the whole problem.** The sprites are RGBA with 38-66 distinct
+colours; Gen 3 gives them fifteen plus transparency. The first attempt used
+median cut over the *pixels*, which is the obvious thing and is wrong: the
+king slime's large flat blue body outvoted its four-pixel mouth, and the
+palette came back with **no warm colour at all**. Its face vanished.
+
+Running median cut over the *distinct colours* instead - each colour counted
+once, however many pixels wear it - fixed it. Mean error per pixel, before and
+after:
+
+| | by pixel | by colour |
+|---|---|---|
+| Slime | 7.8 | **6.6** |
+| metal slime | 1.9 | 2.1 |
+| kingslime | 23.5 | **16.6** |
+
+and the king slime's warm palette slots went from 0 to 2.
+
+**Icons needed a new palette each.** Icons do not carry their own palette; every
+one draws from a shared table. Forcing three slimes onto the existing three
+gave a blue Slime, an olive metal slime and a purple king slime with an orange
+crown - mean error 39.5 a pixel. But `gMonIconPaletteTable` already reserved
+slots 3, 4 and 5 with a comment saying they *"don't point to valid data"*, so
+the three slimes take one each. Error drops to 6.6, 2.1 and 16.6, and three
+table entries that pointed at whatever followed the array in ROM now point at
+something real.
+
+Battle sprites are upscaled 2x with nearest neighbour - 19x14 becomes 38x28,
+32x30 becomes 64x60 - and the icons use the originals at native size. The metal
+slime's floating debris is kept: it is detached from the body, which looks
+deliberate in a battle frame and turns out to survive the 32x32 icon too.
+
+**Placement.** One slot each, slot 11, which at 1% is the rarest thing a land
+table can express, and on three different maps: Route 141 for the Slime,
+Route 146 for the king, Route 148 - the furthest corner of the new region -
+for the metal one. Finding one should feel like finding one, not like finding
+the slime route.
+
+They are genderless, in the no-eggs group, and do not evolve into each other.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

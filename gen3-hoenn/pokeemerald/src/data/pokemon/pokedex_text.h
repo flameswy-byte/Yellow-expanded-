@@ -2357,3 +2357,21 @@ const u8 gNinetalesAPokedexText[] = _(
     "lost down the mountain, and to\n"
     "bury those who anger it.");
 
+const u8 gSlimePokedexText[] = _(
+    "A wanderer from somewhere else\n"
+    "entirely. It bounces rather than\n"
+    "walks, and seems delighted to be\n"
+    "here at all.");
+
+const u8 gMetalSlimePokedexText[] = _(
+    "Almost nothing can hurt it and it\n"
+    "would rather not find out. It flees\n"
+    "at once, and those who fell one\n"
+    "are said to learn a great deal.");
+
+const u8 gKingSlimePokedexText[] = _(
+    "Said to be what happens when a\n"
+    "great many of its lesser kin\n"
+    "agree on a leader. The crown was\n"
+    "not given to it by anyone.");
+

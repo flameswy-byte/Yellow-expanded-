@@ -111,6 +111,9 @@ python3 tools/newmoves.py --check      # verify their data, animations and learn
   not move and no table is resized. Art and cries come from
   [DPE](https://github.com/Skeli789/Dynamic-Pokemon-Expansion), the other half
   of what Radical Red is built on.
+- **Three Dragon Quest slimes** — a Slime, a metal slime and a kingslime, with
+  art from this author's own dungeon crawler. Each takes one of the three icon
+  palette slots `gMonIconPaletteTable` reserved but never filled.
 - **Six moves to go with them** — Quiver Dance, Fiery Dance, Bug Buzz, First
   Impression, Aurora Veil and Dazzling Gleam, which is also the game's first
   damaging Fairy move. Animations are borrowed from moves of the same type and

@@ -430,3 +430,6 @@ const u32 gMonFrontPic_Wimpod[] = INCGFX_U32("graphics/pokemon/wimpod/anim_front
 const u32 gMonFrontPic_Golisopod[] = INCGFX_U32("graphics/pokemon/golisopod/anim_front.png", ".4bpp.lz");
 const u32 gMonFrontPic_VulpixA[] = INCGFX_U32("graphics/pokemon/vulpix_a/anim_front.png", ".4bpp.lz");
 const u32 gMonFrontPic_NinetalesA[] = INCGFX_U32("graphics/pokemon/ninetales_a/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_Slime[] = INCGFX_U32("graphics/pokemon/slime/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_MetalSlime[] = INCGFX_U32("graphics/pokemon/metal_slime/anim_front.png", ".4bpp.lz");
+const u32 gMonFrontPic_KingSlime[] = INCGFX_U32("graphics/pokemon/king_slime/anim_front.png", ".4bpp.lz");

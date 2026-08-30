@@ -4718,4 +4718,40 @@ const struct PokedexEntry gPokedexEntries[] =
         .trainerOffset = 0,
     },
 
+    [NATIONAL_DEX_SLIME] =
+    {
+        .categoryName = _("GOO"),
+        .height = 4,
+        .weight = 80,
+        .description = gSlimePokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_METAL_SLIME] =
+    {
+        .categoryName = _("QUICKSILVER"),
+        .height = 3,
+        .weight = 200,
+        .description = gMetalSlimePokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
+    [NATIONAL_DEX_KING_SLIME] =
+    {
+        .categoryName = _("SOVEREIGN"),
+        .height = 9,
+        .weight = 1500,
+        .description = gKingSlimePokedexText,
+        .pokemonScale = 256,
+        .pokemonOffset = 0,
+        .trainerScale = 256,
+        .trainerOffset = 0,
+    },
+
 };

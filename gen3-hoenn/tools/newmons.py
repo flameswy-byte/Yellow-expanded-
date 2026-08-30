@@ -45,7 +45,7 @@ sys.path.insert(0, HERE)
 import render_hoenn as R
 
 # The slots being taken over, in order. Species 252-257, national dex 387-392.
-SLOTS = ['B', 'C', 'D', 'E', 'F', 'G']
+SLOTS = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
 ABILITY_NOTE = {
     'WIMPOD':      'Wimp Out -> Run Away, which is the same idea and exists',
@@ -122,6 +122,41 @@ MONS = [
               "peaks. It is said to guide the\n"
               "lost down the mountain, and to\n"
               "bury those who anger it."),
+    # --- and three that are not Pokemon at all -----------------------------
+    # Dragon Quest slimes, from the dungeon crawler this repo's author writes.
+    # Types follow their colours, which is the only honest way to type
+    # something that has no element in its own game: purple goo is Poison, the
+    # metal one is Steel, the blue king is Water.
+    dict(const='SLIME', dir='slime', name='SLIME', cat='Goo',
+         types=('POISON', 'POISON'), stats=(45, 40, 40, 40, 45, 40),
+         catch=45, exp=62, ev=dict(HP=1), gender='MON_GENDERLESS',
+         cycles=25, growth='GROWTH_MEDIUM_FAST', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
+         abilities=('LIQUID_OOZE', 'STICKY_HOLD'), color='PURPLE',
+         height=4, weight=80, cry='gulpin',
+         text="A wanderer from somewhere else\n"
+              "entirely. It bounces rather than\n"
+              "walks, and seems delighted to be\n"
+              "here at all."),
+    dict(const='METAL_SLIME', dir='metal_slime', name='METALSLIME', cat='Quicksilver',
+         types=('STEEL', 'STEEL'), stats=(20, 30, 150, 150, 30, 150),
+         catch=3, exp=255, ev=dict(SpDefense=2), gender='MON_GENDERLESS',
+         cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
+         abilities=('RUN_AWAY', 'STURDY'), color='GRAY',
+         height=3, weight=200, cry='nosepass',
+         text="Almost nothing can hurt it and it\n"
+              "would rather not find out. It flees\n"
+              "at once, and those who fell one\n"
+              "are said to learn a great deal."),
+    dict(const='KING_SLIME', dir='king_slime', name='KINGSLIME', cat='Sovereign',
+         types=('WATER', 'WATER'), stats=(110, 95, 90, 35, 70, 85),
+         catch=25, exp=187, ev=dict(HP=2), gender='MON_GENDERLESS',
+         cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
+         abilities=('WATER_ABSORB', 'THICK_FAT'), color='BLUE',
+         height=9, weight=1500, cry='swalot',
+         text="Said to be what happens when a\n"
+              "great many of its lesser kin\n"
+              "agree on a leader. The crown was\n"
+              "not given to it by anyone."),
 ]
 
 EVOLUTIONS = {
@@ -147,6 +182,15 @@ LEARNSETS = {
     'GOLISOPOD': [(1, 'SLASH'), (1, 'FURY_CUTTER'), (1, 'WATER_PULSE'),
                   (30, 'SWORDS_DANCE'), (36, 'IRON_DEFENSE'), (42, 'CRUNCH'),
                   (48, 'SURF'), (54, 'MEGAHORN'), (60, 'SUPERPOWER')],
+    'SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (7, 'ACID'), (13, 'BIDE'),
+              (19, 'SLUDGE'), (25, 'AMNESIA'), (31, 'ACID_ARMOR'),
+              (37, 'SLUDGE_BOMB'), (43, 'BODY_SLAM')],
+    'METAL_SLIME': [(1, 'HARDEN'), (1, 'TACKLE'), (10, 'IRON_DEFENSE'),
+                    (20, 'AGILITY'), (30, 'METAL_SOUND'), (40, 'IRON_TAIL'),
+                    (50, 'DOUBLE_TEAM'), (60, 'PROTECT')],
+    'KING_SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (9, 'WATER_GUN'),
+                   (17, 'BODY_SLAM'), (25, 'AMNESIA'), (33, 'SURF'),
+                   (41, 'BULK_UP'), (49, 'EARTHQUAKE'), (57, 'DOUBLE_EDGE')],
     'VULPIX_A': [(1, 'POWDER_SNOW'), (1, 'TAIL_WHIP'), (9, 'ROAR'),
                  (13, 'QUICK_ATTACK'), (17, 'ICY_WIND'), (21, 'CONFUSE_RAY'),
                  (25, 'ICE_BEAM'), (29, 'SAFEGUARD'), (33, 'IMPRISON'),
@@ -174,6 +218,13 @@ TMHM = {
     'VULPIX_A': 'TOXIC HAIL BLIZZARD ICE_BEAM PROTECT FRUSTRATION RETURN '
                 'DOUBLE_TEAM FACADE REST ATTRACT SECRET_POWER SAFEGUARD '
                 'SWIFT RAIN_DANCE',
+    'SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
+             'ATTRACT SECRET_POWER SLUDGE_BOMB SHADOW_BALL',
+    'METAL_SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
+                   'ATTRACT SECRET_POWER IRON_TAIL LIGHT_SCREEN REFLECT',
+    'KING_SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
+                  'ATTRACT SECRET_POWER SURF DIVE RAIN_DANCE EARTHQUAKE '
+                  'BRICK_BREAK ROCK_TOMB STRENGTH ROCK_SMASH WATERFALL',
     'NINETALES_A': 'TOXIC HAIL BLIZZARD ICE_BEAM PROTECT FRUSTRATION RETURN '
                    'DOUBLE_TEAM FACADE REST ATTRACT SECRET_POWER SAFEGUARD '
                    'SWIFT RAIN_DANCE CALM_MIND PSYCHIC LIGHT_SCREEN '
@@ -185,12 +236,16 @@ TMHM = {
 # Animation scripts are generic and shared; borrowing from the nearest body
 # plan is cheaper and looks better than keeping the Old Unown placeholders.
 BORROW = {'LARVESTA': 'Wurmple', 'VOLCARONA': 'Masquerain', 'WIMPOD': 'Anorith',
-          'GOLISOPOD': 'Armaldo', 'VULPIX_A': 'Vulpix', 'NINETALES_A': 'Ninetales'}
+          'GOLISOPOD': 'Armaldo', 'VULPIX_A': 'Vulpix', 'NINETALES_A': 'Ninetales',
+          'SLIME': 'Gulpin', 'METAL_SLIME': 'Nosepass', 'KING_SLIME': 'Swalot'}
 
 # Which of the three shared icon palettes each icon was remapped onto when the
 # sprites were converted. Icons do not carry their own palette in this engine.
 ICON_PAL = {'LARVESTA': 0, 'VOLCARONA': 0, 'WIMPOD': 2,
-            'GOLISOPOD': 2, 'VULPIX_A': 0, 'NINETALES_A': 2}
+            'GOLISOPOD': 2, 'VULPIX_A': 0, 'NINETALES_A': 2,
+            # one each, in the three slots gMonIconPaletteTable reserved but
+            # never filled; fifteen colours will not cover all three at once
+            'SLIME': 3, 'METAL_SLIME': 4, 'KING_SLIME': 5}
 
 EV_FIELDS = ('HP', 'Attack', 'Defense', 'Speed', 'SpAttack', 'SpDefense')
 FIRST_CRY_ID = 388          # first free slot past vanilla's 388-entry cry table
@@ -483,9 +538,12 @@ def wire_dex(dry):
     write('src/data/pokemon/pokedex_entries.h',
           t[:i].rstrip() + '\n\n' + mark + entries + '};\n', dry)
 
-    swap('include/constants/pokedex.h',
-         [('#define NATIONAL_DEX_COUNT  NATIONAL_DEX_DEOXYS',
-           f"#define NATIONAL_DEX_COUNT  NATIONAL_DEX_{MONS[-1]['const']}")], dry)
+    # whatever it currently names, it should name the last of ours - matching
+    # only vanilla's NATIONAL_DEX_DEOXYS breaks the moment the table grows
+    d = read('include/constants/pokedex.h')
+    d = re.sub(r'#define NATIONAL_DEX_COUNT  NATIONAL_DEX_\w+',
+               f"#define NATIONAL_DEX_COUNT  NATIONAL_DEX_{MONS[-1]['const']}", d)
+    write('include/constants/pokedex.h', d, dry)
 
 
 def wire_orders(dry):
