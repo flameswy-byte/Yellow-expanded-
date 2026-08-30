@@ -1508,14 +1508,30 @@ Not Pokémon at all. The art comes from the author's own dungeon crawler
 metal slime and a kingslime already drawn, each with front, back and three
 animation frames.
 
-    SLIME        Poison   45-40-40-40-45-40    Liquid Ooze / Sticky Hold
-    METALSLIME   Steel    20-30-150-150-30-150 Run Away / Sturdy
-    KINGSLIME    Water    110-95-90-35-70-85   Water Absorb / Thick Fat
+| | type | HP | Atk | Def | Spe | SpA | SpD | BST |
+|---|---|---|---|---|---|---|---|---|
+| SLIME | Normal/Water | 100 | 85 | 70 | 45 | 85 | 70 | 455 |
+| METALSLIME | Steel | 20 | 30 | 200 | 150 | 30 | 200 | 630 |
+| KINGSLIME | Normal/Water | 170 | 125 | 80 | 30 | 75 | 120 | 600 |
 
-Types follow their colours, which is the only honest way to type something
-that has no element in its own game. The metal slime's stat line is the joke
-made mechanical: almost nothing can hurt it, it would rather not find out
-(Run Away, catch rate 3), and it is worth 255 experience if you land the hit.
+A slime has no element in its own game, so the two soft ones are Normal/Water,
+which is what a bouncing blob of liquid is, and the metal one is Steel, which
+is what it is called.
+
+**Slime** sits at 455, between Mawile's 380 and Flygon's 520, with Attack and
+Special Attack deliberately equal and the largest HP that budget allows. It
+learns **fifty** TMs and HMs - nearly every offensive one in the game - because
+a mixed attacker with no coverage is just a worse single attacker.
+
+**The metal slime** has 200 in both defences, short of Shuckle's 230 and above
+everything else in the game. Twenty HP is the counterweight: a fixed-damage
+move, or anything super effective, still ends it. It tanks, it does not last.
+The rest of the joke is mechanical too - Run Away, catch rate 3, and 255
+experience if you land the hit.
+
+**The king slime** is a pseudo-legendary's 600, laid out as Snorlax with sixty
+points spread over it: HP +10, Attack +15, Defence +15, Sp.Atk +10, Sp.Def +10,
+and Speed left exactly where Snorlax has it, at 30.
 
 **Quantising was the whole problem.** The sprites are RGBA with 38-66 distinct
 colours; Gen 3 gives them fifteen plus transparency. The first attempt used

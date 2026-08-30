@@ -124,12 +124,15 @@ MONS = [
               "bury those who anger it."),
     # --- and three that are not Pokemon at all -----------------------------
     # Dragon Quest slimes, from the dungeon crawler this repo's author writes.
-    # Types follow their colours, which is the only honest way to type
-    # something that has no element in its own game: purple goo is Poison, the
-    # metal one is Steel, the blue king is Water.
+    # A slime has no element in its own game, so: the two soft ones are
+    # Normal/Water, which is what a bouncing blob of liquid is, and the metal
+    # one is Steel, which is what it is called.
+    # BST 455, between Mawile's 380 and Flygon's 520. Attack and Special
+    # Attack are equal on purpose - it is a mixed attacker with the movepool to
+    # use either, and the highest HP of anything at that budget.
     dict(const='SLIME', dir='slime', name='SLIME', cat='Goo',
-         types=('POISON', 'POISON'), stats=(45, 40, 40, 40, 45, 40),
-         catch=45, exp=62, ev=dict(HP=1), gender='MON_GENDERLESS',
+         types=('NORMAL', 'WATER'), stats=(100, 85, 70, 45, 85, 70),
+         catch=45, exp=145, ev=dict(HP=1), gender='MON_GENDERLESS',
          cycles=25, growth='GROWTH_MEDIUM_FAST', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
          abilities=('LIQUID_OOZE', 'STICKY_HOLD'), color='PURPLE',
          height=4, weight=80, cry='gulpin',
@@ -137,8 +140,11 @@ MONS = [
               "entirely. It bounces rather than\n"
               "walks, and seems delighted to be\n"
               "here at all."),
+    # Def and Sp.Def 200 apiece - short of Shuckle's 230 and above everything
+    # else in the game. Twenty HP means a fixed-damage move or anything super
+    # effective still ends it, which is the point: it tanks, it does not last.
     dict(const='METAL_SLIME', dir='metal_slime', name='METALSLIME', cat='Quicksilver',
-         types=('STEEL', 'STEEL'), stats=(20, 30, 150, 150, 30, 150),
+         types=('STEEL', 'STEEL'), stats=(20, 30, 200, 150, 30, 200),
          catch=3, exp=255, ev=dict(SpDefense=2), gender='MON_GENDERLESS',
          cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
          abilities=('RUN_AWAY', 'STURDY'), color='GRAY',
@@ -147,9 +153,12 @@ MONS = [
               "would rather not find out. It flees\n"
               "at once, and those who fell one\n"
               "are said to learn a great deal."),
+    # A pseudo-legendary's 600, laid out as Snorlax with sixty points spread
+    # over it: HP +10, Attack +15, Defence +15, Sp.Atk +10, Sp.Def +10, and
+    # Speed left exactly where Snorlax has it.
     dict(const='KING_SLIME', dir='king_slime', name='KINGSLIME', cat='Sovereign',
-         types=('WATER', 'WATER'), stats=(110, 95, 90, 35, 70, 85),
-         catch=25, exp=187, ev=dict(HP=2), gender='MON_GENDERLESS',
+         types=('NORMAL', 'WATER'), stats=(170, 125, 80, 30, 75, 120),
+         catch=25, exp=218, ev=dict(HP=3), gender='MON_GENDERLESS',
          cycles=40, growth='GROWTH_SLOW', eggs=('NO_EGGS_DISCOVERED', 'NO_EGGS_DISCOVERED'),
          abilities=('WATER_ABSORB', 'THICK_FAT'), color='BLUE',
          height=9, weight=1500, cry='swalot',
@@ -182,9 +191,12 @@ LEARNSETS = {
     'GOLISOPOD': [(1, 'SLASH'), (1, 'FURY_CUTTER'), (1, 'WATER_PULSE'),
                   (30, 'SWORDS_DANCE'), (36, 'IRON_DEFENSE'), (42, 'CRUNCH'),
                   (48, 'SURF'), (54, 'MEGAHORN'), (60, 'SUPERPOWER')],
-    'SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (7, 'ACID'), (13, 'BIDE'),
-              (19, 'SLUDGE'), (25, 'AMNESIA'), (31, 'ACID_ARMOR'),
-              (37, 'SLUDGE_BOMB'), (43, 'BODY_SLAM')],
+    # rebuilt for Normal/Water, and mixed: a physical and a special line that
+    # climb together, since its Attack and Sp.Atk are equal
+    'SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (6, 'WATER_GUN'), (11, 'BIDE'),
+              (16, 'BUBBLE_BEAM'), (21, 'AMNESIA'), (26, 'BODY_SLAM'),
+              (31, 'WATER_PULSE'), (36, 'SWIFT'), (41, 'SURF'),
+              (46, 'DOUBLE_EDGE')],
     'METAL_SLIME': [(1, 'HARDEN'), (1, 'TACKLE'), (10, 'IRON_DEFENSE'),
                     (20, 'AGILITY'), (30, 'METAL_SOUND'), (40, 'IRON_TAIL'),
                     (50, 'DOUBLE_TEAM'), (60, 'PROTECT')],
@@ -218,13 +230,25 @@ TMHM = {
     'VULPIX_A': 'TOXIC HAIL BLIZZARD ICE_BEAM PROTECT FRUSTRATION RETURN '
                 'DOUBLE_TEAM FACADE REST ATTRACT SECRET_POWER SAFEGUARD '
                 'SWIFT RAIN_DANCE',
+    # "huge move coverage": everything offensive the TM list has, which for a
+    # mixed attacker is most of the point of it
     'SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
-             'ATTRACT SECRET_POWER SLUDGE_BOMB SHADOW_BALL',
+             'ATTRACT SECRET_POWER SLUDGE_BOMB SHADOW_BALL WATER_PULSE '
+             'ICE_BEAM BLIZZARD THUNDERBOLT THUNDER SHOCK_WAVE FLAMETHROWER '
+             'FIRE_BLAST SOLAR_BEAM GIGA_DRAIN PSYCHIC EARTHQUAKE DIG '
+             'ROCK_TOMB BRICK_BREAK IRON_TAIL AERIAL_ACE HYPER_BEAM '
+             'RAIN_DANCE SUNNY_DAY HAIL SANDSTORM CALM_MIND BULK_UP '
+             'LIGHT_SCREEN REFLECT SAFEGUARD TORMENT THIEF SNATCH '
+             'SKILL_SWAP SWIFT ROAR SURF STRENGTH ROCK_SMASH WATERFALL '
+             'DIVE CUT',
     'METAL_SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
                    'ATTRACT SECRET_POWER IRON_TAIL LIGHT_SCREEN REFLECT',
     'KING_SLIME': 'TOXIC PROTECT FRUSTRATION RETURN DOUBLE_TEAM FACADE REST '
                   'ATTRACT SECRET_POWER SURF DIVE RAIN_DANCE EARTHQUAKE '
-                  'BRICK_BREAK ROCK_TOMB STRENGTH ROCK_SMASH WATERFALL',
+                  'BRICK_BREAK ROCK_TOMB STRENGTH ROCK_SMASH WATERFALL '
+                  'ICE_BEAM BLIZZARD THUNDERBOLT SHADOW_BALL HYPER_BEAM '
+                  'BULK_UP CALM_MIND LIGHT_SCREEN REFLECT SWIFT ROAR '
+                  'WATER_PULSE HAIL SOLAR_BEAM',
     'NINETALES_A': 'TOXIC HAIL BLIZZARD ICE_BEAM PROTECT FRUSTRATION RETURN '
                    'DOUBLE_TEAM FACADE REST ATTRACT SECRET_POWER SAFEGUARD '
                    'SWIFT RAIN_DANCE CALM_MIND PSYCHIC LIGHT_SCREEN '
