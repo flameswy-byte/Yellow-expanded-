@@ -40,4 +40,7 @@ enum ItemTMHMOrEvolutionStone
     ITEM_IS_EVOLUTION_STONE,
 };
 
+bool8 CanUseAnotherRepel(void);
+void UseAnotherRepel(void);
+
 #endif // GUARD_ITEM_USE_H

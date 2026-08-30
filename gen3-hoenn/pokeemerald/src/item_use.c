@@ -41,6 +41,8 @@
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/songs.h"
+#include "constants/qol_config.h"
+#include "constants/vars.h"
 
 static void SetUpItemUseCallback(u8);
 static void FieldCB_UseItemOnField(void);
@@ -854,6 +856,7 @@ static void Task_UseRepel(u8 taskId)
     if (!IsSEPlaying())
     {
         VarSet(VAR_REPEL_STEP_COUNT, GetItemHoldEffectParam(gSpecialVar_ItemId));
+        VarSet(VAR_LAST_REPEL_USED, gSpecialVar_ItemId);
         RemoveUsedItem();
         if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE)
             DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, CloseItemMessage);
@@ -1126,3 +1129,33 @@ void ItemUseOutOfBattle_CannotUse(u8 taskId)
 }
 
 #undef tUsingRegisteredKeyItem
+
+// --- the BW repel prompt --------------------------------------------------
+// When a repel runs out, offer another of the same kind rather than making the
+// player open the bag. Which kind was used is remembered across saves in
+// VAR_LAST_REPEL_USED, written by Task_UseRepel above.
+//
+// The switch is enforced here rather than in the script, so that turning
+// BW_REPEL_PROMPT off leaves EventScript_RepelWoreOff falling straight through
+// to the message vanilla printed.
+bool8 CanUseAnotherRepel(void)
+{
+    u16 item = VarGet(VAR_LAST_REPEL_USED);
+
+    if (!BW_REPEL_PROMPT || item == ITEM_NONE || !CheckBagHasItem(item, 1))
+        return FALSE;
+
+    // buffered here because the question names the repel, and this is the only
+    // place that has already proved the player still has one
+    CopyItemName(item, gStringVar1);
+    return TRUE;
+}
+
+void UseAnotherRepel(void)
+{
+    u16 item = VarGet(VAR_LAST_REPEL_USED);
+
+    VarSet(VAR_REPEL_STEP_COUNT, GetItemHoldEffectParam(item));
+    RemoveBagItem(item, 1);
+    CopyItemName(item, gStringVar1);
+}

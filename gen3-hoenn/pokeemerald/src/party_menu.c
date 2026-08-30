@@ -72,6 +72,7 @@
 #include "constants/party_menu.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "constants/qol_config.h"
 
 enum {
     MENU_SUMMARY,
@@ -4775,7 +4776,7 @@ static void Task_LearnedMove(u8 taskId)
     if (move[1] == 0)
     {
         AdjustFriendship(mon, FRIENDSHIP_EVENT_LEARN_TMHM);
-        if (item < ITEM_HM01)
+        if (item < ITEM_HM01 && !REUSABLE_TMS)
             RemoveBagItem(item, 1);
     }
     GetMonNickname(mon, gStringVar1);

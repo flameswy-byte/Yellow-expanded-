@@ -1091,6 +1091,59 @@ evasion moves, the Gen 5 hail and sandstorm changes, Sturdy surviving from full
 HP, and every move whose base power was rebalanced after Gen 3. The header is
 the list of what was changed, not a claim to have finished the job.
 
+### The quality-of-life batch
+
+`include/constants/qol_config.h`, built the same way as the battle constants and
+for the same reason: what has been changed about *playing* the game should be
+readable in one place. Each entry names the CFRU switch it corresponds to and
+whether CFRU takes it, so a disagreement is visible rather than silent.
+
+| | CFRU switch | CFRU ships it |
+|---|---|---|
+| `RUN_INDOORS` | `CAN_RUN_IN_BUILDINGS` | on |
+| `REUSABLE_TMS` | `REUSABLE_TMS` | **off** |
+| `POISON_SURVIVES_AT_1_HP` | `POISON_1_HP_SURVIVAL` | on |
+| `BW_REPEL_PROMPT` | `BW_REPEL_SYSTEM` | on |
+
+**Running indoors** is one condition. Emerald refuses to run wherever the map
+header clears `allowRunning`, which is every interior. The per-metatile refusal
+is deliberately left alone — the Petalburg gym's mats and the sliding ice are
+puzzles, not politeness. Note that `RS_IsRunningDisallowed` next to it in
+`bike.c` is a Ruby/Sapphire leftover with no callers; editing that one instead
+would have changed nothing, which is worth knowing before believing a fix
+works.
+
+**Reusable TMs** is the one place this batch overrides CFRU on purpose. CFRU
+ships the switch off with a warning that every TM then needs its Mystery byte
+set — a Fire Red binary-hacking detail with no counterpart in a decompilation,
+where the item simply is not removed. Radical Red itself has reusable TMs, and
+Radical Red is what was asked for. HMs were already never consumed, so this
+only makes TMs behave the way HMs always did.
+
+**Poison stopping at 1 HP** needs care, because the obvious edit is wrong. The
+vanilla line is `if (hp == 0 || --hp == 0) numFainted++;`, and adding a "stop at
+1" branch in front of it still lets a mon *at* 1 HP fall through to the
+decrement and faint. The branch has to cover the whole case, and a mon already
+at 0 must not be counted as a new faint — it was fainted before this step, not
+by it. The whiteout path is untouched and still reachable.
+
+**The BW repel prompt** is the only one that needed more than a condition. When
+a repel runs out the game now offers another of the same kind, if the bag still
+has one:
+
+- `VAR_LAST_REPEL_USED` — an alias for `VAR_UNUSED_0x40DB`, verified free by
+  grepping the whole tree, written by `Task_UseRepel` beside the step count.
+- `CanUseAnotherRepel` / `UseAnotherRepel` — two new specials in `item_use.c`.
+  The first buffers the repel's name into `gStringVar1`, because the question
+  names it and that function is the only place that has already proved the
+  player still has one.
+- `EventScript_RepelWoreOff` — rewritten to ask, and to fall through to
+  vanilla's message when the answer is no or the bag is empty.
+
+The switch is enforced in C rather than in the script, so turning
+`BW_REPEL_PROMPT` off leaves the script falling straight through to the message
+vanilla printed, with no dead script branches to reason about.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

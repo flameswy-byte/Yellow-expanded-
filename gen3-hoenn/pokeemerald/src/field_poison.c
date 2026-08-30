@@ -16,6 +16,7 @@
 #include "trainer_hill.h"
 #include "constants/field_poison.h"
 #include "constants/party_menu.h"
+#include "constants/qol_config.h"
 
 static bool32 IsMonValidSpecies(struct Pokemon *pokemon)
 {
@@ -131,8 +132,17 @@ s32 DoPoisonFieldEffect(void)
         {
             // Apply poison damage
             hp = GetMonData(pokemon, MON_DATA_HP);
-            if (hp == 0 || --hp == 0)
+            if (POISON_SURVIVES_AT_1_HP)
+            {
+                // stop at 1 rather than at 0, and never count as a new faint -
+                // a mon already at 0 was fainted before this step, not by it
+                if (hp > 1)
+                    hp--;
+            }
+            else if (hp == 0 || --hp == 0)
+            {
                 numFainted++;
+            }
 
             SetMonData(pokemon, MON_DATA_HP, &hp);
             numPoisoned++;
