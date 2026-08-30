@@ -119,6 +119,53 @@ def build_table(kind, tables, weights):
              if tables.get(nb, {}).get(kind)]
     return {'encounter_rate': round(sum(rates) / len(rates)), 'mons': mons}
 
+
+# The six species tools/newmons.py adds are native to nowhere in Hoenn, so
+# unlike everything else in this file they are placed by hand rather than
+# derived from the neighbours. Each line overwrites one slot of one table on
+# one map, so the rest of that map's list is untouched, and re-running is
+# idempotent because the slot is addressed by index rather than by what is in
+# it.
+#
+# Only the first stage of each line is placed. Volcarona, Golisopod and Alolan
+# Ninetales are evolution-only, which is what makes them worth having.
+#
+#   (map, table, slot, species, min level, max level)
+PLANT = [
+    # Larvesta on the one new route with a volcanic character - it is the map
+    # that inherited Slugma from its neighbours. Slots 10 and 11 are 4% and 1%.
+    ('MAP_ROUTE144', 'land_mons', 10, 'SPECIES_LARVESTA', 15, 16),
+    ('MAP_ROUTE144', 'land_mons', 11, 'SPECIES_LARVESTA', 15, 16),
+
+    # Wimpod on a shore route, at a level that leaves a climb to Golisopod's 30
+    ('MAP_ROUTE140', 'land_mons', 10, 'SPECIES_WIMPOD', 12, 13),
+    ('MAP_ROUTE140', 'land_mons', 11, 'SPECIES_WIMPOD', 12, 13),
+
+    # Alolan Vulpix in the one genuinely cold room in the game. Its neighbours
+    # there are Spheal and Zubat at 26-28, so it arrives most of the way to the
+    # level 35 it evolves at.
+    ('MAP_SHOAL_CAVE_LOW_TIDE_ICE_ROOM', 'land_mons', 10, 'SPECIES_VULPIX_A', 26, 28),
+    ('MAP_SHOAL_CAVE_LOW_TIDE_ICE_ROOM', 'land_mons', 11, 'SPECIES_VULPIX_A', 26, 28),
+]
+
+
+def plant(groups):
+    """Put the hand-placed species into their slots, on our maps and vanilla's
+    alike. Runs after the derived tables, so it always wins."""
+    by_map = {e['map']: e for e in groups}
+    done = 0
+    for const, kind, slot, species, lo, hi in PLANT:
+        e = by_map.get(const)
+        if e is None or kind not in e:
+            sys.exit(f'{const} has no {kind} table to plant {species} in')
+        mons = e[kind]['mons']
+        if slot >= len(mons):
+            sys.exit(f'{const} {kind} has {len(mons)} slots, no slot {slot}')
+        mons[slot] = {'min_level': lo, 'max_level': hi, 'species': species}
+        done += 1
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dry-run', action='store_true')
@@ -175,6 +222,9 @@ def main():
     for const, entry in done.items():
         grp['encounters'] = [e for e in grp['encounters'] if e['map'] != const]
         grp['encounters'].append(entry)
+
+    n = plant(grp['encounters'])
+    print(f'{n} hand-placed slots for the species newmons.py added')
 
     # the table is indexed by map order in some tools; keep it deterministic
     grp['encounters'].sort(key=lambda e: e['map'])

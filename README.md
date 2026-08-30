@@ -85,6 +85,8 @@ python3 tools/split.py --check    # verify the written table against the rule
 python3 tools/fairy.py --report   # the species and moves Gen 6 made Fairy
 python3 tools/fairy.py --check    # verify those, and the type chart
 python3 tools/hiddenpower.py --check   # verify Hidden Power is unreachable
+python3 tools/newmons.py --report      # the six species added from later gens
+python3 tools/newmons.py --check       # verify their rows, assets and sort orders
 ```
 
 - The **physical/special split** gives every move its own damage category
@@ -101,6 +103,12 @@ python3 tools/hiddenpower.py --check   # verify Hidden Power is unreachable
 - **Hidden Power is gone**, removed from every pool the game can draw a move
   from rather than rewritten. TM10 teaches Swift instead. Metronome is the pool
   a learnset edit cannot close, so it is forbidden there explicitly.
+- **Six Pokémon from later generations** — Larvesta, Volcarona, Wimpod,
+  Golisopod and the Alolan Vulpix line — in the twenty-five species slots
+  Emerald was already carrying for a scrapped Unown feature. `NUM_SPECIES` does
+  not move and no table is resized. Art and cries come from
+  [DPE](https://github.com/Skeli789/Dynamic-Pokemon-Expansion), the other half
+  of what Radical Red is built on.
 
 The reference throughout is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade),
 the engine Radical Red is built on and the only part of it that is public. It

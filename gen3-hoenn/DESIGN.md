@@ -1385,7 +1385,28 @@ move and TM name in the table is checked against the game's own data, which
 caught thirteen Gen 4+ names before a line of the tool ran.
 
 Ninetales-A is the first Pokemon in the game that is part Fairy by design
-rather than by retyping.
+rather than by retyping - which `fairy.py --check` immediately reported as a
+nineteenth Fairy it could not account for. It now carries a `BY_DESIGN` set, so
+the check stays strict rather than being loosened.
+
+**Where they are found.** `tools/encounters.py` owns `wild_encounters.json`, so
+placement had to live there or the next run would erase it. It grew a `PLANT`
+table: unlike everything else in that file, these six are native to nowhere and
+are placed by hand rather than derived from the neighbours. Each line
+overwrites one slot of one table by index, so the rest of the map's list is
+untouched and re-running is idempotent.
+
+| | where | level |
+|---|---|---|
+| Larvesta | Route 144, the new route that inherited Slugma | 15-16 |
+| Wimpod | Route 140, a shore route | 12-13 |
+| Alolan Vulpix | Shoal Cave ice room, beside Spheal | 26-28 |
+
+Each takes slots 10 and 11 of its table, which are the 4% and 1% slots, so 5%
+in total. Only the first stage of each line is placed; Volcarona, Golisopod and
+Alolan Ninetales are evolution-only, which is what makes them worth having.
+Larvesta's climb to 59 is a long one, and it is a long one in the real games
+too.
 
 ### Why CFRU is a specification and not a dependency
 

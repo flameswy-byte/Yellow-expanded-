@@ -55,6 +55,12 @@ RETYPE = {
     'TOGETIC':    (('NORMAL', 'FLYING'), ('FAIRY', 'FLYING')),
 }
 
+# Species that are Fairy by design rather than by retyping, and so are not
+# this tool's business - but --check counts every Fairy in the game, so it has
+# to be told about them or it reports a species it cannot account for. Alolan
+# Ninetales arrives Ice/Fairy from tools/newmons.py.
+BY_DESIGN = {'NINETALES_A'}
+
 # the three Gen 3 moves Gen 6 made Fairy. All are status moves, so the
 # physical/special split is not affected by the change of type.
 MOVE_RETYPE = {'CHARM': 'NORMAL', 'SWEET_KISS': 'NORMAL', 'MOONLIGHT': 'NORMAL'}
@@ -158,9 +164,14 @@ def check():
         if got.get(name) != after:
             bad.append(f'{name} is {got.get(name)}, should be {after}')
     fairies = [n for n, a, b, _ in species if 'FAIRY' in (a, b)]
-    if len(fairies) != len(RETYPE):
-        bad.append(f'{len(fairies)} species are Fairy, expected {len(RETYPE)}: '
-                   + ', '.join(sorted(set(fairies) - set(RETYPE))))
+    unexplained = set(fairies) - set(RETYPE) - BY_DESIGN
+    if unexplained:
+        bad.append(f'{len(fairies)} species are Fairy; these are neither in the '
+                   'retype table nor Fairy by design: ' + ', '.join(sorted(unexplained)))
+    missing = BY_DESIGN - set(fairies)
+    if missing:
+        bad.append('expected to be Fairy by design but is not: '
+                   + ', '.join(sorted(missing)))
 
     moves = open(f'{R.ROOT}/{MOVES}').read()
     for name in MOVE_RETYPE:
