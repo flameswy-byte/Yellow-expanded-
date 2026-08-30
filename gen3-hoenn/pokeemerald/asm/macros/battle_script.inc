@@ -695,6 +695,10 @@
 	.byte B_SCR_OP_SETRAIN
 	.endm
 
+	.macro setauroraveil
+	.byte B_SCR_OP_SETAURORAVEIL
+	.endm
+
 	.macro setreflect
 	.byte B_SCR_OP_SETREFLECT
 	.endm

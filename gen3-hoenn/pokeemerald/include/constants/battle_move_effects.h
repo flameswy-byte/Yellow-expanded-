@@ -215,7 +215,14 @@
 #define EFFECT_CALM_MIND 211
 #define EFFECT_DRAGON_DANCE 212
 #define EFFECT_CAMOUFLAGE 213
+// Added for the moves in tools/newmoves.py. Bug Buzz and Dazzling Gleam
+// needed no new effect - EFFECT_SPECIAL_DEFENSE_DOWN_HIT and EFFECT_HIT
+// already do what they want.
+#define EFFECT_QUIVER_DANCE 214
+#define EFFECT_SPECIAL_ATTACK_UP_HIT 215
+#define EFFECT_FIRST_IMPRESSION 216
+#define EFFECT_AURORA_VEIL 217
 
-#define NUM_BATTLE_MOVE_EFFECTS 214
+#define NUM_BATTLE_MOVE_EFFECTS 218
 
 #endif  // GUARD_CONSTANTS_BATTLE_MOVE_EFFECTS_H

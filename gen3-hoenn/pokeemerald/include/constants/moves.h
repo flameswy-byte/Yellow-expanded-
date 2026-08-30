@@ -357,9 +357,18 @@
 #define MOVE_DOOM_DESIRE 353
 #define MOVE_PSYCHO_BOOST 354
 
-#define MOVES_COUNT 355
 
 // Used for checks for moves affected by Disable, Mimic, etc.
 #define MOVE_UNAVAILABLE 0xFFFF
+
+// Open Hoenn - tools/newmoves.py
+#define MOVE_QUIVER_DANCE 355
+#define MOVE_FIERY_DANCE 356
+#define MOVE_BUG_BUZZ 357
+#define MOVE_FIRST_IMPRESSION 358
+#define MOVE_AURORA_VEIL 359
+#define MOVE_DAZZLING_GLEAM 360
+
+#define MOVES_COUNT 361
 
 #endif  // GUARD_CONSTANTS_MOVES_H

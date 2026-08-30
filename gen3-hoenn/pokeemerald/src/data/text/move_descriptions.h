@@ -1418,6 +1418,27 @@ static const u8 sPsychoBoostDescription[] = _(
     "but sharply lowers SP. ATK.");
 
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
+
+// Open Hoenn - tools/newmoves.py (strings)
+static const u8 sQuiverDanceDescription[] = _(
+    "Raises SP. ATK,\n"
+    "SP. DEF and SPEED.");
+static const u8 sFieryDanceDescription[] = _(
+    "A fiery dance that may\n"
+    "raise SP. ATK.");
+static const u8 sBugBuzzDescription[] = _(
+    "A sound wave that may\n"
+    "lower SP. DEF.");
+static const u8 sFirstImpressionDescription[] = _(
+    "Strikes first, but only\n"
+    "on the first turn.");
+static const u8 sAuroraVeilDescription[] = _(
+    "Blunts all attacks,\n"
+    "but only during hail.");
+static const u8 sDazzlingGleamDescription[] = _(
+    "Damages foes with a\n"
+    "burst of light.");
+
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
     [MOVE_POUND - 1] = sPoundDescription,
@@ -1774,4 +1795,13 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_WATER_PULSE - 1] = sWaterPulseDescription,
     [MOVE_DOOM_DESIRE - 1] = sDoomDesireDescription,
     [MOVE_PSYCHO_BOOST - 1] = sPsychoBoostDescription,
+
+// Open Hoenn - tools/newmoves.py
+    [MOVE_QUIVER_DANCE - 1] = sQuiverDanceDescription,
+    [MOVE_FIERY_DANCE - 1] = sFieryDanceDescription,
+    [MOVE_BUG_BUZZ - 1] = sBugBuzzDescription,
+    [MOVE_FIRST_IMPRESSION - 1] = sFirstImpressionDescription,
+    [MOVE_AURORA_VEIL - 1] = sAuroraVeilDescription,
+    [MOVE_DAZZLING_GLEAM - 1] = sDazzlingGleamDescription,
+
 };

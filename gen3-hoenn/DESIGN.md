@@ -1433,6 +1433,65 @@ Alolan Ninetales are evolution-only, which is what makes them worth having.
 Larvesta's climb to 59 is a long one, and it is a long one in the real games
 too.
 
+### Six moves, so the new species are the ones they are named after
+
+`python3 tools/newmoves.py`, `--check`, `--report`.
+
+Substituting Amnesia and Agility for Quiver Dance was not the same Pokémon.
+One turn of setup raising three stats is most of what makes Volcarona a threat;
+two separate +2 moves that skip Special Attack is not it.
+
+| id | move | | |
+|---|---|---|---|
+| 355 | Quiver Dance | Bug status | Sp.Atk, Sp.Def, Speed up one |
+| 356 | Fiery Dance | Fire special 80 | 50% Sp.Atk up one |
+| 357 | Bug Buzz | Bug special 90 | 10% Sp.Def down one |
+| 358 | First Impression | Bug physical 90 | +2 priority, first turn only |
+| 359 | Aurora Veil | Ice status | both screens, hail only |
+| 360 | Dazzling Gleam | Fairy special 80 | hits both foes |
+
+Dazzling Gleam is also the game's **first damaging Fairy move**. Retyping Charm,
+Sweet Kiss and Moonlight gave the type no offence at all, which was a gap the
+Fairy work left open.
+
+**Only two needed new machinery.** Bug Buzz is the existing
+`EFFECT_SPECIAL_DEFENSE_DOWN_HIT` and Dazzling Gleam is a plain `EFFECT_HIT`.
+Of the rest:
+
+- **Quiver Dance** is Calm Mind's script with a third stage bolted on.
+- **Fiery Dance** needed no new command at all — `MOVE_EFFECT_SP_ATK_PLUS_1`
+  with the existing `MOVE_EFFECT_AFFECTS_USER` flag is already a self-targeting
+  secondary effect.
+- **First Impression** is Fake Out with the flinch removed. The +2 priority is
+  move data, not script, so the whole script is three lines.
+- **Aurora Veil** is the only one with a new battle-script command. It is one
+  side status in the real games; here `setauroraveil` raises both screens at
+  once, which is the same thing from the player's side. Its script gates on
+  `jumpifhalfword CMP_NO_COMMON_BITS, gBattleWeather, B_WEATHER_HAIL` — the
+  same test Solar Beam uses for sun — and it reuses Safeguard's
+  "covered by a veil" message, which fits it exactly.
+
+**Animations are borrowed, not drawn**, each from a move of the same type and
+shape: Dragon Dance, Flame Wheel, Silver Wind, Slash, Light Screen and Swift.
+Same reasoning as the Fairy type badges reusing existing lettering — a
+wrong-looking animation is worse than a familiar one. The animation table is
+indexed by move id and had eleven spare entries, so it still has five.
+
+**Two tools disagreed, and the check caught it.** `newmoves.py` writes a
+`.split` for each move, but `split.py` owns that field and runs after: it read
+Bug Buzz as Bug-typed, applied the Gen 3 default of physical, and silently
+flipped it. Bug Buzz is a sound move and is special, so it is now in
+`split.py`'s override list. The lesson is that `split.py` is the authority on
+damage categories and anything else writing that field is only setting an
+initial value.
+
+Two things about the tool itself, both found by running it twice:
+
+- `include/constants/moves.h` ends in an include guard, so cutting the tool's
+  block at its marker took the `#endif` with it.
+- `contest_moves.h` holds three tables, and reaching for the file's last `};`
+  put six moves inside `gContestEffectFuncs`. Tables are now found by name.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

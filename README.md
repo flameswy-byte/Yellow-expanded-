@@ -87,6 +87,8 @@ python3 tools/fairy.py --check    # verify those, and the type chart
 python3 tools/hiddenpower.py --check   # verify Hidden Power is unreachable
 python3 tools/newmons.py --report      # the six species added from later gens
 python3 tools/newmons.py --check       # verify their rows, assets and sort orders
+python3 tools/newmoves.py --report     # the six moves added for them
+python3 tools/newmoves.py --check      # verify their data, animations and learnsets
 ```
 
 - The **physical/special split** gives every move its own damage category
@@ -109,6 +111,10 @@ python3 tools/newmons.py --check       # verify their rows, assets and sort orde
   not move and no table is resized. Art and cries come from
   [DPE](https://github.com/Skeli789/Dynamic-Pokemon-Expansion), the other half
   of what Radical Red is built on.
+- **Six moves to go with them** — Quiver Dance, Fiery Dance, Bug Buzz, First
+  Impression, Aurora Veil and Dazzling Gleam, which is also the game's first
+  damaging Fairy move. Animations are borrowed from moves of the same type and
+  shape rather than drawn.
 
 The reference throughout is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade),
 the engine Radical Red is built on and the only part of it that is public. It

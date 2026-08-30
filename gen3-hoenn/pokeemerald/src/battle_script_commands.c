@@ -204,6 +204,7 @@ static void Cmd_tryhealhalfhealth(void);
 static void Cmd_trymirrormove(void);
 static void Cmd_setrain(void);
 static void Cmd_setreflect(void);
+static void Cmd_setauroraveil(void);
 static void Cmd_setseeded(void);
 static void Cmd_manipulatedamage(void);
 static void Cmd_trysetrest(void);
@@ -455,6 +456,7 @@ void (*const gBattleScriptingCommandsTable[])(void) =
     [B_SCR_OP_TRYHEALHALFHEALTH]               = Cmd_tryhealhalfhealth,                       //0x7B
     [B_SCR_OP_TRYMIRRORMOVE]                   = Cmd_trymirrormove,                           //0x7C
     [B_SCR_OP_SETRAIN]                         = Cmd_setrain,                                 //0x7D
+    [B_SCR_OP_SETAURORAVEIL]                   = Cmd_setauroraveil,
     [B_SCR_OP_SETREFLECT]                      = Cmd_setreflect,                              //0x7E
     [B_SCR_OP_SETSEEDED]                       = Cmd_setseeded,                               //0x7F
     [B_SCR_OP_MANIPULATEDAMAGE]                = Cmd_manipulatedamage,                        //0x80
@@ -6725,6 +6727,25 @@ static void Cmd_setrain(void)
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STARTED_RAIN;
         gWishFutureKnock.weatherDuration = 5;
     }
+    gBattlescriptCurrInstr++;
+}
+
+// Aurora Veil is one side status in the real games; here it sets both screens
+// at once, which is the same effect from the player's side. It is the only
+// thing that can raise a screen that is already up, so unlike setreflect it
+// cannot fail once the hail check in its script has passed.
+static void Cmd_setauroraveil(void)
+{
+    u8 side = GET_BATTLER_SIDE(gBattlerAttacker);
+
+    gSideStatuses[side] |= SIDE_STATUS_REFLECT | SIDE_STATUS_LIGHTSCREEN;
+    gSideTimers[side].reflectTimer = 5;
+    gSideTimers[side].reflectBattlerId = gBattlerAttacker;
+    gSideTimers[side].lightscreenTimer = 5;
+    gSideTimers[side].lightscreenBattlerId = gBattlerAttacker;
+    // "covered by a veil", which is Safeguard's line and is exactly right here
+    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SET_SAFEGUARD;
+
     gBattlescriptCurrInstr++;
 }
 
