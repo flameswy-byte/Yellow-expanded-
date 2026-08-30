@@ -5830,6 +5830,18 @@ u16 SpeciesToCryId(u16 species)
     if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
         return 388 + (species - (SPECIES_LARVESTA - 1));
 
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
+    // The six species added in the Old Unown slots have cries of their own,
+    // appended past the end of vanilla's table. Without this they would fall
+    // into the branch below and every one of them would sound like Unown.
+    if (species >= SPECIES_LARVESTA - 1 && species <= SPECIES_KING_SLIME - 1)
+        return 388 + (species - (SPECIES_LARVESTA - 1));
+
     if (species < SPECIES_TREECKO - 1)
         return SPECIES_UNOWN - 1;
 

@@ -197,18 +197,32 @@ LEARNSETS = {
     'GOLISOPOD': [(1, 'SLASH'), (1, 'FURY_CUTTER'), (1, 'WATER_PULSE'),
                   (30, 'SWORDS_DANCE'), (36, 'IRON_DEFENSE'), (42, 'CRUNCH'),
                   (48, 'SURF'), (54, 'MEGAHORN'), (60, 'SUPERPOWER')],
-    # rebuilt for Normal/Water, and mixed: a physical and a special line that
-    # climb together, since its Attack and Sp.Atk are equal
-    'SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (6, 'WATER_GUN'), (11, 'BIDE'),
-              (16, 'BUBBLE_BEAM'), (21, 'AMNESIA'), (26, 'BODY_SLAM'),
-              (31, 'WATER_PULSE'), (36, 'SWIFT'), (41, 'SURF'),
-              (46, 'DOUBLE_EDGE')],
-    'METAL_SLIME': [(1, 'HARDEN'), (1, 'TACKLE'), (10, 'IRON_DEFENSE'),
-                    (20, 'AGILITY'), (30, 'METAL_SOUND'), (40, 'IRON_TAIL'),
-                    (50, 'DOUBLE_TEAM'), (60, 'PROTECT')],
+    # Normal/Water and mixed, so a physical and a special line that climb
+    # together. The elemental coverage is held back past 40 on purpose: a slime
+    # that can hit four types at level 20 has nothing left to grow into.
+    'SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (6, 'WATER_GUN'), (10, 'ROLLOUT'),
+              (14, 'HEADBUTT'), (18, 'BUBBLE_BEAM'), (22, 'AMNESIA'),
+              (26, 'SLAM'), (30, 'RECOVER'), (34, 'BODY_SLAM'),
+              (38, 'WATER_PULSE'), (40, 'EMBER'), (44, 'SWIFT'),
+              (48, 'THUNDERBOLT'), (52, 'FLAMETHROWER'), (56, 'SURF'),
+              (60, 'THUNDER'), (64, 'DOUBLE_EDGE')],
+    # Protect comes early because Protect is how this thing survives anything
+    # that would one-shot it through 20 HP. Flash Cannon at 30 is the first
+    # special Steel attack the game has ever had.
+    'METAL_SLIME': [(1, 'HARDEN'), (1, 'TACKLE'), (5, 'PROTECT'), (8, 'EMBER'),
+                    (12, 'IRON_DEFENSE'), (18, 'AGILITY'), (24, 'METAL_SOUND'),
+                    (30, 'FLASH_CANNON'), (36, 'FLAMETHROWER'),
+                    (42, 'IRON_TAIL'), (48, 'DOUBLE_TEAM'), (54, 'FIRE_BLAST')],
+    # Two physical Water attacks for its 125 Attack, both Fairy moves for the
+    # half of its typing that had nothing, and the same elemental spread the
+    # common slime gets, at the same levels.
     'KING_SLIME': [(1, 'TACKLE'), (1, 'HARDEN'), (9, 'WATER_GUN'),
-                   (17, 'BODY_SLAM'), (25, 'AMNESIA'), (33, 'SURF'),
-                   (41, 'BULK_UP'), (49, 'EARTHQUAKE'), (57, 'DOUBLE_EDGE')],
+                   (14, 'HEADBUTT'), (19, 'BODY_SLAM'), (24, 'AMNESIA'),
+                   (28, 'WATERFALL'), (30, 'RECOVER'), (35, 'ROCK_SLIDE'),
+                   (40, 'EMBER'), (44, 'CRABHAMMER'), (48, 'THUNDERBOLT'),
+                   (52, 'PLAY_ROUGH'), (56, 'FLAMETHROWER'),
+                   (60, 'DAZZLING_GLEAM'), (64, 'THUNDER'), (68, 'HYPER_BEAM'),
+                   (74, 'GIGA_IMPACT')],
     'VULPIX_A': [(1, 'POWDER_SNOW'), (1, 'TAIL_WHIP'), (9, 'ROAR'),
                  (13, 'QUICK_ATTACK'), (17, 'ICY_WIND'), (21, 'CONFUSE_RAY'),
                  (25, 'ICE_BEAM'), (29, 'SAFEGUARD'), (33, 'IMPRISON'),

@@ -2876,6 +2876,20 @@ const struct ContestMove gContestMoves[MOVES_COUNT] =
         .comboStarterId = 0,
         .comboMoves = {0},
     },
+    [MOVE_FLASH_CANNON] =
+    {
+        .effect = CONTEST_EFFECT_BETTER_WHEN_LATER,
+        .contestCategory = CONTEST_CATEGORY_BEAUTY,
+        .comboStarterId = 0,
+        .comboMoves = {0},
+    },
+    [MOVE_GIGA_IMPACT] =
+    {
+        .effect = CONTEST_EFFECT_BETTER_IF_LAST,
+        .contestCategory = CONTEST_CATEGORY_TOUGH,
+        .comboStarterId = 0,
+        .comboMoves = {0},
+    },
     [MOVE_DAZZLING_GLEAM] =
     {
         .effect = CONTEST_EFFECT_BETTER_WHEN_AUDIENCE_EXCITED,

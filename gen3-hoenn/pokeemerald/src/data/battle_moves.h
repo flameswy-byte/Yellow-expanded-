@@ -887,7 +887,7 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
         .effect = EFFECT_RECHARGE,
         .power = 150,
         .type = TYPE_NORMAL,
-        .split = SPLIT_PHYSICAL,
+        .split = SPLIT_SPECIAL,
         .accuracy = 90,
         .pp = 5,
         .secondaryEffectChance = 0,
@@ -5051,6 +5051,34 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
         .accuracy = 90,
         .pp = 10,
         .secondaryEffectChance = 10,
+        .target = MOVE_TARGET_SELECTED,
+        .priority = 0,
+        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,
+    },
+
+    [MOVE_FLASH_CANNON] =
+    {
+        .effect = EFFECT_SPECIAL_DEFENSE_DOWN_HIT,
+        .power = 80,
+        .type = TYPE_STEEL,
+        .split = SPLIT_SPECIAL,
+        .accuracy = 100,
+        .pp = 10,
+        .secondaryEffectChance = 10,
+        .target = MOVE_TARGET_SELECTED,
+        .priority = 0,
+        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,
+    },
+
+    [MOVE_GIGA_IMPACT] =
+    {
+        .effect = EFFECT_RECHARGE,
+        .power = 150,
+        .type = TYPE_NORMAL,
+        .split = SPLIT_PHYSICAL,
+        .accuracy = 90,
+        .pp = 5,
+        .secondaryEffectChance = 0,
         .target = MOVE_TARGET_SELECTED,
         .priority = 0,
         .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,

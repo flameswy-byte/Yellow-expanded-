@@ -89,6 +89,22 @@ MOVES = [
          flags='FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED',
          anim='Move_COVET', contest=('CUTE', 'CONTEST_EFFECT_BETTER_IF_SAME_TYPE'),
          desc="Plays rough, and may\nlower the foe's ATTACK."),
+    # The game has no special Steel move at all - Doom Desire is the only one
+    # and it is Jirachi's delayed-hit signature. Flash Cannon exists so the
+    # metal slime's Special Attack has something to spend itself on.
+    dict(const='FLASH_CANNON', name='FLASH CANNON', effect='EFFECT_SPECIAL_DEFENSE_DOWN_HIT',
+         power=80, type='STEEL', acc=100, pp=10, chance=10,
+         target='MOVE_TARGET_SELECTED', priority=0, split='SPLIT_SPECIAL',
+         flags='FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED',
+         anim='Move_AURORA_BEAM', contest=('BEAUTY', 'CONTEST_EFFECT_BETTER_WHEN_LATER'),
+         desc='A beam of light that may\nlower SP. DEF.'),
+    # Hyper Beam's physical twin, and the same recharge turn
+    dict(const='GIGA_IMPACT', name='GIGA IMPACT', effect='EFFECT_RECHARGE',
+         power=150, type='NORMAL', acc=90, pp=5, chance=0,
+         target='MOVE_TARGET_SELECTED', priority=0, split='SPLIT_PHYSICAL',
+         flags='FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED',
+         anim='Move_HYPER_BEAM', contest=('TOUGH', 'CONTEST_EFFECT_BETTER_IF_LAST'),
+         desc='A reckless charge. The\nuser must then rest.'),
     dict(const='DAZZLING_GLEAM', name='DAZZLNGGLEAM', effect='EFFECT_HIT',
          power=80, type='FAIRY', acc=100, pp=10, chance=0,
          target='MOVE_TARGET_BOTH', priority=0, split='SPLIT_SPECIAL',

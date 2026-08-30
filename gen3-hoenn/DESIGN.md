@@ -1444,6 +1444,8 @@ two separate +2 moves that skip Special Attack is not it.
 | id | move | | |
 |---|---|---|---|
 | 355 | Quiver Dance | Bug status | Sp.Atk, Sp.Def, Speed up one |
+| — | Flash Cannon | Steel special 80 | 10% Sp.Def down |
+| — | Giga Impact | Normal physical 150 | recharge turn |
 | 356 | Fiery Dance | Fire special 80 | 50% Sp.Atk up one |
 | 357 | Bug Buzz | Bug special 90 | 10% Sp.Def down one |
 | 358 | First Impression | Bug physical 90 | +2 priority, first turn only |
@@ -1485,6 +1487,19 @@ shape: Dragon Dance, Flame Wheel, Silver Wind, Slash, Light Screen and Swift.
 Same reasoning as the Fairy type badges reusing existing lettering — a
 wrong-looking animation is worse than a familiar one. The animation table is
 indexed by move id and had eleven spare entries, so it still has five.
+
+**Flash Cannon exists because nothing else could.** Every damaging Steel move
+in the game is physical - Steel Wing, Iron Tail, Metal Claw, Meteor Mash - with
+the single exception of Doom Desire, which is Jirachi's delayed-hit signature
+and no use as an attack. A Steel-typed special attacker had literally nothing
+to press. It reuses Bug Buzz's effect, so it needed no new machinery.
+
+**Giga Impact exposed a real error in the split table.** It is Hyper Beam's
+physical twin, which only means anything if Hyper Beam is special - and it was
+not. `split.py` had it as physical, because Normal is a physical type under the
+Gen 3 rule and Hyper Beam was not in the override list. Gen 4 made it special.
+Adding the twin is what made the parent's mistake visible; it is fixed, and the
+pair now reads 150 special against 150 physical as it should.
 
 **Two tools disagreed, and the check caught it.** `newmoves.py` writes a
 `.split` for each move, but `split.py` owns that field and runs after: it read

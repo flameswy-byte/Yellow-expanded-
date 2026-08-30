@@ -1438,6 +1438,12 @@ static const u8 sAuroraVeilDescription[] = _(
 static const u8 sPlayRoughDescription[] = _(
     "Plays rough, and may\n"
     "lower the foe's ATTACK.");
+static const u8 sFlashCannonDescription[] = _(
+    "A beam of light that may\n"
+    "lower SP. DEF.");
+static const u8 sGigaImpactDescription[] = _(
+    "A reckless charge. The\n"
+    "user must then rest.");
 static const u8 sDazzlingGleamDescription[] = _(
     "Damages foes with a\n"
     "burst of light.");
@@ -1806,6 +1812,8 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_FIRST_IMPRESSION - 1] = sFirstImpressionDescription,
     [MOVE_AURORA_VEIL - 1] = sAuroraVeilDescription,
     [MOVE_PLAY_ROUGH - 1] = sPlayRoughDescription,
+    [MOVE_FLASH_CANNON - 1] = sFlashCannonDescription,
+    [MOVE_GIGA_IMPACT - 1] = sGigaImpactDescription,
     [MOVE_DAZZLING_GLEAM - 1] = sDazzlingGleamDescription,
 
 };
