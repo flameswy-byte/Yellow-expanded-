@@ -809,7 +809,6 @@ static const bool8 sValidApprenticeMoves[MOVES_COUNT] =
     [MOVE_MORNING_SUN] = TRUE,
     [MOVE_SYNTHESIS] = TRUE,
     [MOVE_MOONLIGHT] = TRUE,
-    [MOVE_HIDDEN_POWER] = TRUE,
     [MOVE_CROSS_CHOP] = TRUE,
     [MOVE_TWISTER] = FALSE,
     [MOVE_RAIN_DANCE] = TRUE,

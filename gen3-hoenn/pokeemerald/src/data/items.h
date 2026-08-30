@@ -3612,7 +3612,7 @@ const struct Item gItems[] =
         .fieldUseFunc = ItemUseOutOfBattle_TMHM,
     },
 
-    [ITEM_TM_HIDDEN_POWER] =
+    [ITEM_TM_SWIFT] =
     {
         .name = _("TM10"),
         .itemId = ITEM_TM10,

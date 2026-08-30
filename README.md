@@ -84,6 +84,7 @@ python3 tools/split.py --report   # the physical/special split, by type
 python3 tools/split.py --check    # verify the written table against the rule
 python3 tools/fairy.py --report   # the species and moves Gen 6 made Fairy
 python3 tools/fairy.py --check    # verify those, and the type chart
+python3 tools/hiddenpower.py --check   # verify Hidden Power is unreachable
 ```
 
 - The **physical/special split** gives every move its own damage category
@@ -97,6 +98,9 @@ python3 tools/fairy.py --check    # verify those, and the type chart
 - The **Fairy type** is in, with a chart that matches Gen 6 — including the two
   Steel resistances Gen 6 removed — eighteen retyped species, three retyped
   moves, and both of its icons.
+- **Hidden Power is gone**, removed from every pool the game can draw a move
+  from rather than rewritten. TM10 teaches Swift instead. Metronome is the pool
+  a learnset edit cannot close, so it is forbidden there explicitly.
 
 The reference throughout is [CFRU](https://github.com/Skeli789/Complete-Fire-Red-Upgrade),
 the engine Radical Red is built on and the only part of it that is public. It

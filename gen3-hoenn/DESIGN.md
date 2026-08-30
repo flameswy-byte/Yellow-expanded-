@@ -1250,6 +1250,69 @@ damage, so the physical/special split is untouched by the change. `split.py`
 now lists `TYPE_FAIRY` as special anyway, which makes no difference today and
 is the right default for a fourth.
 
+### Taking Hidden Power out
+
+`python3 tools/hiddenpower.py`, `--check`.
+
+Adding Fairy exposed Hidden Power as a liability: its type is derived from IVs
+using the *number of types that exist*, so a nineteenth type silently widened
+its range to something it has never rolled in any generation. That was pinned
+(§ the Fairy type), and pinning a constant to stop a move misbehaving is a good
+sign the move costs more than it earns. So it is gone.
+
+Not rewritten — **removed from every pool the game can draw from**, which is
+much less invasive than repurposing the move. Everything keyed by move id (the
+name, the description, the animation, the contest data, the easy-chat word,
+the Dome's and Arena's scoring tables) is untouched. `MOVE_HIDDEN_POWER` still
+exists in `gBattleMoves`; nothing can ask for it any more.
+
+The pools, and the one that is not a pool:
+
+| | |
+|---|---|
+| TM10 | taught Hidden Power; now teaches Swift |
+| level-up | Unown, Meditite, Medicham |
+| trainers | two Abra — Edward's and Jaclyn's |
+| Frontier | Trainer Hill ×6, Battle Pike ×2, a rental mon, a contest opponent, the Apprentice's askable-move list |
+| **Metronome** | picks from every move in the game regardless of who knows what |
+
+Metronome is the one a learnset edit cannot close, and the one that would have
+been missed. It is now in `sMovesForbiddenToCopy`, placed *after*
+`MIMIC_FORBIDDEN_END` so it binds Metronome and not Mimic — Mimic copies the
+target's last move, and nothing will ever use it. Assist, Sleep Talk, Sketch
+and Mirror Move all read from moves someone actually knows, so the learnsets
+close those.
+
+**One line does most of the work.** `FOREACH_TM` in `constants/tms_hms.h`
+generates three things at once — the item enum `ITEM_TM_HIDDEN_POWER`, the
+TM-to-move table `sTMHMMoves`, and the per-species compatibility bitfield's
+member name. Changing `F(HIDDEN_POWER)` to `F(SWIFT)` moves all three together.
+
+**Swift is legal, not merely plausible, for almost all of it.** TM10's
+compatibility list is untouched, so every one of the 372 species that could
+have learned Hidden Power from TM10 can now learn Swift from it.
+
+Two exceptions worth naming:
+
+- **Unown.** Hidden Power was its *entire* learnset — one move, at level 1 —
+  and its TM list is empty. Deleting the entry would have left a Pokémon that
+  can only ever Struggle. Its Swift is a design decision, not a legal moveset,
+  and it is the one substitution here that is not justified by the TM list.
+- **The Apprentice's table** is keyed by move id and already had
+  `[MOVE_SWIFT] = TRUE`, so that line is deleted rather than substituted — a
+  second initialiser for the same index would not compile.
+
+The Fortree woman's whole scene is built on the words *hidden power*: she tests
+whether yours has awoken and hands you the TM for it. The coin-guessing game is
+worth keeping, so the scene is rewritten around a sixth sense rather than cut.
+Her object event names its script in `map.json`, from which `events.inc` is
+generated at build time — renaming only `scripts.inc` gives a link error rather
+than a compile error, which is how that one announced itself.
+
+`NUMBER_OF_HIDDEN_POWER_TYPES` stays. Nothing can reach the code that uses it
+now, but a pinned constant that is right costs nothing and the alternative is a
+latent trap for whoever makes the move reachable again.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

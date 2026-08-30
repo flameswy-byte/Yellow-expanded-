@@ -1163,9 +1163,9 @@ static const u8 sTM09Desc[] = _(
     "the foe.");
 
 static const u8 sTM10Desc[] = _(
-    "The attack power\n"
-    "varies among\n"
-    "different POKéMON.");
+    "Fires star-shaped\n"
+    "rays that will not\n"
+    "miss the target.");
 
 static const u8 sTM11Desc[] = _(
     "Raises the power of\n"

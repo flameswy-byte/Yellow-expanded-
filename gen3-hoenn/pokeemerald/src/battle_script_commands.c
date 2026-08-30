@@ -744,6 +744,7 @@ static const u16 sMovesForbiddenToCopy[] =
     MOVE_COVET,
     MOVE_TRICK,
     MOVE_FOCUS_PUNCH,
+    MOVE_HIDDEN_POWER, // removed from the game; see tools/hiddenpower.py
     METRONOME_FORBIDDEN_END
 };
 
