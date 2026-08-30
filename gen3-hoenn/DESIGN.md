@@ -1144,6 +1144,39 @@ The switch is enforced in C rather than in the script, so turning
 `BW_REPEL_PROMPT` off leaves the script falling straight through to the message
 vanilla printed, with no dead script branches to reason about.
 
+**The party-wide Exp. Share** is `EXP_SHARE_PARTY_WIDE`, gated on
+`FLAG_SYS_EXP_SHARE_PARTY`. CFRU has the same shape — `#define FLAG_EXP_SHARE
+0x906`, "used to indicate if the Gen 6+ Exp Share is enabled" — and leaves it to
+the hack to say when the flag goes up. Ours goes up when Mr. Stone hands the
+item over on Devon Corp's third floor, which is where Emerald already gives it,
+so the structure is exactly Gen 6's: you receive one Exp. Share, and from then
+on it feeds the whole party without anyone holding it. The rate is vanilla's
+and matches Gen 6 — participants split half the experience, everyone else
+splits the other half.
+
+Three conditions in `Cmd_getexp` change, all through one `GetsExpShare` helper
+so the rule is stated once. The helper has a test that looks like paranoia and
+is not:
+
+```c
+return !GetMonData(&gPlayerParty[partyIndex], MON_DATA_IS_EGG);
+```
+
+An egg has a species and hit points, so it survives every check the experience
+loop makes. Vanilla never had to exclude one, because an egg cannot be sent
+into battle and cannot hold an item — it could not qualify by either route.
+Party-wide, it qualifies by default, and without this test eggs would collect
+experience.
+
+Mr. Stone's explanation was rewritten too, since he otherwise describes the
+held-item behaviour that no longer exists. The longest line is 38 characters
+against the 40 vanilla already uses in that box.
+
+The flag is only ever set by that script, so a save file that is already past
+Rustboro when the patch is applied will not have it. That is not a case worth
+engineering around — this is a hack applied to a fresh ROM — but it is the kind
+of thing that looks like a bug if you meet it without warning.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

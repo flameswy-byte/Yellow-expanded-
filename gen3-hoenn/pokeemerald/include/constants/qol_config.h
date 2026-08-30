@@ -48,4 +48,20 @@
 // see VAR_LAST_REPEL_USED.
 #define BW_REPEL_PROMPT TRUE
 
+// --- the Exp. Share -------------------------------------------------------
+// CFRU: #define FLAG_EXP_SHARE 0x906, "used to indicate if the Gen 6+ Exp Share
+// is enabled" - so CFRU makes it a flag rather than a held item, and leaves it
+// to the hack to decide when the flag goes up.
+//
+// Ours goes up when Mr. Stone hands over the Exp. Share on Devon Corp's third
+// floor, which is where Emerald already gives it. That reproduces Gen 6's shape
+// exactly: you receive one Exp. Share, and from then on it feeds the whole
+// party without being held by anyone. The item stays in the bag as the token
+// of having earned it.
+//
+// The rate is unchanged from vanilla's held-item behaviour and matches Gen 6:
+// the participants split half the experience, and everyone else splits the
+// other half.
+#define EXP_SHARE_PARTY_WIDE TRUE
+
 #endif // GUARD_CONSTANTS_QOL_CONFIG_H

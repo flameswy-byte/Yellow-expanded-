@@ -50,6 +50,7 @@
 #include "constants/party_menu.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "constants/qol_config.h"
 #include "constants/trainers.h"
 
 extern const u8 *const gBattleScriptsForMoveEffects[];
@@ -3262,6 +3263,23 @@ static void Cmd_jumpiftype(void)
         gBattlescriptCurrInstr += 7;
 }
 
+// Gen 6 turned the Exp. Share from a held item into a party-wide switch. The
+// hold effect still works for anyone carrying one; FLAG_SYS_EXP_SHARE_PARTY
+// extends it to everybody once Mr. Stone has handed the item over.
+//
+// The egg test is the part that is not obvious. An egg has a species and hit
+// points and so survives every check the exp loop makes; vanilla never had to
+// exclude one because an egg cannot be sent into battle and cannot hold an
+// item, so it could never qualify. Party-wide, it can.
+static bool8 GetsExpShare(u8 partyIndex, u8 holdEffect)
+{
+    if (holdEffect == HOLD_EFFECT_EXP_SHARE)
+        return TRUE;
+    if (!EXP_SHARE_PARTY_WIDE || !FlagGet(FLAG_SYS_EXP_SHARE_PARTY))
+        return FALSE;
+    return !GetMonData(&gPlayerParty[partyIndex], MON_DATA_IS_EGG);
+}
+
 static void Cmd_getexp(void)
 {
     u16 item;
@@ -3313,7 +3331,7 @@ static void Cmd_getexp(void)
                 else
                     holdEffect = GetItemHoldEffect(item);
 
-                if (holdEffect == HOLD_EFFECT_EXP_SHARE)
+                if (GetsExpShare(i, holdEffect))
                     viaExpShare++;
             }
 
@@ -3352,7 +3370,7 @@ static void Cmd_getexp(void)
             else
                 holdEffect = GetItemHoldEffect(item);
 
-            if (holdEffect != HOLD_EFFECT_EXP_SHARE && !(gBattleStruct->sentInPokes & 1))
+            if (!GetsExpShare(gBattleStruct->expGetterMonId, holdEffect) && !(gBattleStruct->sentInPokes & 1))
             {
                 *(&gBattleStruct->sentInPokes) >>= 1;
                 gBattleScripting.getexpState = 5;
@@ -3381,7 +3399,7 @@ static void Cmd_getexp(void)
                     else
                         gBattleMoveDamage = 0;
 
-                    if (holdEffect == HOLD_EFFECT_EXP_SHARE)
+                    if (GetsExpShare(gBattleStruct->expGetterMonId, holdEffect))
                         gBattleMoveDamage += gExpShareExp;
                     if (holdEffect == HOLD_EFFECT_LUCKY_EGG)
                         gBattleMoveDamage = (gBattleMoveDamage * 150) / 100;
