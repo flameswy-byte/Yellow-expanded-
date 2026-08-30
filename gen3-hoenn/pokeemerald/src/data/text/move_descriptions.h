@@ -1435,6 +1435,9 @@ static const u8 sFirstImpressionDescription[] = _(
 static const u8 sAuroraVeilDescription[] = _(
     "Blunts all attacks,\n"
     "but only during hail.");
+static const u8 sPlayRoughDescription[] = _(
+    "Plays rough, and may\n"
+    "lower the foe's ATTACK.");
 static const u8 sDazzlingGleamDescription[] = _(
     "Damages foes with a\n"
     "burst of light.");
@@ -1802,6 +1805,7 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_BUG_BUZZ - 1] = sBugBuzzDescription,
     [MOVE_FIRST_IMPRESSION - 1] = sFirstImpressionDescription,
     [MOVE_AURORA_VEIL - 1] = sAuroraVeilDescription,
+    [MOVE_PLAY_ROUGH - 1] = sPlayRoughDescription,
     [MOVE_DAZZLING_GLEAM - 1] = sDazzlingGleamDescription,
 
 };

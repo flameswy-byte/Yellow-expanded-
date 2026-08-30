@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add the six moves the new species are actually known for.
+"""Add the moves the new species are actually known for, and Play Rough.
 
 tools/newmons.py brought in Larvesta, Volcarona, Wimpod, Golisopod and the
 Alolan Vulpix line, but their signature moves are all Gen 5 or later and simply
@@ -14,9 +14,14 @@ not it.
     FIRST IMPRESSION  Bug     physical 90, +2 priority, first turn out only
     AURORA VEIL       Ice     status   both screens at once, only in hail
     DAZZLING GLEAM    Fairy   special  80, hits both foes
+    PLAY ROUGH        Fairy   physical 90, 90% accurate, 10% Attack down
 
 Dazzling Gleam is also the first damaging Fairy move in the game - retyping
-Charm, Sweet Kiss and Moonlight gave the type no offence at all.
+Charm, Sweet Kiss and Moonlight gave the type no offence at all. Play Rough is
+the second, and the only physical one: it goes to Mawile, which fairy.py
+retyped to Steel/Fairy and which otherwise had no way to use that half of its
+typing. Every other Fairy in the game is a special attacker, so Play Rough is
+the one move here aimed at a vanilla species rather than a new one.
 
 Only two needed new machinery of their own. Bug Buzz uses the existing
 EFFECT_SPECIAL_DEFENSE_DOWN_HIT and Dazzling Gleam is a plain EFFECT_HIT; the
@@ -78,6 +83,12 @@ MOVES = [
          flags='FLAG_SNATCH_AFFECTED',
          anim='Move_LIGHT_SCREEN', contest=('BEAUTY', 'CONTEST_EFFECT_AVOID_STARTLE'),
          desc='Blunts all attacks,\nbut only during hail.'),
+    dict(const='PLAY_ROUGH', name='PLAY ROUGH', effect='EFFECT_ATTACK_DOWN_HIT',
+         power=90, type='FAIRY', acc=90, pp=10, chance=10,
+         target='MOVE_TARGET_SELECTED', priority=0, split='SPLIT_PHYSICAL',
+         flags='FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED',
+         anim='Move_COVET', contest=('CUTE', 'CONTEST_EFFECT_BETTER_IF_SAME_TYPE'),
+         desc="Plays rough, and may\nlower the foe's ATTACK."),
     dict(const='DAZZLING_GLEAM', name='DAZZLNGGLEAM', effect='EFFECT_HIT',
          power=80, type='FAIRY', acc=100, pp=10, chance=0,
          target='MOVE_TARGET_BOTH', priority=0, split='SPLIT_SPECIAL',
@@ -94,6 +105,13 @@ LEARN = {
     'VOLCARONA':   [(50, 'QUIVER_DANCE'), (64, 'FIERY_DANCE'), (70, 'BUG_BUZZ')],
     'GOLISOPOD':   [(30, 'FIRST_IMPRESSION')],
     'NINETALES_A': [(45, 'AURORA_VEIL'), (51, 'DAZZLING_GLEAM')],
+}
+
+# Moves added to learnsets that were already in the game. Unlike LEARN above,
+# these species are vanilla, so their learnsets are named after them rather
+# than being one of the numbered stubs newmons.py filled in.
+LEARN_VANILLA = {
+    'Mawile': [(41, 'PLAY_ROUGH')],
 }
 
 # Moves these replace in the learnsets newmons.py wrote, so the level curve
@@ -230,8 +248,9 @@ def wire_learnsets(dry):
     slot = {m['const']: 252 + i for i, m in enumerate(NM.MONS)}
     gone = {(s, lv): mv for s, lv, mv in REPLACED}
 
-    for const, adds in LEARN.items():
-        sym = f'sSpecies{slot[const]}LevelUpLearnset'
+    for const, adds in list(LEARN.items()) + list(LEARN_VANILLA.items()):
+        sym = (f'sSpecies{slot[const]}LevelUpLearnset' if const in slot
+               else f's{const}LevelUpLearnset')
         mm = re.search(rf'(static const u16 {sym}\[\] = \{{\n)(.*?)(    LEVEL_UP_END\n\}};)',
                        t, re.S)
         if mm is None:
@@ -277,7 +296,7 @@ def check():
         if f'[MOVE_{m["const"]}] = _("{m["name"]}")' not in names:
             bad.append(f'MOVE_{m["const"]} is not named {m["name"]}')
 
-    for const, adds in LEARN.items():
+    for const, adds in list(LEARN.items()) + list(LEARN_VANILLA.items()):
         for lv, mv in adds:
             if f'MOVE_{mv}' not in learn:
                 bad.append(f'{const} does not learn {mv}')

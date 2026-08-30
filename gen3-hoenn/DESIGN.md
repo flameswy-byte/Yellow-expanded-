@@ -1449,6 +1449,15 @@ two separate +2 moves that skip Special Attack is not it.
 | 358 | First Impression | Bug physical 90 | +2 priority, first turn only |
 | 359 | Aurora Veil | Ice status | both screens, hail only |
 | 360 | Dazzling Gleam | Fairy special 80 | hits both foes |
+| 361 | Play Rough | Fairy physical 90 | 90% accurate, 10% Attack down |
+
+Play Rough is the odd one out: it is the only one of these aimed at a vanilla
+species rather than a new one. Mawile is Steel/Fairy after `fairy.py` and had
+no way at all to use the Fairy half, since every other Fairy in the game is a
+special attacker and Dazzling Gleam is special. It learns Play Rough at 41.
+Adding it also meant `newmoves.py` learning to edit vanilla learnsets, which
+are named after their species rather than being one of the numbered stubs
+`newmons.py` fills.
 
 Dazzling Gleam is also the game's **first damaging Fairy move**. Retyping Charm,
 Sweet Kiss and Moonlight gave the type no offence at all, which was a gap the
