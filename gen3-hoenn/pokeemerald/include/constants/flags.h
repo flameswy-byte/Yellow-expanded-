@@ -84,7 +84,7 @@
 #define FLAG_ITEM_ROUTE_148_ELIXIR                                  0x46 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x046)
 #define FLAG_ITEM_ROUTE_148_STAR_PIECE                              0x47 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x047)
 #define FLAG_ITEM_ROUTE_148_LIQUID_ORE                              0x48 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x048)
-#define FLAG_UNUSED_0x049    0x49 // Unused Flag
+#define FLAG_HIDE_GRANITE_CAVE_TRADER_STEVEN                        0x49 // Open Hoenn - tools/trades.py (FLAG_UNUSED_0x049)
 #define FLAG_UNUSED_0x04A    0x4A // Unused Flag
 #define FLAG_UNUSED_0x04B    0x4B // Unused Flag
 #define FLAG_UNUSED_0x04C    0x4C // Unused Flag

@@ -535,6 +535,15 @@ gCryTable_Reverse::
 	cry Cry_Gulpin
 	cry Cry_Nosepass
 	cry Cry_Swalot
+	cry Cry_Larvesta
+	cry Cry_Volcarona
+	cry Cry_Wimpod
+	cry Cry_Golisopod
+	cry Cry_Vulpix
+	cry Cry_Ninetales
+	cry Cry_Gulpin
+	cry Cry_Nosepass
+	cry Cry_Swalot
 
 	cry_reverse Cry_Bulbasaur
 	cry_reverse Cry_Ivysaur
@@ -960,6 +969,15 @@ gCryTable_Reverse::
 	cry_reverse Cry_Golisopod
 	cry_reverse Cry_Vulpix
 	cry_reverse Cry_Ninetales
+	cry_reverse Cry_Larvesta
+	cry_reverse Cry_Volcarona
+	cry_reverse Cry_Wimpod
+	cry_reverse Cry_Golisopod
+	cry_reverse Cry_Vulpix
+	cry_reverse Cry_Ninetales
+	cry_reverse Cry_Gulpin
+	cry_reverse Cry_Nosepass
+	cry_reverse Cry_Swalot
 	cry_reverse Cry_Larvesta
 	cry_reverse Cry_Volcarona
 	cry_reverse Cry_Wimpod

@@ -1714,10 +1714,25 @@ fixed species and the starter is one of three, so `VAR_STARTER_MON` picks the
 row. What he hands over is a SLIME with perfect IVs, no nickname worth the
 name, and an OT of `?`.
 
-**Steven, and LIQUID ORE.** A new item — id 377, the Items pocket, worth
-nothing at a mart — placed by `tools/populate.py` at the single deepest cell of
-every new route that has one deep enough to bother. Deep means *walking*
-distance from the rim, over the ground the player can actually cross:
+**Steven, and LIQUID ORE.** He waits at the bottom of Granite Cave, on the
+exact tile he walks off once you hand him the letter — behind Flash, a cave and
+a boat, which is the point of him.
+
+Getting him there turned up a vanilla loose end. `FLAG_HIDE_GRANITE_CAVE_STEVEN`
+exists, is attached to his object event, and **is written by nothing in the
+entire game**: the letter script only `removeobject`s him, which lasts until
+the room next loads. Re-enter and he is standing there again, waiting for a
+letter you no longer have. Two Stevens on one tile is not what anybody wants,
+so a new on-transition script drives both flags off
+`FLAG_DELIVERED_STEVEN_LETTER` — the one who wanted the letter is hidden for
+good once he has it, and the one who wants the ore appears in his place.
+That does change vanilla: you can no longer walk back in and re-trigger the
+letter scene.
+
+The ore is a new item — id 377, the Items pocket, worth nothing at a mart —
+placed by `tools/populate.py` at the single deepest cell of every new route
+that has one deep enough to bother. Deep means *walking* distance from the rim,
+over the ground the player can actually cross:
 
 ```
 Route 137  ( 90, 23)   67 steps in
