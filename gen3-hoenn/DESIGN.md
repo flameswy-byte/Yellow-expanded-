@@ -543,6 +543,73 @@ after     2 of 14 maps,        11 stranded cells
 For scale, vanilla's own routes carry 33, 15 and 12 such cells; ours are now
 cleaner than the game's.
 
+### The art a map leaned on its own border for
+
+Both checks above ask about one map at a time. The first bug a player actually
+reported lived in neither map: **a line of tree tops floating along the bottom
+of Littleroot**, and it was correct in Littleroot and correct in Route 137.
+
+The bottom row of Littleroot is metatiles `1CE`/`1CF`, the top halves of trees.
+Their trunks were never in the map. They came from the border block — the 2x2
+the game repeats forever outside a map's edge — which for Littleroot is
+`1D4 1D5 / 1DC 1DD`, the bottom halves of the same trees. Connect a route
+below and the border stops being drawn there. The trunks go with it.
+
+`tools/check_seam_tiles.py` checks metatile pairs *across* connections, which
+nothing did before, against the same table of pairs-vanilla-draws that
+`check_adjacency.py` builds. Vanilla's own seams are the control, because a
+seam pair is a different population from a pair inside a map — joins occur
+there that occur nowhere else.
+
+```
+10892 seam cell pairs checked across 215 connections
+  vanilla against vanilla :   858 pairs over 82 seams   <- the noise floor
+  seams we created        :   584 pairs over 82 seams
+```
+
+`--fix` repairs only what it can prove: a cell on a vanilla map's edge, whose
+pair with the border is one vanilla draws, whose pair with the new neighbour is
+not. That is the treetop and nothing else — a cliff or a ledge meeting a route
+awkwardly fails the middle test, because vanilla never drew it against its own
+border either. The repair copies the cell one step further in, and takes it
+only if that mends the seam or is a tile vanilla stacks on itself; **104 cells
+over 20 maps**, the metatile id only, never collision or elevation. It runs
+after `newmaps.py`, since it repairs that tool's output.
+
+### A gate that fired on every step, forever
+
+The three new exits out of Littleroot are gated for a player with no POKéMON,
+by a coord event on each edge cell. A coord event fires while `VarGet(var)`
+reads the value it was given, and this one asked for `VAR_TEMP_2 == 0` —
+which nothing ever set. So it matched forever. Every edge tile ran a script on
+every step for the whole game, and because `TryStartCoordEventScript` is the
+first thing `TryStartStepBasedScript` tries, it returned before warps, the step
+counter and the repel counter ever got a look.
+
+Three things were wrong, and all three are the kind that only bite at a seam:
+
+- The var was never moved. `ClearTempFieldEventData` zeroes `VAR_TEMP_2` on
+  every map load and `RunOnTransitionMapScript` runs straight after it, on a
+  warp and on walking in from a connection alike, so that is the one place the
+  answer can be recomputed. The gate now sets it there and the coord events
+  simply stop matching once you have a starter.
+- The triggers sat on the rim — the cell the player stands on while
+  `LoadMapFromCameraTransition` is already swapping `gMapHeader`, the object
+  events and the temp vars out from under whatever is running. They now sit one
+  cell in, which is where vanilla puts its own "I need a POKéMON" trigger at
+  Littleroot (10,1). One trigger in Littleroot is still on the rim, at the
+  corner, because the top row is open grass all the way to (0,0) and no ring
+  drawn inside the map can close there.
+- The push-back was one fixed direction per edge, and `applymovement` does not
+  consult collision — a scripted walk goes wherever it is pointed. On Route
+  101's west rim that direction is a tree. The direction is now chosen per
+  trigger from what is actually next to it, and a cell with nowhere safe to
+  push gets no trigger rather than a freeze.
+
+`gate_leaks()` then walks the map to confirm the ring closes: flood from the
+town proper with trigger cells treated as walls, and report any gated rim cell
+still reachable. It is what caught the corner.
+
 Two things that measurement needed to get right, or it says nothing:
 
 **Surfing counts.** A walk-only test flags every islet as broken. Route 134
