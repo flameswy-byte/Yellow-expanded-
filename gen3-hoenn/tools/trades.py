@@ -61,6 +61,19 @@ TRADER_AT = (4, 12)
 STEVEN_MAP = 'GraniteCave_StevensRoom'
 STEVEN_AT = (7, 8)
 
+# What he hands over. Personality is doing three jobs at once in Gen 3 and all
+# three are pinned here: nature is personality % 25, which must land on one of
+# the five that change nothing; shininess is GET_SHINY_VALUE(otId, personality)
+# against a fixed otId, so it is decided at build time and not by luck; and the
+# ability index is personality & 1, which SLIME does not use because it has
+# only one ability. check() recomputes the first two rather than trusting this
+# comment.
+NICKNAME = 'SLIME'
+OT_NAME = 'MONTY'
+OT_ID = 51337
+PERSONALITY = 12                 # 12 % 25 = NATURE_SERIOUS
+NEUTRAL = (0, 6, 12, 18, 24)     # HARDY, DOCILE, SERIOUS, BASHFUL, QUIRKY
+
 TRADES = [                       # (constant, starter species, VAR_STARTER_MON)
     ('INGAME_TRADE_SLIME_TREECKO', 'SPECIES_TREECKO', 0),
     ('INGAME_TRADE_SLIME_TORCHIC', 'SPECIES_TORCHIC', 1),
@@ -291,33 +304,40 @@ def add_trades(dry):
 
     p = f'{R.ROOT}/src/data/trade.h'
     text = open(p).read()
-    if TRADES[0][0] not in text:
-        rows = ''
-        for const, starter, _ in TRADES:
-            rows += (
-                f'    [{const}] =\n'
-                f'    {{\n'
-                f'        .nickname = _("?"),\n'
-                f'        .species = SPECIES_SLIME,\n'
-                f'        .ivs = {{15, 15, 15, 15, 15, 15}},\n'
-                f'        .abilityNum = 0,\n'
-                f'        .otId = 51337,\n'
-                f'        .conditions = {{5, 5, 5, 5, 5}},\n'
-                f'        .personality = 0x2D,\n'
-                f'        .heldItem = ITEM_NONE,\n'
-                f'        .mailNum = -1,\n'
-                f'        .otName = _("?"),\n'
-                f'        .otGender = MALE,\n'
-                f'        .sheen = 10,\n'
-                f'        .requestedSpecies = {starter}\n'
-                f'    }},\n')
-        i = text.index('static const struct InGameTrade sIngameTrades[]')
-        j = text.index('\n};', i)
+    rows = ''
+    for const, starter, _ in TRADES:
+        rows += (
+            f'    [{const}] =\n'
+            f'    {{\n'
+            f'        .nickname = _("{NICKNAME}"),\n'
+            f'        .species = SPECIES_SLIME,\n'
+            f'        .ivs = {{15, 15, 15, 15, 15, 15}},\n'
+            f'        .abilityNum = 0,\n'
+            f'        .otId = {OT_ID},\n'
+            f'        .conditions = {{5, 5, 5, 5, 5}},\n'
+            f'        .personality = {PERSONALITY},\n'
+            f'        .heldItem = ITEM_NONE,\n'
+            f'        .mailNum = -1,\n'
+            f'        .otName = _("{OT_NAME}"),\n'
+            f'        .otGender = MALE,\n'
+            f'        .sheen = 10,\n'
+            f'        .requestedSpecies = {starter}\n'
+            f'    }},\n')
+    i = text.index('static const struct InGameTrade sIngameTrades[]')
+    j = text.index('\n};', i)
+    # Rewrite the whole generated tail rather than only adding it when absent -
+    # a row whose contents change is otherwise left as whatever the first run
+    # happened to write, and the tool quietly stops meaning what it says.
+    k = text.find(f'    {MARK}\n', i, j)
+    if k >= 0:
+        text = text[:k] + f'    {MARK}\n' + rows + text[j + 1:]
+        done.append('sIngameTrades rows rewritten')
+    else:
         # vanilla's last entry has no trailing comma, being last
         text = text[:j] + ',\n' + f'    {MARK}\n' + rows + text[j + 1:]
         done.append('sIngameTrades rows')
-        if not dry:
-            open(p, 'w').write(text)
+    if not dry:
+        open(p, 'w').write(text)
     return done
 
 
@@ -612,6 +632,20 @@ def check():
             bad.append(f'{const} does not ask for {starter}')
         if '.species = SPECIES_SLIME' not in blk:
             bad.append(f'{const} does not offer SPECIES_SLIME')
+        pid = int(re.search(r'\.personality = (\w+)', blk).group(1), 0)
+        oid = int(re.search(r'\.otId = (\d+)', blk).group(1))
+        if pid % 25 not in NEUTRAL:
+            bad.append(f'{const} personality {pid} gives nature {pid % 25}, '
+                       'which is not one of the five that change nothing')
+        # GET_SHINY_VALUE(otId, personality), which for a fixed pair is decided
+        # here rather than at catch time
+        sv = ((oid >> 16) ^ (oid & 0xFFFF) ^ (pid >> 16) ^ (pid & 0xFFFF))
+        if sv < 8:
+            bad.append(f'{const} is shiny (value {sv}), which was not asked for')
+        if f'.nickname = _("{NICKNAME}")' not in blk:
+            bad.append(f'{const} is not nicknamed {NICKNAME}')
+        if f'.otName = _("{OT_NAME}")' not in blk:
+            bad.append(f'{const} does not come from {OT_NAME}')
 
     # The secret: nothing the trader says may name what is on offer, and
     # nothing may buffer STR_VAR_2, which GetInGameTradeSpeciesInfo fills with
