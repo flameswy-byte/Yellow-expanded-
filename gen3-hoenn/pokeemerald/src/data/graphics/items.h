@@ -736,3 +736,7 @@ const u32 gItemIconPalette_MagmaEmblem[] = INCGFX_U32("graphics/items/icon_palet
 
 const u32 gItemIcon_OldSeaMap[] = INCGFX_U32("graphics/items/icons/old_sea_map.png", ".4bpp.lz");
 const u32 gItemIconPalette_OldSeaMap[] = INCGFX_U32("graphics/items/icon_palettes/old_sea_map.pal", ".gbapal.lz");
+
+// Open Hoenn - tools/trades.py
+const u32 gItemIcon_LiquidOre[] = INCGFX_U32("graphics/items/icons/liquid_ore.png", ".4bpp.lz");
+const u32 gItemIconPalette_LiquidOre[] = INCGFX_U32("graphics/items/icon_palettes/liquid_ore.pal", ".gbapal.lz");

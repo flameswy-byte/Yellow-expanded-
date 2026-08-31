@@ -3506,6 +3506,9 @@ extern const u32 gItemIcon_Stardust[];
 extern const u32 gItemIconPalette_Star[];
 extern const u32 gItemIcon_StarPiece[];
 extern const u32 gItemIcon_Nugget[];
+// Open Hoenn - tools/trades.py
+extern const u32 gItemIcon_LiquidOre[];
+extern const u32 gItemIconPalette_LiquidOre[];
 extern const u32 gItemIconPalette_Nugget[];
 extern const u32 gItemIcon_HeartScale[];
 extern const u32 gItemIconPalette_HeartScale[];

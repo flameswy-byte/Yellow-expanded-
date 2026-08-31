@@ -691,6 +691,10 @@ Route137_EventScript_ItemPpUp::
 	finditem ITEM_PP_UP
 	end
 
+Route137_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
+	end
+
 Route138_EventScript_ItemXAccuracy::
 	finditem ITEM_X_ACCURACY
 	end
@@ -717,6 +721,10 @@ Route139_EventScript_ItemZinc::
 
 Route139_EventScript_ItemHpUp::
 	finditem ITEM_HP_UP
+	end
+
+Route139_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
 	end
 
 Route140_EventScript_ItemProtein::
@@ -747,6 +755,10 @@ Route143_EventScript_ItemProtein::
 	finditem ITEM_PROTEIN
 	end
 
+Route143_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
+	end
+
 Route144_EventScript_ItemRareCandy::
 	finditem ITEM_RARE_CANDY
 	end
@@ -755,8 +767,16 @@ Route144_EventScript_ItemHyperPotion::
 	finditem ITEM_HYPER_POTION
 	end
 
+Route144_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
+	end
+
 Route145_EventScript_ItemStarPiece::
 	finditem ITEM_STAR_PIECE
+	end
+
+Route145_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
 	end
 
 Route146_EventScript_ItemIron::
@@ -793,5 +813,9 @@ Route148_EventScript_ItemElixir::
 
 Route148_EventScript_ItemStarPiece::
 	finditem ITEM_STAR_PIECE
+	end
+
+Route148_EventScript_ItemLiquidOre::
+	finditem ITEM_LIQUID_ORE
 	end
 

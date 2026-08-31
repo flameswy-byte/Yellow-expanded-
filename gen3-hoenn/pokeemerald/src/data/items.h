@@ -4537,4 +4537,15 @@ const struct Item gItems[] =
         .type = ITEM_USE_BAG_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
+    // Open Hoenn - tools/trades.py
+    [ITEM_LIQUID_ORE] =
+    {
+        .name = _("LIQUID ORE"),
+        .itemId = ITEM_LIQUID_ORE,
+        .price = 0,
+        .description = sLiquidOreDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
 };

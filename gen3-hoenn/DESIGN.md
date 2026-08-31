@@ -1697,6 +1697,54 @@ the slime route.
 
 They are genderless, in the no-eggs group, and do not evolve into each other.
 
+### Two people who want something you have
+
+`tools/trades.py` puts two of them in Littleroot.
+
+**The man who will not say.** He offers a trade for your starter and never
+names what he is offering, which is the whole point of him. Vanilla's trade
+dialogue puts the requested species in `STR_VAR_1` and the *offered* one in
+`STR_VAR_2`, both filled by `GetInGameTradeSpeciesInfo` — so keeping the secret
+is a matter of writing text that never uses `STR_VAR_2`. `--check` reads back
+the `.string` lines it wrote and fails if the word appears in any of them,
+because that is the kind of thing a later edit puts back without noticing.
+
+He needs three rows in `sIngameTrades`, not one: an in-game trade asks for a
+fixed species and the starter is one of three, so `VAR_STARTER_MON` picks the
+row. What he hands over is a SLIME with perfect IVs, no nickname worth the
+name, and an OT of `?`.
+
+**Steven, and LIQUID ORE.** A new item — id 377, the Items pocket, worth
+nothing at a mart — placed by `tools/populate.py` at the single deepest cell of
+every new route that has one deep enough to bother. Deep means *walking*
+distance from the rim, over the ground the player can actually cross:
+
+```
+Route 137  ( 90, 23)   67 steps in
+Route 139  ( 76,  4)   83 steps in, elevation 5
+Route 143  ( 76, 26)   79 steps in, elevation 5
+Route 144  (  5, 41)  105 steps in, elevation 5
+Route 145  (  5, 11)   40 steps in, elevation 5
+Route 148  ( 22,  3)   96 steps in, elevation 5
+```
+
+Straight-line distance would have been the wrong measure: a cell six steps from
+the edge is not hard to reach whatever the map looks like around it. Five of
+the six are up on the terraces, which is the walk finding the stairs for us.
+Routes whose deepest cell is under 40 steps get no ore at all, which is eight
+of the fourteen.
+
+Steven trades a level 1 METAL SLIME for each one, as often as you bring them —
+the ore is what is rare, not the trade. The icon is drawn from METAL SLIME's
+own palette, and neither of them mentions that the ore and the POKéMON are the
+same substance.
+
+While that palette was open: METAL SLIME had arrived carrying the basic
+slime's rust-coloured flecks in its floating debris, 188 pixels across the four
+frames, which on a mercury-coloured POKéMON reads as dirt rather than as
+metal. They are gone, and `newmons.py --check` now fails if any pixel of it is
+warmer than it is cool.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

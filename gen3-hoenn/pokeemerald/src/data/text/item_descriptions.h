@@ -1549,3 +1549,7 @@ static const u8 sOldSeaMapDesc[] = _(
     "A faded sea chart\n"
     "that shows the way\n"
     "to a certain island.");
+
+// Open Hoenn - tools/trades.py
+static const u8 sLiquidOreDesc[] = _(
+    "A bead of strange\nore. It is heavy,\nand it moves.");

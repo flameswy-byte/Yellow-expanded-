@@ -50,6 +50,14 @@ HIDDEN_ITEMS = ['ITEM_HEART_SCALE', 'ITEM_RARE_CANDY', 'ITEM_REVIVE',
                 'ITEM_SUPER_POTION', 'ITEM_CARBOS', 'ITEM_IRON',
                 'ITEM_CALCIUM', 'ITEM_ULTRA_BALL']
 
+# The one rare thing. Steven trades a level 1 METAL SLIME for each, so where it
+# goes is the whole difficulty: it wants to be the furthest cell from any edge
+# the route has, and only on routes that are actually deep enough to hide one.
+# Walking distance from the rim, not straight-line - a cell six steps from the
+# edge of the map is not hard to reach whatever the map looks like.
+ORE = 'ITEM_LIQUID_ORE'
+ORE_DEPTH = 40                  # steps from the nearest way in
+
 SIGN_TILE = 0x003               # the signpost; see signs() below
 MARK = '// Open Hoenn - tools/populate.py'
 FLAGS = 'include/constants/flags.h'
@@ -213,10 +221,37 @@ def spots(spec, lay, maps, rend, beh):
             out.append((x, y))
         return out
 
+    def depths():
+        """steps from the nearest rim cell, over ground the player can walk."""
+        seed = [i for i in live if i % w in (0, w-1) or i // w in (0, h-1)]
+        d = {i: 0 for i in seed}
+        q = collections.deque(seed)
+        while q:
+            i = q.popleft()
+            x, y = i % w, i // w
+            for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                j = ny*w + nx
+                if (0 <= nx < w and 0 <= ny < h and j not in d and j in live
+                        and ok(ele[i], ele[j])):
+                    d[j] = d[i] + 1
+                    q.append(j)
+        return d
+
+    ok = lambda a, b: a == b or 0 in (a, b) or 15 in (a, b)
+    far = depths()
+
     area = w * h
     nb = max(1, round(ITEM_RATE * area / 1000))
     nh = max(1, round(HIDDEN_RATE * area / 1000))
     balls = pick(BALL_ON, nb, 11, True)
+
+    # the ore goes as far in as the route can put it, on ground an item ball
+    # can stand on and out of the way of everything else already placed
+    deep = [i for i in sorted(far, key=lambda i: -far[i])
+            if usable(i, BALL_ON, True)
+            and all(abs(i % w - x) + abs(i // w - y) >= APART for x, y in balls)]
+    ore = [(deep[0] % w, deep[0] // w)] if deep and far[deep[0]] >= ORE_DEPTH else []
+    balls = balls + ore
     # a nook is what a visible item ball wants; a buried one is buried anywhere
     hidden = [p for p in pick(HIDDEN_ON, nh + len(balls), 29, False, solid=False)
               if all(abs(p[0]-b[0]) + abs(p[1]-b[1]) >= APART for b in balls)][:nh]
@@ -224,7 +259,8 @@ def spots(spec, lay, maps, rend, beh):
     used = set(balls) | set(hidden)
     return ([(x, y, elev(x, y)) for x, y in balls],
             [(x, y, elev(x, y)) for x, y in hidden],
-            signs(spec, w, h, raw, cls, live, walk, cut, used))
+            signs(spec, w, h, raw, cls, live, walk, cut, used),
+            set(ore))
 
 # A route sign is metatile 003, which vanilla uses 101 times and always at
 # collision 1 - you read it, you do not stand on it. All 23 of vanilla's route
@@ -324,11 +360,11 @@ def main():
     plan, claimed, hclaimed, scripts = [], [], [], []
     used_names = set(re.findall(r'#define (FLAG_\w+)', flags))
     for spec in N.NEWMAPS:
-        balls, hidden, posts = spots(spec, lay, maps, rend, beh)
+        balls, hidden, posts, ore = spots(spec, lay, maps, rend, beh)
         n = spec['num']
         objs, bgs = [], []
         for k, (x, y, e) in enumerate(balls):
-            item = BALL_ITEMS[(n * 5 + k * 3) % len(BALL_ITEMS)]
+            item = ORE if (x, y) in ore else BALL_ITEMS[(n * 5 + k * 3) % len(BALL_ITEMS)]
             name = f'FLAG_ITEM_ROUTE_{n}_{item[5:]}'
             while name in used_names:
                 name += '_B'

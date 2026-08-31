@@ -704,6 +704,26 @@ def check():
             p = f'{R.ROOT}/graphics/pokemon/{m["dir"]}/{f}'
             if not os.path.exists(p):
                 bad.append(f'missing asset {p}')
+
+    # METAL SLIME arrived with the basic slime's rust-coloured flecks still in
+    # its debris, which on a mercury-coloured POKeMON reads as dirt. They were
+    # cleared out of all four frames; this is what stops them coming back with
+    # the next re-quantise.
+    from PIL import Image
+    for f in ('front.png', 'anim_front.png', 'back.png', 'icon.png'):
+        p = f'{R.ROOT}/graphics/pokemon/metal_slime/{f}'
+        if not os.path.exists(p):
+            continue
+        im = Image.open(p)
+        if im.mode != 'P':
+            continue
+        pal = im.getpalette()[:48]
+        warm = {i for i in range(16)
+                if pal[i*3] > pal[i*3+2] + 30}
+        n = sum(1 for v in im.get_flattened_data() if v in warm)
+        if n:
+            bad.append(f'metal_slime/{f} has {n} warm-coloured pixels; '
+                       'it is meant to be entirely greyscale')
     for m in MONS:
         w = f'{R.ROOT}/sound/direct_sound_samples/cries/{m["cry"]}.wav'
         if not os.path.exists(w):

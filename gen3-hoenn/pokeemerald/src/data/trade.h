@@ -1047,7 +1047,56 @@ static const struct InGameTrade sIngameTrades[] =
         .otGender = FEMALE,
         .sheen = 10,
         .requestedSpecies = SPECIES_SKITTY
-    }
+    },
+    // Open Hoenn - tools/trades.py
+    [INGAME_TRADE_SLIME_TREECKO] =
+    {
+        .nickname = _("?"),
+        .species = SPECIES_SLIME,
+        .ivs = {15, 15, 15, 15, 15, 15},
+        .abilityNum = 0,
+        .otId = 51337,
+        .conditions = {5, 5, 5, 5, 5},
+        .personality = 0x2D,
+        .heldItem = ITEM_NONE,
+        .mailNum = -1,
+        .otName = _("?"),
+        .otGender = MALE,
+        .sheen = 10,
+        .requestedSpecies = SPECIES_TREECKO
+    },
+    [INGAME_TRADE_SLIME_TORCHIC] =
+    {
+        .nickname = _("?"),
+        .species = SPECIES_SLIME,
+        .ivs = {15, 15, 15, 15, 15, 15},
+        .abilityNum = 0,
+        .otId = 51337,
+        .conditions = {5, 5, 5, 5, 5},
+        .personality = 0x2D,
+        .heldItem = ITEM_NONE,
+        .mailNum = -1,
+        .otName = _("?"),
+        .otGender = MALE,
+        .sheen = 10,
+        .requestedSpecies = SPECIES_TORCHIC
+    },
+    [INGAME_TRADE_SLIME_MUDKIP] =
+    {
+        .nickname = _("?"),
+        .species = SPECIES_SLIME,
+        .ivs = {15, 15, 15, 15, 15, 15},
+        .abilityNum = 0,
+        .otId = 51337,
+        .conditions = {5, 5, 5, 5, 5},
+        .personality = 0x2D,
+        .heldItem = ITEM_NONE,
+        .mailNum = -1,
+        .otName = _("?"),
+        .otGender = MALE,
+        .sheen = 10,
+        .requestedSpecies = SPECIES_MUDKIP
+    },
 };
 
 static const u16 sIngameTradeMail[][MAIL_WORDS_COUNT + 1] =
