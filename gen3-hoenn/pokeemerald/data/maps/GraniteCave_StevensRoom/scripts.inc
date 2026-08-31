@@ -13,6 +13,7 @@ GraniteCave_StevensRoom_OnTransition:	@ open hoenn
 
 
 
+
 GraniteCave_StevensRoom_EventScript_Steven::
 	lock
 	faceplayer
