@@ -131,10 +131,12 @@ def write_icon(dry):
         return
     os.makedirs(os.path.dirname(f'{R.ROOT}/{ICON}'), exist_ok=True)
     im.save(f'{R.ROOT}/{ICON}')
-    with open(f'{R.ROOT}/{PAL}', 'w') as f:
-        f.write('JASC-PAL\n0100\n16\n')
+    # .gitattributes marks *.pal as eol=crlf, and every other palette in the
+    # tree is written that way; newline='' keeps Python from undoing it
+    with open(f'{R.ROOT}/{PAL}', 'w', newline='') as f:
+        f.write('JASC-PAL\r\n0100\r\n16\r\n')
         for c in pal:
-            f.write(f'{c[0]} {c[1]} {c[2]}\n')
+            f.write(f'{c[0]} {c[1]} {c[2]}\r\n')
 
 
 def add_item(dry):
