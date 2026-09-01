@@ -1783,12 +1783,21 @@ that scale it is the only value anyone is really looking for:
  6-10  C       21-25  B+      31     A+
 ```
 
-Two things this does not do. Nature is not coloured: the summary screen's text
-palette has a blue but no red, and the page already says the nature in the
-trainer memo. And the columns are not aligned identically across modes - a
-two-character grade cannot right-align against a three-digit number in a
-variable-width font - so the grades sit left in their column while the numbers
-sit right.
+Nature is not coloured: the summary screen's text palette has a blue but no
+red, and the page already names the nature in the trainer memo.
+
+Alignment took two goes, and `tools/render_summary.py` is why the second one
+happened. There is no emulator here, so the first version could only be read
+and hoped over - it padded the grades with spaces, which cannot work, because a
+space is 3 pixels wide in this font and a digit is 6. The renderer draws the
+page out of the same three things the game does - the page tilemap, its
+tileset, and the Latin font with `gFontNormalLatinGlyphWidths` - so the
+geometry and the text metrics are the real ones, and the ragged left edge was
+plain to see. Grades are now printed one line at a time and right-aligned
+individually, which is the only way to align them against numbers.
+
+Read that tool's output for layout, not for colour: window text uses palette 6,
+which is loaded from the page graphics at runtime, so the ink is approximated.
 
 ### The physical/special indicator, and why it is not here yet
 

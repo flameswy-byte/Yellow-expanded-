@@ -126,6 +126,11 @@ enum
 #define TILE_EMPTY_JAM_HEART     0x103D
 
 static EWRAM_DATA u8 sStatsMode = 0;
+// the six IV grades, kept apart from the one-string-per-window path
+// because a two-character grade cannot be right-aligned against a
+// three-digit number by padding it with spaces: a space is 3 pixels
+// wide in this font and a digit is 6, so the padding never lands.
+static EWRAM_DATA u8 sIvColumn[NUM_STATS][4] = {0};
 static EWRAM_DATA struct PokemonSummaryScreenData
 {
     /*0x00*/ union {
@@ -765,16 +770,14 @@ static const u8 sText_SkillsIVs[] = _("SKILLS - IVs");
 static const u8 sText_SkillsEVs[] = _("SKILLS - EVs");
 
 // 0..31 as a letter. 31 gets a grade to itself, because on a 0-31 scale the
-// only value anyone is really looking for is the top one. The trailing space
-// pads the one-character grades so the column stays right-aligned like the
-// numbers it replaces.
+// only value anyone is really looking for is the top one.
 static const u8 sIvGradeAPlus[]  = _("A+");
-static const u8 sIvGradeA[]      = _("A ");
+static const u8 sIvGradeA[]      = _("A");
 static const u8 sIvGradeAMinus[] = _("A-");
 static const u8 sIvGradeBPlus[]  = _("B+");
-static const u8 sIvGradeB[]      = _("B ");
+static const u8 sIvGradeB[]      = _("B");
 static const u8 sIvGradeCPlus[]  = _("C+");
-static const u8 sIvGradeC[]      = _("C ");
+static const u8 sIvGradeC[]      = _("C");
 static const u8 sIvGradeDPlus[]  = _("D+");
 static const u8 sIvGradeDMinus[] = _("D-");
 
@@ -3486,12 +3489,13 @@ static const u8 *IvGrade(u8 iv)
 // One stat's column entry, whichever of the three things the column is
 // currently showing. Widths match what the stats themselves use, so the
 // columns line up the same way in every mode.
-static void BufferStatForMode(u8 *dest, u16 stat, u8 ivField, u8 evField, u8 width)
+static void BufferStatForMode(u8 *dest, u16 stat, u8 ivField, u8 evField, u8 width, u8 slot)
 {
     switch (sStatsMode)
     {
     case STATS_MODE_IV:
         StringCopy(dest, IvGrade(GetMonData(&sMonSummaryScreen->currentMon, ivField)));
+        StringCopy(sIvColumn[slot], dest);
         break;
     case STATS_MODE_EV:
         ConvertIntToDecimalStringN(dest, GetMonData(&sMonSummaryScreen->currentMon, evField),
@@ -3529,11 +3533,11 @@ static void BufferLeftColumnStats(void)
         // an IV or an EV is one number, so the HP row becomes a single value
         // and the column takes the same three-line shape as the right one
         BufferStatForMode(currentHPString, sMonSummaryScreen->summary.maxHP,
-                          MON_DATA_HP_IV, MON_DATA_HP_EV, 7);
+                          MON_DATA_HP_IV, MON_DATA_HP_EV, 7, 0);
         BufferStatForMode(attackString, sMonSummaryScreen->summary.atk,
-                          MON_DATA_ATK_IV, MON_DATA_ATK_EV, 7);
+                          MON_DATA_ATK_IV, MON_DATA_ATK_EV, 7, 1);
         BufferStatForMode(defenseString, sMonSummaryScreen->summary.def,
-                          MON_DATA_DEF_IV, MON_DATA_DEF_EV, 7);
+                          MON_DATA_DEF_IV, MON_DATA_DEF_EV, 7, 2);
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, attackString);
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, defenseString);
@@ -3546,19 +3550,41 @@ static void BufferLeftColumnStats(void)
     Free(defenseString);
 }
 
+// The three rows of one stat column. Grades get a line each so every one can
+// be right-aligned on its own; numbers keep vanilla's single string, which is
+// already aligned by ConvertIntToDecimalStringN padding them to a fixed width.
+static void PrintStatColumn(u8 templateId, u8 firstSlot, u8 alignTo, u8 numberX)
+{
+    u8 win = AddWindowFromTemplateList(sPageSkillsTemplate, templateId);
+    u8 i;
+
+    if (sStatsMode != STATS_MODE_IV)
+    {
+        PrintTextOnWindow(win, gStringVar4, numberX, 1, 0, 0);
+        return;
+    }
+    for (i = 0; i < 3; i++)
+    {
+        const u8 *text = sIvColumn[firstSlot + i];
+        PrintTextOnWindow(win, text,
+                          GetStringRightAlignXOffset(FONT_NORMAL, text, alignTo),
+                          1 + i * 16, 0, 0);
+    }
+}
+
 static void PrintLeftColumnStats(void)
 {
-    PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_LEFT), gStringVar4, 4, 1, 0, 0);
+    PrintStatColumn(PSS_DATA_WINDOW_SKILLS_STATS_LEFT, 0, 44, 4);
 }
 
 static void BufferRightColumnStats(void)
 {
     BufferStatForMode(gStringVar1, sMonSummaryScreen->summary.spatk,
-                      MON_DATA_SPATK_IV, MON_DATA_SPATK_EV, 3);
+                      MON_DATA_SPATK_IV, MON_DATA_SPATK_EV, 3, 3);
     BufferStatForMode(gStringVar2, sMonSummaryScreen->summary.spdef,
-                      MON_DATA_SPDEF_IV, MON_DATA_SPDEF_EV, 3);
+                      MON_DATA_SPDEF_IV, MON_DATA_SPDEF_EV, 3, 4);
     BufferStatForMode(gStringVar3, sMonSummaryScreen->summary.speed,
-                      MON_DATA_SPEED_IV, MON_DATA_SPEED_EV, 3);
+                      MON_DATA_SPEED_IV, MON_DATA_SPEED_EV, 3, 5);
 
     DynamicPlaceholderTextUtil_Reset();
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, gStringVar1);
@@ -3569,7 +3595,7 @@ static void BufferRightColumnStats(void)
 
 static void PrintRightColumnStats(void)
 {
-    PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_RIGHT), gStringVar4, 2, 1, 0, 0);
+    PrintStatColumn(PSS_DATA_WINDOW_SKILLS_STATS_RIGHT, 3, 22, 2);
 }
 
 static void PrintExpPointsNextLevel(void)
