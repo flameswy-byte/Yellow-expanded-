@@ -12,9 +12,13 @@ a nook rather than dropped in the open. Its 55 hidden items are on grass and
 sand, and sometimes on a rock. What they contain is drawn from the same pool
 vanilla uses on its own routes.
 
-Run after newmaps.py, which rewrites the map headers from scratch:
+Run after newmaps.py, which rewrites the map headers from scratch, and always
+with trainers.py after it - this tool's trim() cuts scripts.inc at the first
+generated block of any kind, so running it alone leaves 155 trainer objects
+pointing at scripts that are no longer there, and the link fails naming every
+one of them:
 
-    python3 tools/newmaps.py && python3 tools/populate.py
+    python3 tools/newmaps.py && python3 tools/populate.py && python3 tools/trainers.py
 """
 import argparse, collections, json, os, re, sys
 
@@ -422,8 +426,17 @@ def main():
     for spec, objs, bgs, posts in plan:
         p = f'{R.ROOT}/data/maps/{spec["name"]}/map.json'
         d = json.load(open(p))
-        d['object_events'] = objs
-        d['bg_events'] = bgs
+        # Keep whatever this tool did not put here. It used to assign the
+        # list outright, which quietly deleted all 155 of tools/trainers.py's
+        # trainers the next time this ran on its own - the two tools write the
+        # same field, and only one of them was being careful about it.
+        mine = lambda o: (o.get('graphics_id') == 'OBJ_EVENT_GFX_ITEM_BALL'
+                          and 'FLAG_ITEM_' in str(o.get('flag')))
+        d['object_events'] = [o for o in (d.get('object_events') or [])
+                              if not mine(o)] + objs
+        theirs = lambda e: e.get('type') not in ('hidden_item', 'sign')
+        d['bg_events'] = [e for e in (d.get('bg_events') or [])
+                          if theirs(e)] + bgs
         # the sign has to be there to read: metatile 003 is what a signpost
         # looks like, and it is on the painter's avoid list precisely so that
         # one never appears without a script behind it. This is the script.
