@@ -1760,6 +1760,46 @@ frames, which on a mercury-coloured POKéMON reads as dirt rather than as
 metal. They are gone, and `newmons.py --check` now fails if any pixel of it is
 warmer than it is cool.
 
+### IVs and EVs on the skills page
+
+Radical Red grades IVs with a letter and Elite Redux shows EVs as a numeric
+column; both were asked for, and Emerald has room for neither as a third
+column. Its skills page puts the six stats in two windows, and the right-hand
+one is three tiles wide and sits flush against the right edge of the screen -
+rendering the page's own tilemap and drawing the window rectangles onto it is
+what settled that, rather than guessing.
+
+So the columns cycle instead. **A** on the skills page goes stats -> IVs ->
+EVs -> stats, and A on that page did nothing before, so nothing was taken away
+to pay for it. The page title doubles as the indicator, which is where Radical
+Red puts its own.
+
+The IV grades band 0-31 nine ways, with 31 getting a grade to itself because on
+that scale it is the only value anyone is really looking for:
+
+```
+ 0     D-      11-15  C+      26-29  A-
+ 1-5   D+      16-20  B       30     A
+ 6-10  C       21-25  B+      31     A+
+```
+
+Two things this does not do. Nature is not coloured: the summary screen's text
+palette has a blue but no red, and the page already says the nature in the
+trainer memo. And the columns are not aligned identically across modes - a
+two-character grade cannot right-align against a three-digit number in a
+variable-width font - so the grades sit left in their column while the numbers
+sit right.
+
+### The physical/special indicator, and why it is not here yet
+
+The battle move-type window is `B_WIN_MOVE_TYPE`: eight tiles, 64 pixels, and
+"TYPE/" plus the longest type name already fills it. There is nowhere to put
+text, and the one spare tile before the screen edge is 8 pixels. It needs
+either the "TYPE/" label dropped to make room for an icon, or a sprite with its
+own palette - the window's own palette is the battle text one, which is greys.
+That is a decision about how it should look, and it wants an eye on the
+running game rather than a guess from the window template.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

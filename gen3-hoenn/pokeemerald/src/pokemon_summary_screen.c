@@ -125,6 +125,7 @@ enum
 #define TILE_FILLED_JAM_HEART    0x103C
 #define TILE_EMPTY_JAM_HEART     0x103D
 
+static EWRAM_DATA u8 sStatsMode = 0;
 static EWRAM_DATA struct PokemonSummaryScreenData
 {
     /*0x00*/ union {
@@ -270,6 +271,8 @@ static void PrintEggMemo(void);
 static void Task_PrintSkillsPage(u8);
 static void PrintHeldItemName(void);
 static void PrintSkillsPageText(void);
+static void PrintSkillsPageTitle(void);
+static void RefreshStatsMode(void);
 static void PrintRibbonCount(void);
 static void BufferLeftColumnStats(void);
 static void PrintLeftColumnStats(void);
@@ -746,6 +749,41 @@ static const TaskFunc sTextPrinterTasks[] =
 static const u8 sMemoNatureTextColor[] = _("{COLOR LIGHT_RED}{SHADOW GREEN}");
 static const u8 sMemoMiscTextColor[] = _("{COLOR WHITE}{SHADOW DARK_GRAY}"); // This is also affected by palettes, apparently
 static const u8 sStatsLeftColumnLayout[] = _("{DYNAMIC 0}/{DYNAMIC 1}\n{DYNAMIC 2}\n{DYNAMIC 3}");
+
+// --- IVs and EVs on the skills page ---------------------------------------
+// A cycles the number columns between the stats themselves, the IVs as a
+// letter grade, and the EVs. A on this page did nothing before, so nothing is
+// taken away to pay for it.
+//
+// The page's own two windows are reused rather than a third column added: the
+// right-hand one is three tiles wide and sits flush against the right edge of
+// the screen, so there is nowhere to put one. Which mode is showing goes in
+// the page title, which is where Radical Red puts it too.
+enum { STATS_MODE_STATS, STATS_MODE_IV, STATS_MODE_EV, STATS_MODE_COUNT };
+
+static const u8 sText_SkillsIVs[] = _("SKILLS - IVs");
+static const u8 sText_SkillsEVs[] = _("SKILLS - EVs");
+
+// 0..31 as a letter. 31 gets a grade to itself, because on a 0-31 scale the
+// only value anyone is really looking for is the top one. The trailing space
+// pads the one-character grades so the column stays right-aligned like the
+// numbers it replaces.
+static const u8 sIvGradeAPlus[]  = _("A+");
+static const u8 sIvGradeA[]      = _("A ");
+static const u8 sIvGradeAMinus[] = _("A-");
+static const u8 sIvGradeBPlus[]  = _("B+");
+static const u8 sIvGradeB[]      = _("B ");
+static const u8 sIvGradeCPlus[]  = _("C+");
+static const u8 sIvGradeC[]      = _("C ");
+static const u8 sIvGradeDPlus[]  = _("D+");
+static const u8 sIvGradeDMinus[] = _("D-");
+
+static const struct { u8 min; const u8 *text; } sIvGrades[] =
+{
+    {31, sIvGradeAPlus},  {30, sIvGradeA},     {26, sIvGradeAMinus},
+    {21, sIvGradeBPlus},  {16, sIvGradeB},     {11, sIvGradeCPlus},
+    { 6, sIvGradeC},      { 1, sIvGradeDPlus}, { 0, sIvGradeDMinus},
+};
 static const u8 sStatsRightColumnLayout[] = _("{DYNAMIC 0}\n{DYNAMIC 1}\n{DYNAMIC 2}");
 static const u8 sMovesPPLayout[] = _("{PP}{DYNAMIC 0}/{DYNAMIC 1}");
 
@@ -1138,6 +1176,7 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
     }
 
     sMonSummaryScreen->currPageIndex = sMonSummaryScreen->minPageIndex;
+    sStatsMode = STATS_MODE_STATS;
     SummaryScreen_SetAnimDelayTaskId(TASK_NONE);
 
     if (gMonSpritesGfxPtr == NULL)
@@ -1558,7 +1597,14 @@ static void Task_HandleInput(u8 taskId)
         }
         else if (JOY_NEW(A_BUTTON))
         {
-            if (sMonSummaryScreen->currPageIndex != PSS_PAGE_SKILLS)
+            if (sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS)
+            {
+                // stats -> IVs -> EVs -> stats
+                sStatsMode = (sStatsMode + 1) % STATS_MODE_COUNT;
+                PlaySE(SE_SELECT);
+                RefreshStatsMode();
+            }
+            else
             {
                 if (sMonSummaryScreen->currPageIndex == PSS_PAGE_INFO)
                 {
@@ -3305,8 +3351,38 @@ static void PrintEggMemo(void)
     PrintTextOnWindow(AddWindowFromTemplateList(sPageInfoTemplate, PSS_DATA_WINDOW_INFO_MEMO), text, 0, 1, 0, 0);
 }
 
+// The title doubles as the mode indicator, so the page says what its numbers
+// mean without a window being added anywhere to say it.
+static void PrintSkillsPageTitle(void)
+{
+    const u8 *text = gText_PkmnSkills;
+
+    if (sStatsMode == STATS_MODE_IV)
+        text = sText_SkillsIVs;
+    else if (sStatsMode == STATS_MODE_EV)
+        text = sText_SkillsEVs;
+
+    FillWindowPixelBuffer(PSS_LABEL_WINDOW_POKEMON_SKILLS_TITLE, PIXEL_FILL(0));
+    PrintTextOnWindow(PSS_LABEL_WINDOW_POKEMON_SKILLS_TITLE, text, 2, 1, 0, 1);
+}
+
+// Redraw just the parts the toggle changes. The two stat windows are removed
+// first because AddWindowFromTemplateList only clears a window when it creates
+// it, so reprinting into a live one leaves the old digits underneath.
+static void RefreshStatsMode(void)
+{
+    PrintSkillsPageTitle();
+    RemoveWindowByIndex(PSS_DATA_WINDOW_SKILLS_STATS_LEFT);
+    RemoveWindowByIndex(PSS_DATA_WINDOW_SKILLS_STATS_RIGHT);
+    BufferLeftColumnStats();
+    PrintLeftColumnStats();
+    BufferRightColumnStats();
+    PrintRightColumnStats();
+}
+
 static void PrintSkillsPageText(void)
 {
+    PrintSkillsPageTitle();
     PrintHeldItemName();
     PrintRibbonCount();
     BufferLeftColumnStats();
@@ -3395,6 +3471,38 @@ static void PrintRibbonCount(void)
     PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_RIBBON_COUNT), text, x, 1, 0, 0);
 }
 
+static const u8 *IvGrade(u8 iv)
+{
+    u32 i;
+
+    for (i = 0; i < ARRAY_COUNT(sIvGrades); i++)
+    {
+        if (iv >= sIvGrades[i].min)
+            return sIvGrades[i].text;
+    }
+    return sIvGrades[ARRAY_COUNT(sIvGrades) - 1].text;
+}
+
+// One stat's column entry, whichever of the three things the column is
+// currently showing. Widths match what the stats themselves use, so the
+// columns line up the same way in every mode.
+static void BufferStatForMode(u8 *dest, u16 stat, u8 ivField, u8 evField, u8 width)
+{
+    switch (sStatsMode)
+    {
+    case STATS_MODE_IV:
+        StringCopy(dest, IvGrade(GetMonData(&sMonSummaryScreen->currentMon, ivField)));
+        break;
+    case STATS_MODE_EV:
+        ConvertIntToDecimalStringN(dest, GetMonData(&sMonSummaryScreen->currentMon, evField),
+                                   STR_CONV_MODE_RIGHT_ALIGN, width);
+        break;
+    default:
+        ConvertIntToDecimalStringN(dest, stat, STR_CONV_MODE_RIGHT_ALIGN, width);
+        break;
+    }
+}
+
 static void BufferLeftColumnStats(void)
 {
     u8 *currentHPString = Alloc(8);
@@ -3402,17 +3510,35 @@ static void BufferLeftColumnStats(void)
     u8 *attackString = Alloc(8);
     u8 *defenseString = Alloc(8);
 
-    ConvertIntToDecimalStringN(currentHPString, sMonSummaryScreen->summary.currentHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    ConvertIntToDecimalStringN(maxHPString, sMonSummaryScreen->summary.maxHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    ConvertIntToDecimalStringN(attackString, sMonSummaryScreen->summary.atk, STR_CONV_MODE_RIGHT_ALIGN, 7);
-    ConvertIntToDecimalStringN(defenseString, sMonSummaryScreen->summary.def, STR_CONV_MODE_RIGHT_ALIGN, 7);
-
     DynamicPlaceholderTextUtil_Reset();
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, maxHPString);
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, attackString);
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(3, defenseString);
-    DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsLeftColumnLayout);
+    if (sStatsMode == STATS_MODE_STATS)
+    {
+        // the HP line is "current/max", which only the stats themselves have
+        ConvertIntToDecimalStringN(currentHPString, sMonSummaryScreen->summary.currentHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
+        ConvertIntToDecimalStringN(maxHPString, sMonSummaryScreen->summary.maxHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
+        ConvertIntToDecimalStringN(attackString, sMonSummaryScreen->summary.atk, STR_CONV_MODE_RIGHT_ALIGN, 7);
+        ConvertIntToDecimalStringN(defenseString, sMonSummaryScreen->summary.def, STR_CONV_MODE_RIGHT_ALIGN, 7);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, maxHPString);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, attackString);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(3, defenseString);
+        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsLeftColumnLayout);
+    }
+    else
+    {
+        // an IV or an EV is one number, so the HP row becomes a single value
+        // and the column takes the same three-line shape as the right one
+        BufferStatForMode(currentHPString, sMonSummaryScreen->summary.maxHP,
+                          MON_DATA_HP_IV, MON_DATA_HP_EV, 7);
+        BufferStatForMode(attackString, sMonSummaryScreen->summary.atk,
+                          MON_DATA_ATK_IV, MON_DATA_ATK_EV, 7);
+        BufferStatForMode(defenseString, sMonSummaryScreen->summary.def,
+                          MON_DATA_DEF_IV, MON_DATA_DEF_EV, 7);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, attackString);
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, defenseString);
+        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsRightColumnLayout);
+    }
 
     Free(currentHPString);
     Free(maxHPString);
@@ -3427,9 +3553,12 @@ static void PrintLeftColumnStats(void)
 
 static void BufferRightColumnStats(void)
 {
-    ConvertIntToDecimalStringN(gStringVar1, sMonSummaryScreen->summary.spatk, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    ConvertIntToDecimalStringN(gStringVar2, sMonSummaryScreen->summary.spdef, STR_CONV_MODE_RIGHT_ALIGN, 3);
-    ConvertIntToDecimalStringN(gStringVar3, sMonSummaryScreen->summary.speed, STR_CONV_MODE_RIGHT_ALIGN, 3);
+    BufferStatForMode(gStringVar1, sMonSummaryScreen->summary.spatk,
+                      MON_DATA_SPATK_IV, MON_DATA_SPATK_EV, 3);
+    BufferStatForMode(gStringVar2, sMonSummaryScreen->summary.spdef,
+                      MON_DATA_SPDEF_IV, MON_DATA_SPDEF_EV, 3);
+    BufferStatForMode(gStringVar3, sMonSummaryScreen->summary.speed,
+                      MON_DATA_SPEED_IV, MON_DATA_SPEED_EV, 3);
 
     DynamicPlaceholderTextUtil_Reset();
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, gStringVar1);
