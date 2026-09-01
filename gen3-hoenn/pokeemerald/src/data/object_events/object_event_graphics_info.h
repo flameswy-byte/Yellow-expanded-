@@ -1442,119 +1442,17 @@ const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedMauvilleOldM
     .affineAnims = gDummySpriteAffineAnimTable,
 };
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedNatuDoll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_3,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_3,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedNatuDoll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedMagnemiteDoll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_3,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_3,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedMagnemiteDoll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedSquirtleDoll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_1,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_1,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedSquirtleDoll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedWooperDoll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_3,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_3,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedWooperDoll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedPikachuDoll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_2,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_2,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedPikachuDoll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
 
-const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_UnusedPorygon2Doll = {
-    .tileTag = TAG_NONE,
-    .paletteTag = OBJ_EVENT_PAL_TAG_NPC_1,
-    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
-    .size = 128,
-    .width = 16,
-    .height = 16,
-    .paletteSlot = PALSLOT_NPC_1,
-    .shadowSize = SHADOW_SIZE_S,
-    .inanimate = TRUE,
-    .disableReflectionPaletteLoad = FALSE,
-    .tracks = TRACKS_NONE,
-    .oam = &gObjectEventBaseOam_16x16,
-    .subspriteTables = sOamTables_16x16,
-    .anims = sAnimTable_Inanimate,
-    .images = sPicTable_UnusedPorygon2Doll,
-    .affineAnims = gDummySpriteAffineAnimTable,
-};
+
+
+
+
+
+
 
 const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_CuttableTree = {
     .tileTag = TAG_NONE,
@@ -4650,5 +4548,208 @@ const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_HoOh = {
     .subspriteTables = sOamTables_32x32,
     .anims = sAnimTable_HoOh,
     .images = sPicTable_HoOh,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_Larvesta = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_LARVESTA,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_Larvesta,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_Volcarona = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_VOLCARONA,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_Volcarona,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_Wimpod = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_WIMPOD,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_Wimpod,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_Golisopod = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_GOLISOPOD,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_Golisopod,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_VulpixA = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_VULPIX_A,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_VulpixA,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_NinetalesA = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_NINETALES_A,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_NinetalesA,
+    .affineAnims = gDummySpriteAffineAnimTable,
+};
+
+// Open Hoenn - tools/statics.py
+const struct ObjectEventGraphicsInfo gObjectEventGraphicsInfo_KingSlime = {
+    .tileTag = TAG_NONE,
+    .paletteTag = OBJ_EVENT_PAL_TAG_KING_SLIME,
+    .reflectionPaletteTag = OBJ_EVENT_PAL_TAG_NONE,
+    .size = 512,
+    .width = 32,
+    .height = 32,
+    .paletteSlot = PALSLOT_NPC_4,
+    .shadowSize = SHADOW_SIZE_M,
+    .inanimate = TRUE,
+    .disableReflectionPaletteLoad = TRUE,
+    .tracks = TRACKS_NONE,
+    .oam = &gObjectEventBaseOam_32x32,
+    .subspriteTables = sOamTables_32x32,
+    .anims = sAnimTable_Inanimate,
+    .images = sPicTable_KingSlime,
     .affineAnims = gDummySpriteAffineAnimTable,
 };

@@ -181,12 +181,6 @@ const u16 gObjectEventPal_Kyogre[] = INCGFX_U16("graphics/object_events/palettes
 const u16 gObjectEventPal_KyogreReflection[] = INCGFX_U16("graphics/object_events/palettes/kyogre_reflection.pal", ".gbapal");
 const u16 gObjectEventPal_Groudon[] = INCGFX_U16("graphics/object_events/palettes/groudon.pal", ".gbapal");
 const u16 gObjectEventPal_GroudonReflection[] = INCGFX_U16("graphics/object_events/palettes/groudon_reflection.pal", ".gbapal");
-const u32 gObjectEventPic_UnusedNatuDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_natu_doll.png", ".4bpp");
-const u32 gObjectEventPic_UnusedMagnemiteDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_magnemite_doll.png", ".4bpp");
-const u32 gObjectEventPic_UnusedSquirtleDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_squirtle_doll.png", ".4bpp");
-const u32 gObjectEventPic_UnusedWooperDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_wooper_doll.png", ".4bpp");
-const u32 gObjectEventPic_UnusedPikachuDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_pikachu_doll.png", ".4bpp");
-const u32 gObjectEventPic_UnusedPorygon2Doll[] = INCGFX_U32("graphics/object_events/pics/dolls/unused_porygon2_doll.png", ".4bpp");
 const u32 gObjectEventPic_PichuDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/pichu_doll.png", ".4bpp");
 const u32 gObjectEventPic_PikachuDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/pikachu_doll.png", ".4bpp");
 const u32 gObjectEventPic_MarillDoll[] = INCGFX_U32("graphics/object_events/pics/dolls/marill_doll.png", ".4bpp");
@@ -360,3 +354,45 @@ const u32 gObjectEventPic_Lugia[] = INCGFX_U32("graphics/object_events/pics/poke
 const u16 gObjectEventPal_Lugia[] = INCGFX_U16("graphics/object_events/palettes/lugia.pal", ".gbapal");
 const u32 gObjectEventPic_HoOh[] = INCGFX_U32("graphics/object_events/pics/pokemon/ho_oh.png", ".4bpp", "-mwidth 4 -mheight 4");
 const u16 gObjectEventPal_HoOh[] = INCGFX_U16("graphics/object_events/palettes/ho_oh.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_Larvesta[] = INCGFX_U32("graphics/object_events/pics/pokemon/larvesta.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_Larvesta[] = INCGFX_U16("graphics/object_events/palettes/larvesta.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_Volcarona[] = INCGFX_U32("graphics/object_events/pics/pokemon/volcarona.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_Volcarona[] = INCGFX_U16("graphics/object_events/palettes/volcarona.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_Wimpod[] = INCGFX_U32("graphics/object_events/pics/pokemon/wimpod.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_Wimpod[] = INCGFX_U16("graphics/object_events/palettes/wimpod.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_Golisopod[] = INCGFX_U32("graphics/object_events/pics/pokemon/golisopod.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_Golisopod[] = INCGFX_U16("graphics/object_events/palettes/golisopod.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_VulpixA[] = INCGFX_U32("graphics/object_events/pics/pokemon/vulpix_a.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_VulpixA[] = INCGFX_U16("graphics/object_events/palettes/vulpix_a.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_NinetalesA[] = INCGFX_U32("graphics/object_events/pics/pokemon/ninetales_a.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_NinetalesA[] = INCGFX_U16("graphics/object_events/palettes/ninetales_a.pal", ".gbapal");
+// Open Hoenn - tools/statics.py
+const u32 gObjectEventPic_KingSlime[] = INCGFX_U32("graphics/object_events/pics/pokemon/king_slime.png", ".4bpp", "-mwidth 4 -mheight 4");
+const u16 gObjectEventPal_KingSlime[] = INCGFX_U16("graphics/object_events/palettes/king_slime.pal", ".gbapal");

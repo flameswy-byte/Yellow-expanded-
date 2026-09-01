@@ -468,6 +468,13 @@ const u8 gInitialMovementTypeFacingDirections[] = {
 #define OBJ_EVENT_PAL_TAG_LUGIA                   0x1121
 #define OBJ_EVENT_PAL_TAG_RS_BRENDAN              0x1122
 #define OBJ_EVENT_PAL_TAG_RS_MAY                  0x1123
+#define OBJ_EVENT_PAL_TAG_LARVESTA                0x1200  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_VOLCARONA               0x1201  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_WIMPOD                  0x1202  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_GOLISOPOD               0x1203  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_VULPIX_A                0x1204  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_NINETALES_A             0x1205  // Open Hoenn - tools/statics.py
+#define OBJ_EVENT_PAL_TAG_KING_SLIME              0x1206  // Open Hoenn - tools/statics.py
 #define OBJ_EVENT_PAL_TAG_NONE                    0x11FF
 
 #include "data/object_events/object_event_graphics_info_pointers.h"
@@ -479,6 +486,13 @@ const u8 gInitialMovementTypeFacingDirections[] = {
 #include "data/object_events/object_event_graphics_info.h"
 
 static const struct SpritePalette sObjectEventSpritePalettes[] = {
+    {gObjectEventPal_KingSlime,               OBJ_EVENT_PAL_TAG_KING_SLIME},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_NinetalesA,              OBJ_EVENT_PAL_TAG_NINETALES_A},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_VulpixA,                 OBJ_EVENT_PAL_TAG_VULPIX_A},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_Golisopod,               OBJ_EVENT_PAL_TAG_GOLISOPOD},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_Wimpod,                  OBJ_EVENT_PAL_TAG_WIMPOD},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_Volcarona,               OBJ_EVENT_PAL_TAG_VOLCARONA},  // Open Hoenn - tools/statics.py
+    {gObjectEventPal_Larvesta,                OBJ_EVENT_PAL_TAG_LARVESTA},  // Open Hoenn - tools/statics.py
     {gObjectEventPal_Npc1,                  OBJ_EVENT_PAL_TAG_NPC_1},
     {gObjectEventPal_Npc2,                  OBJ_EVENT_PAL_TAG_NPC_2},
     {gObjectEventPal_Npc3,                  OBJ_EVENT_PAL_TAG_NPC_3},

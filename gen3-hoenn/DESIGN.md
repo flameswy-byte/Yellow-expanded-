@@ -1809,6 +1809,53 @@ own palette - the window's own palette is the battle text one, which is greys.
 That is a decision about how it should look, and it wants an eye on the
 running game rather than a guess from the window template.
 
+### Seven Pokemon standing still
+
+Slime and Metal Slime are what the two traders hand over, so they are left out:
+a thing you can be given *and* walk up to is worth less than either. That
+leaves seven, and seven is exactly what the game has room for.
+
+An object event's graphics id is one byte, and the sixteen values above
+`NUM_OBJ_EVENT_GFX` are the dynamic VAR ids, so 239 is the ceiling and vanilla
+already spends 238 of it. But six of those are `UNUSED_*_DOLL` - Natu,
+Magnemite, Squirtle, Wooper, Pikachu and Porygon2 - and each is referenced
+**exactly once in the whole tree**, by the pointer table and nothing else.
+Taking those six plus the one genuinely free slot at 239 gives seven, with no
+expansion patch and nothing widened that stores a graphics id.
+
+The sprites are the party icons. Those are already 32x32 and already drawn for
+these species, so the top frame of each becomes the overworld picture and the
+icon's own palette becomes the object event palette. The dolls were 16x16, so
+each info struct is rewritten rather than nudged - size, width, height, oam and
+subsprite table all move together, and getting one of them wrong shows up as a
+quarter of a sprite rather than as an error.
+
+Where they stand is the same test `populate.py` uses for item balls: the
+deepest cell the map has that is not an articulation point, because an object
+event you have not battled is exactly as solid as an item ball you have not
+picked up. Two of them are in cave rooms, which broke that outright - a route
+is entered across its edge and `reachable()` seeds from the rim, but a cave is
+entered through a warp and its edges are all wall, so the seed was empty and
+nothing was reachable at all. Interior maps now seed from their warps.
+
+```
+WIMPOD       Lv16  ROUTE140                       (18,29)   36 steps in
+LARVESTA     Lv20  ROUTE144                        (5,40)  104 steps in
+KING SLIME   Lv32  ROUTE146                       (16,66)   32 steps in
+GOLISOPOD    Lv35  ROUTE147                       (19,24)   23 steps in
+VOLCARONA    Lv45  ROUTE148                        (33,2)  104 steps in
+VULPIX-A     Lv28  SHOAL CAVE, ICE ROOM           (14,8)   63 steps in
+NINETALES-A  Lv40  SHOAL CAVE, LOWER ROOM         (19,2)   12 steps in
+```
+
+Each stands where its own line already lives, so finding one rewards having
+walked the route rather than a lottery elsewhere. The three that otherwise only
+exist by evolution are the exceptions: they are put deeper and higher, because
+being handed one is the entire point of them.
+
+The script is vanilla's own static-Pokemon shape - cry, `dowildbattle`, and
+gone for good if you win or catch it, flew away if you run.
+
 ### Why CFRU is a specification and not a dependency
 
 Worth writing down, because the obvious question is why any of this is being

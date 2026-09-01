@@ -85,12 +85,12 @@
 #define FLAG_ITEM_ROUTE_148_STAR_PIECE                              0x47 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x047)
 #define FLAG_ITEM_ROUTE_148_LIQUID_ORE                              0x48 // Open Hoenn - tools/populate.py (FLAG_UNUSED_0x048)
 #define FLAG_HIDE_GRANITE_CAVE_TRADER_STEVEN                        0x49 // Open Hoenn - tools/trades.py (FLAG_UNUSED_0x049)
-#define FLAG_UNUSED_0x04A    0x4A // Unused Flag
-#define FLAG_UNUSED_0x04B    0x4B // Unused Flag
-#define FLAG_UNUSED_0x04C    0x4C // Unused Flag
-#define FLAG_UNUSED_0x04D    0x4D // Unused Flag
-#define FLAG_UNUSED_0x04E    0x4E // Unused Flag
-#define FLAG_UNUSED_0x04F    0x4F // Unused Flag
+#define FLAG_HIDE_STATIC_LARVESTA                                   0x4A // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04A)
+#define FLAG_CAUGHT_STATIC_LARVESTA                                 0x4B // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04B)
+#define FLAG_HIDE_STATIC_VOLCARONA                                  0x4C // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04C)
+#define FLAG_CAUGHT_STATIC_VOLCARONA                                0x4D // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04D)
+#define FLAG_HIDE_STATIC_WIMPOD                                     0x4E // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04E)
+#define FLAG_CAUGHT_STATIC_WIMPOD                                   0x4F // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x04F)
 
 // Scripts
 #define FLAG_HIDE_SKY_PILLAR_TOP_RAYQUAZA_STILL  0x50
@@ -255,7 +255,7 @@
 #define FLAG_RECEIVED_TM_ROAR                0xE7
 #define FLAG_RECEIVED_TM_GIGA_DRAIN          0xE8
 
-#define FLAG_UNUSED_0x0E9                    0xE9 // Unused Flag
+#define FLAG_HIDE_STATIC_GOLISOPOD                                  0xE9 // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x0E9)
 
 #define FLAG_RECEIVED_TM_REST                0xEA
 #define FLAG_RECEIVED_TM_ATTRACT             0xEB
@@ -460,8 +460,8 @@
 #define FLAG_REGISTERED_DRAKE                (TRAINER_REGISTERED_FLAGS_START + REMATCH_DRAKE)
 #define FLAG_REGISTERED_WALLACE              (TRAINER_REGISTERED_FLAGS_START + REMATCH_WALLACE)
 
-#define FLAG_UNUSED_0x1AA                    0x1AA // Unused Flag
-#define FLAG_UNUSED_0x1AB                    0x1AB // Unused Flag
+#define FLAG_CAUGHT_STATIC_GOLISOPOD                                0x1AA // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1AA)
+#define FLAG_HIDE_STATIC_VULPIX_A                                   0x1AB // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1AB)
 
 #define FLAG_DEFEATED_DEOXYS                 0x1AC
 #define FLAG_BATTLED_DEOXYS                  0x1AD
@@ -510,16 +510,16 @@
 #define FLAG_ENABLE_TATE_AND_LIZA_MATCH_CALL 0x1D8
 #define FLAG_ENABLE_JUAN_MATCH_CALL          0x1D9
 
-#define FLAG_UNUSED_0x1DA                    0x1DA // Unused Flag
+#define FLAG_CAUGHT_STATIC_VULPIX_A                                 0x1DA // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1DA)
 
 #define FLAG_SHOWN_MYSTIC_TICKET             0x1DB
 #define FLAG_DEFEATED_HO_OH                  0x1DC
 #define FLAG_DEFEATED_LUGIA                  0x1DD
 
-#define FLAG_UNUSED_0x1DE                    0x1DE // Unused Flag
-#define FLAG_UNUSED_0x1DF                    0x1DF // Unused Flag
-#define FLAG_UNUSED_0x1E0                    0x1E0 // Unused Flag
-#define FLAG_UNUSED_0x1E1                    0x1E1 // Unused Flag
+#define FLAG_HIDE_STATIC_NINETALES_A                                0x1DE // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1DE)
+#define FLAG_CAUGHT_STATIC_NINETALES_A                              0x1DF // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1DF)
+#define FLAG_HIDE_STATIC_KING_SLIME                                 0x1E0 // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1E0)
+#define FLAG_CAUGHT_STATIC_KING_SLIME                               0x1E1 // Open Hoenn - tools/statics.py (FLAG_UNUSED_0x1E1)
 #define FLAG_UNUSED_0x1E2                    0x1E2 // Unused Flag
 #define FLAG_UNUSED_0x1E3                    0x1E3 // Unused Flag
 

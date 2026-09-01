@@ -80,12 +80,12 @@
 #define OBJ_EVENT_GFX_SPENSER                     73
 #define OBJ_EVENT_GFX_NOLAND                      74
 #define OBJ_EVENT_GFX_LUCY                        75
-#define OBJ_EVENT_GFX_UNUSED_NATU_DOLL            76
-#define OBJ_EVENT_GFX_UNUSED_MAGNEMITE_DOLL       77
-#define OBJ_EVENT_GFX_UNUSED_SQUIRTLE_DOLL        78
-#define OBJ_EVENT_GFX_UNUSED_WOOPER_DOLL          79
-#define OBJ_EVENT_GFX_UNUSED_PIKACHU_DOLL         80
-#define OBJ_EVENT_GFX_UNUSED_PORYGON2_DOLL        81
+#define OBJ_EVENT_GFX_LARVESTA                    76  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_NATU_DOLL)
+#define OBJ_EVENT_GFX_VOLCARONA                   77  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_MAGNEMITE_DOLL)
+#define OBJ_EVENT_GFX_WIMPOD                      78  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_SQUIRTLE_DOLL)
+#define OBJ_EVENT_GFX_GOLISOPOD                   79  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_WOOPER_DOLL)
+#define OBJ_EVENT_GFX_VULPIX_A                    80  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_PIKACHU_DOLL)
+#define OBJ_EVENT_GFX_NINETALES_A                 81  // Open Hoenn - tools/statics.py (was OBJ_EVENT_GFX_UNUSED_PORYGON2_DOLL)
 #define OBJ_EVENT_GFX_CUTTABLE_TREE               82
 #define OBJ_EVENT_GFX_MART_EMPLOYEE               83
 #define OBJ_EVENT_GFX_ROOFTOP_SALE_WOMAN          84
@@ -253,13 +253,14 @@
 // object graphics that can be removed. If more graphics are needed, anything that
 // stores graphics ids will need to be increased in size. See wiki entry below:
 // https://github.com/pret/pokeemerald/wiki/Feature-Branches#overworld-expansion
-#define NUM_OBJ_EVENT_GFX                        239
+#define OBJ_EVENT_GFX_KING_SLIME                                239  // Open Hoenn - tools/statics.py
+#define NUM_OBJ_EVENT_GFX                        240
 
 
 // These are dynamic object gfx ids.
 // They correspond with the values of the VAR_OBJ_GFX_ID_X vars.
 // More info about them in include/constants/vars.h
-#define OBJ_EVENT_GFX_VARS   (NUM_OBJ_EVENT_GFX + 1)
+#define OBJ_EVENT_GFX_VARS   (NUM_OBJ_EVENT_GFX)  // Open Hoenn - tools/statics.py
 #define OBJ_EVENT_GFX_VAR_0  (OBJ_EVENT_GFX_VARS + 0x0) // 240
 #define OBJ_EVENT_GFX_VAR_1  (OBJ_EVENT_GFX_VARS + 0x1)
 #define OBJ_EVENT_GFX_VAR_2  (OBJ_EVENT_GFX_VARS + 0x2)
